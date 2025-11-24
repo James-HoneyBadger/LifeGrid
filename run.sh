@@ -1,10 +1,26 @@
 #!/bin/bash
-# Cellular Automaton Simulator Launch Script
+# Bootstrap environment and launch the cellular automaton simulator.
 
-# Activate virtual environment if it exists
-if [ -d ".venv" ]; then
-    source .venv/bin/activate
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_DIR="$ROOT_DIR/.venv"
+REQUIREMENTS_FILE="$ROOT_DIR/requirements.txt"
+
+if command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
+else
+    echo "Error: Python 3 is not installed." >&2
+    exit 1
 fi
 
-# Run the application
-python src/main.py
+if [ ! -d "$VENV_DIR" ]; then
+    "$PYTHON_BIN" -m venv "$VENV_DIR"
+fi
+
+"$VENV_DIR/bin/python" -m pip install --upgrade pip >/dev/null
+"$VENV_DIR/bin/python" -m pip install -r "$REQUIREMENTS_FILE"
+
+exec "$VENV_DIR/bin/python" "$ROOT_DIR/src/main.py"
