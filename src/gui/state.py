@@ -13,6 +13,7 @@ from automata import CellularAutomaton
 from .config import DEFAULT_CELL_SIZE, MAX_HISTORY_LENGTH
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class SimulationState:
     """Mutable state shared by the GUI and simulation logic."""

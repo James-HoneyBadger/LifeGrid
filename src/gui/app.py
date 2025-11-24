@@ -29,11 +29,18 @@ try:
     from PIL import Image
 
     PIL_AVAILABLE = True
-    PIL_NEAREST = getattr(getattr(Image, "Resampling", Image), "NEAREST")
 except ImportError:
     Image = None
     PIL_AVAILABLE = False
-    PIL_NEAREST = None
+
+
+def _nearest_resample_filter() -> object | None:
+    """Return the Pillow nearest-neighbour filter if available."""
+
+    if not (PIL_AVAILABLE and Image):
+        return None
+    resampling = getattr(Image, "Resampling", Image)
+    return getattr(resampling, "NEAREST", None)
 
 
 class AutomatonApp:
@@ -122,6 +129,8 @@ class AutomatonApp:
     # Automaton control
     # ------------------------------------------------------------------
     def switch_mode(self, mode_name: str) -> None:
+        """Switch to the requested automaton mode and refresh the grid."""
+
         self.stop_simulation()
         if mode_name == "Custom Rules":
             self.state.current_automaton = LifeLikeAutomaton(
@@ -160,6 +169,8 @@ class AutomatonApp:
         self._update_display()
 
     def _sync_custom_entries(self) -> None:
+        """Mirror the active custom rule sets into the entry widgets."""
+
         birth_values = "".join(str(n) for n in sorted(self.custom_birth))
         survival_values = "".join(str(n) for n in sorted(self.custom_survival))
         self.widgets.birth_entry.delete(0, tk.END)
@@ -168,6 +179,8 @@ class AutomatonApp:
         self.widgets.survival_entry.insert(0, survival_values)
 
     def load_pattern_handler(self) -> None:
+        """Load the currently selected pattern into the simulation grid."""
+
         automaton = self.state.current_automaton
         if not automaton:
             return
@@ -181,6 +194,8 @@ class AutomatonApp:
         self._update_display()
 
     def toggle_simulation(self) -> None:
+        """Start or pause the simulation loop."""
+
         self.state.running = not self.state.running
         if self.state.running:
             self.widgets.start_button.config(text="Stop", bg="#ff9800")
@@ -189,10 +204,14 @@ class AutomatonApp:
             self.widgets.start_button.config(text="Start", bg="#4caf50")
 
     def stop_simulation(self) -> None:
+        """Force the simulation into a stopped state."""
+
         self.state.running = False
         self.widgets.start_button.config(text="Start", bg="#4caf50")
 
     def _run_simulation_loop(self) -> None:
+        """Advance the automaton while the simulation is marked running."""
+
         if not self.state.running:
             return
         self.step_once()
@@ -200,6 +219,8 @@ class AutomatonApp:
         self.root.after(delay, self._run_simulation_loop)
 
     def step_once(self) -> None:
+        """Advance the automaton by a single generation."""
+
         automaton = self.state.current_automaton
         if not automaton:
             return
@@ -213,6 +234,8 @@ class AutomatonApp:
         self.widgets.gen_label.config(text=generation_text)
 
     def reset_simulation(self) -> None:
+        """Reset the automaton grid to its starting state."""
+
         automaton = self.state.current_automaton
         if not automaton:
             return
@@ -223,6 +246,8 @@ class AutomatonApp:
         self._update_display()
 
     def clear_grid(self) -> None:
+        """Clear the grid and pause the simulation."""
+
         automaton = self.state.current_automaton
         if not automaton:
             return
@@ -233,6 +258,8 @@ class AutomatonApp:
         self._update_display()
 
     def apply_custom_rules(self) -> None:
+        """Apply custom birth/survival rule strings to the automaton."""
+
         automaton = self.state.current_automaton
         if not isinstance(automaton, LifeLikeAutomaton):
             messagebox.showinfo(
@@ -263,6 +290,8 @@ class AutomatonApp:
     # Grid size helpers
     # ------------------------------------------------------------------
     def on_size_preset_change(self, _event: tk.Event[tk.Misc]) -> None:
+        """Resize the grid when a preset dimension is selected."""
+
         preset = self.tk_vars.grid_size.get()
         if preset == "Custom":
             return
@@ -279,12 +308,16 @@ class AutomatonApp:
         self.resize_grid(width, height)
 
     def apply_custom_grid_size(self) -> None:
+        """Resize the grid based on custom width and height spinboxes."""
+
         self.resize_grid(
             self.tk_vars.custom_width.get(),
             self.tk_vars.custom_height.get(),
         )
 
     def resize_grid(self, width: int, height: int) -> None:
+        """Clamp and apply a new grid size, rebuilding the automaton."""
+
         width = max(MIN_GRID_SIZE, min(width, MAX_GRID_SIZE))
         height = max(MIN_GRID_SIZE, min(height, MAX_GRID_SIZE))
         self.state.grid_width = width
@@ -296,6 +329,8 @@ class AutomatonApp:
     # Persistence
     # ------------------------------------------------------------------
     def save_pattern(self) -> None:
+        """Persist the current grid and rules to a JSON file."""
+
         automaton = self.state.current_automaton
         if not automaton:
             return
@@ -326,6 +361,8 @@ class AutomatonApp:
             )
 
     def load_saved_pattern(self) -> None:
+        """Load a pattern JSON file into the active automaton."""
+
         filename = filedialog.askopenfilename(
             filetypes=[("JSON files", "*.json"), ("All files", "*.*")]
         )
@@ -384,6 +421,8 @@ class AutomatonApp:
         messagebox.showinfo("Loaded", "Pattern loaded successfully.")
 
     def export_png(self) -> None:
+        """Export the current grid as a Pillow PNG image."""
+
         if not (PIL_AVAILABLE and self.state.current_automaton and Image):
             messagebox.showerror(
                 "Unavailable",
@@ -414,7 +453,7 @@ class AutomatonApp:
         scale = max(1, 800 // max_dimension)
         image = image.resize(
             (self.state.grid_width * scale, self.state.grid_height * scale),
-            PIL_NEAREST,
+            _nearest_resample_filter(),
         )
         try:
             image.save(filename)
@@ -426,6 +465,8 @@ class AutomatonApp:
     # Rendering and interactions
     # ------------------------------------------------------------------
     def _update_display(self) -> None:
+        """Redraw the canvas and population statistics."""
+
         automaton = self.state.current_automaton
         if not (automaton and self.widgets.canvas):
             return
@@ -440,16 +481,24 @@ class AutomatonApp:
         self.widgets.population_label.config(text=stats)
 
     def toggle_grid(self) -> None:
+        """Toggle grid line visibility and refresh the canvas."""
+
         self.state.show_grid = not self.state.show_grid
         self._update_display()
 
     def on_canvas_click(self, event: tk.Event[tk.Misc]) -> None:
+        """Handle a canvas click based on the active draw mode."""
+
         self._handle_canvas_interaction(event)
 
     def on_canvas_drag(self, event: tk.Event[tk.Misc]) -> None:
+        """Handle a canvas drag while the pointer button is held."""
+
         self._handle_canvas_interaction(event)
 
     def _handle_canvas_interaction(self, event: tk.Event[tk.Misc]) -> None:
+        """Translate canvas coordinates into grid mutations."""
+
         automaton = self.state.current_automaton
         if not (automaton and self.widgets.canvas):
             return
@@ -462,6 +511,8 @@ class AutomatonApp:
             self._update_display()
 
     def _apply_draw_action(self, x: int, y: int) -> None:
+        """Apply the selected drawing action at the given grid coordinate."""
+
         automaton = self.state.current_automaton
         if not automaton:
             return
@@ -486,6 +537,8 @@ class AutomatonApp:
 
 
 def launch() -> None:
+    """Create the Tk root window and start the simulator event loop."""
+
     root = tk.Tk()
     AutomatonApp(root)
     root.mainloop()

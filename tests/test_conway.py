@@ -4,7 +4,7 @@
 
 import numpy as np
 
-from main import ConwayGameOfLife
+from automata.conway import ConwayGameOfLife
 
 
 def test_conway_initialization():
