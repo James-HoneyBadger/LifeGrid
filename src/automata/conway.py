@@ -42,6 +42,10 @@ class ConwayGameOfLife(CellularAutomaton):
             self._add_r_pentomino(center_x, center_y)
         elif pattern_name == "Acorn":
             self._add_acorn(center_x, center_y)
+        elif pattern_name == "Beacon":
+            self._add_beacon(center_x, center_y)
+        elif pattern_name == "Pulsar":
+            self._add_pulsar(center_x, center_y)
 
     def _add_classic_mix(self, center_x: int, center_y: int) -> None:
         """Add interesting default patterns to the grid."""
@@ -321,7 +325,33 @@ class ConwayGameOfLife(CellularAutomaton):
             if 0 <= x < self.width and 0 <= y < self.height:
                 self.grid[y, x] = 1
 
+    def _add_beacon(self, center_x: int, center_y: int) -> None:
+        beacon = [(0, 0), (1, 0), (0, 1), (3, 2), (2, 3), (3, 3)]
+        for dx, dy in beacon:
+            x, y = center_x + dx - 1, center_y + dy - 1
+            if 0 <= x < self.width and 0 <= y < self.height:
+                self.grid[y, x] = 1
+
+    def _add_pulsar(self, center_x: int, center_y: int) -> None:
+        pulsar = [
+            (2, 0), (3, 0), (4, 0), (8, 0), (9, 0), (10, 0),
+            (0, 2), (5, 2), (7, 2), (12, 2),
+            (0, 3), (5, 3), (7, 3), (12, 3),
+            (0, 4), (5, 4), (7, 4), (12, 4),
+            (2, 5), (3, 5), (4, 5), (8, 5), (9, 5), (10, 5),
+            (2, 7), (3, 7), (4, 7), (8, 7), (9, 7), (10, 7),
+            (0, 8), (5, 8), (7, 8), (12, 8),
+            (0, 9), (5, 9), (7, 9), (12, 9),
+            (0, 10), (5, 10), (7, 10), (12, 10),
+            (2, 12), (3, 12), (4, 12), (8, 12), (9, 12), (10, 12),
+        ]
+        for dx, dy in pulsar:
+            x, y = center_x + dx - 6, center_y + dy - 6
+            if 0 <= x < self.width and 0 <= y < self.height:
+                self.grid[y, x] = 1
+
     def step(self) -> None:
+        """Advance the automaton by one generation."""
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
         neighbors = signal.convolve2d(
             self.grid,

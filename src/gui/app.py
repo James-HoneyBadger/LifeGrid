@@ -13,8 +13,12 @@ import numpy as np
 from automata import LifeLikeAutomaton
 
 from .config import (
+    DEFAULT_CANVAS_HEIGHT,
+    DEFAULT_CANVAS_WIDTH,
+    DEFAULT_CELL_SIZE,
     DEFAULT_CUSTOM_BIRTH,
     DEFAULT_CUSTOM_SURVIVAL,
+    DEFAULT_SPEED,
     EXPORT_COLOR_MAP,
     MAX_GRID_SIZE,
     MIN_GRID_SIZE,
@@ -48,7 +52,10 @@ class AutomatonApp:
 
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
-        self.root.title("Cellular Automaton Simulator")
+        self.root.title("Project Golem")
+
+        self.settings_file = "settings.json"
+        self.settings = self._load_settings()
 
         self.state = SimulationState()
         self.custom_birth = set(DEFAULT_CUSTOM_BIRTH)
@@ -80,24 +87,62 @@ class AutomatonApp:
         self.widgets.start_button.configure(command=self.toggle_simulation)
         self._widgets_init_defaults()
 
+        self.state.show_grid = self.settings.get("show_grid", True)
+
         self._configure_bindings()
         self.switch_mode(self.tk_vars.mode.get())
         self._update_widgets_enabled_state()
         self._update_display()
 
+        # Save settings on exit
+        self.root.protocol("WM_DELETE_WINDOW", self._on_close)
+
+    def _on_close(self) -> None:
+        """Save settings and close the application."""
+        self._save_settings()
+        self.root.destroy()
+
     # ------------------------------------------------------------------
     # Variable and widget helpers
     # ------------------------------------------------------------------
+    def _load_settings(self) -> dict:
+        """Load user settings from file."""
+        try:
+            with open(self.settings_file, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {}
+
+    def _save_settings(self) -> None:
+        """Save current settings to file."""
+        settings = {
+            "mode": self.tk_vars.mode.get(),
+            "pattern": self.tk_vars.pattern.get(),
+            "speed": self.tk_vars.speed.get(),
+            "grid_size": self.tk_vars.grid_size.get(),
+            "custom_width": self.tk_vars.custom_width.get(),
+            "custom_height": self.tk_vars.custom_height.get(),
+            "draw_mode": self.tk_vars.draw_mode.get(),
+            "symmetry": self.tk_vars.symmetry.get(),
+            "show_grid": self.state.show_grid,
+        }
+        try:
+            with open(self.settings_file, "w", encoding="utf-8") as f:
+                json.dump(settings, f, indent=2)
+        except OSError:
+            pass  # Silently fail if can't save
+
     def _create_variables(self) -> TkVars:
+        settings = self.settings
         return TkVars(
-            mode=tk.StringVar(value="Conway's Game of Life"),
-            pattern=tk.StringVar(value="Classic Mix"),
-            speed=tk.IntVar(value=50),
-            grid_size=tk.StringVar(value="100x100"),
-            custom_width=tk.IntVar(value=100),
-            custom_height=tk.IntVar(value=100),
-            draw_mode=tk.StringVar(value="toggle"),
-            symmetry=tk.StringVar(value="None"),
+            mode=tk.StringVar(value=settings.get("mode", "Conway's Game of Life")),
+            pattern=tk.StringVar(value=settings.get("pattern", "Classic Mix")),
+            speed=tk.IntVar(value=settings.get("speed", DEFAULT_SPEED)),
+            grid_size=tk.StringVar(value=settings.get("grid_size", "100x100")),
+            custom_width=tk.IntVar(value=settings.get("custom_width", 100)),
+            custom_height=tk.IntVar(value=settings.get("custom_height", 100)),
+            draw_mode=tk.StringVar(value=settings.get("draw_mode", "toggle")),
+            symmetry=tk.StringVar(value=settings.get("symmetry", "None")),
         )
 
     def _widgets_init_defaults(self) -> None:

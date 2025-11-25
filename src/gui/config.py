@@ -39,6 +39,8 @@ MODE_PATTERNS: Dict[str, List[str]] = {
         "Puffers",
         "R-Pentomino",
         "Acorn",
+        "Beacon",
+        "Pulsar",
         "Random Soup",
     ],
     "High Life": ["Replicator", "Random Soup"],
