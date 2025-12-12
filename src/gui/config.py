@@ -13,6 +13,9 @@ from automata import (
     ImmigrationGame,
     LangtonsAnt,
     RainbowGame,
+    Wireworld,
+    BriansBrain,
+    GenerationsAutomaton,
     parse_bs,
 )
 
@@ -27,6 +30,9 @@ MODE_FACTORIES: Dict[str, Callable[[int, int], CellularAutomaton]] = {
     "Immigration Game": ImmigrationGame,
     "Rainbow Game": RainbowGame,
     "Langton's Ant": LangtonsAnt,
+    "Wireworld": Wireworld,
+    "Brian's Brain": BriansBrain,
+    "Generations": GenerationsAutomaton,
 }
 
 # Pattern options per mode
@@ -47,6 +53,9 @@ MODE_PATTERNS: Dict[str, List[str]] = {
     "Immigration Game": ["Color Mix", "Random Soup"],
     "Rainbow Game": ["Rainbow Mix", "Random Soup"],
     "Langton's Ant": ["Empty"],
+    "Wireworld": ["Random Soup"],
+    "Brian's Brain": ["Random Soup"],
+    "Generations": ["Random Soup"],
     "Custom Rules": ["Random Soup"],
 }
 
@@ -60,6 +69,8 @@ CELL_COLORS = {
     5: "green",
     6: "blue",
     7: "purple",
+    8: "#444444",
+    9: "#888888",
 }
 
 EXPORT_COLOR_MAP = {
@@ -71,6 +82,8 @@ EXPORT_COLOR_MAP = {
     5: (0, 200, 0),
     6: (0, 0, 255),
     7: (150, 0, 255),
+    8: (68, 68, 68),
+    9: (136, 136, 136),
 }
 
 MAX_HISTORY_LENGTH = 500

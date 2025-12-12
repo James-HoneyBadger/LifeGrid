@@ -1,5 +1,10 @@
-git clone https://github.com/James-HoneyBadger/Project_Golem.git
-## Project Golem
+Repository: https://github.com/James-HoneyBadger/LifeGrid
+
+![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/build-passing-brightgreen)
+git clone https://github.com/James-HoneyBadger/LifeGrid.git
+## LifeGrid
 
 An interactive Tkinter-based workbench for experimenting with cellular
 automata. The simulator ships with several classic rules, a custom B/S rule
@@ -39,7 +44,7 @@ pip install -r requirements.txt
 
 ## Getting Started
 
-Run the simulator from the project root:
+Run LifeGrid from the project root:
 
 ```bash
 python src/main.py
@@ -94,7 +99,7 @@ Mouse interactions:
 ## Project Structure
 
 ```
-Project_Golem/
+LifeGrid/
 ├── src/
 │   ├── automata/        # Automaton implementations
 │   ├── gui/             # GUI modules (app, config, state, ui, rendering)

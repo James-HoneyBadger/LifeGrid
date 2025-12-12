@@ -51,11 +51,6 @@ class Tooltip:
 # pylint: disable=too-many-instance-attributes
 @dataclass
 class TkVars:
-
-
-# pylint: disable=too-many-instance-attributes
-@dataclass
-class TkVars:
     """Container for the Tkinter variables shared across widgets."""
 
     mode: tk.StringVar
@@ -80,6 +75,8 @@ class Widgets:
     apply_rules_button: tk.Button
     gen_label: tk.Label
     population_label: tk.Label
+    population_canvas: tk.Canvas
+    cycle_label: tk.Label
     canvas: tk.Canvas
 
 
@@ -96,6 +93,7 @@ class Callbacks:
     save_pattern: Callable[[], None]
     load_saved_pattern: Callable[[], None]
     export_png: Callable[[], None]
+    export_metrics: Callable[[], None]
     apply_custom_rules: Callable[[], None]
     size_preset_changed: Callable[[tk.Event[tk.Misc]], None]
     apply_custom_size: Callable[[], None]
@@ -112,6 +110,7 @@ def build_ui(
 ) -> Widgets:
     """Create the Tkinter widget layout and wire up callbacks."""
 
+    _add_menubar(root, callbacks)
     _configure_style(root)
     sidebar, content = _create_layout(root)
 
@@ -126,7 +125,7 @@ def build_ui(
         variables,
         callbacks,
     )
-    population_label = _add_population_section(sidebar)
+    population_label, population_canvas, cycle_label = _add_population_section(sidebar, callbacks)
     (
         birth_entry,
         survival_entry,
@@ -144,8 +143,21 @@ def build_ui(
         apply_rules_button=apply_rules_button,
         gen_label=gen_label,
         population_label=population_label,
+        population_canvas=population_canvas,
+        cycle_label=cycle_label,
         canvas=canvas,
     )
+
+
+def _add_menubar(root: tk.Tk, callbacks: Callbacks) -> None:
+    """Add a basic menubar with Help/About."""
+
+    menubar = tk.Menu(root)
+    help_menu = tk.Menu(menubar, tearoff=0)
+    help_menu.add_command(label="About LifeGrid", command=lambda: callbacks.toggle_grid() or None)
+    # Placeholder: actual About handler is implemented in app; here we call a dedicated method via callbacks if present
+    menubar.add_cascade(label="Help", menu=help_menu)
+    root.config(menu=menubar)
 
 
 def _configure_style(root: tk.Tk) -> None:
@@ -322,8 +334,8 @@ def _add_simulation_section(
     return start_button, gen_label
 
 
-def _add_population_section(parent: ttk.Frame) -> ttk.Label:
-    """Add the population stats card and return the label widget."""
+def _add_population_section(parent: ttk.Frame, callbacks: Callbacks) -> tuple[ttk.Label, tk.Canvas, ttk.Label]:
+    """Add the population stats card, chart, and export button."""
 
     frame = ttk.Labelframe(
         parent,
@@ -338,7 +350,19 @@ def _add_population_section(parent: ttk.Frame) -> ttk.Label:
         justify=tk.LEFT,
     )
     label.pack(anchor=tk.W)
-    return label
+
+    chart = tk.Canvas(frame, height=80, width=240, bg="#f8f8f8", highlightthickness=1, highlightbackground="#ccc")
+    chart.pack(fill=tk.X, pady=(6, 4))
+    Tooltip(chart, "Recent history of live cells / entropy / complexity")
+
+    cycle_label = ttk.Label(frame, text="Cycle: –", foreground="#555")
+    cycle_label.pack(anchor=tk.W, pady=(2, 0))
+
+    export_button = ttk.Button(frame, text="Export CSV", command=callbacks.export_metrics)
+    export_button.pack(fill=tk.X, pady=(6, 0))
+    Tooltip(export_button, "Save per-generation metrics to CSV")
+
+    return label, chart, cycle_label
 
 
 def _add_custom_rules_section(

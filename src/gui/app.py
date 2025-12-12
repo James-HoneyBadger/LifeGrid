@@ -52,7 +52,7 @@ class AutomatonApp:
 
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
-        self.root.title("Project Golem")
+        self.root.title("LifeGrid")
 
         self.settings_file = "settings.json"
         self.settings = self._load_settings()
@@ -71,12 +71,14 @@ class AutomatonApp:
             save_pattern=self.save_pattern,
             load_saved_pattern=self.load_saved_pattern,
             export_png=self.export_png,
+            export_metrics=self.export_metrics,
             apply_custom_rules=self.apply_custom_rules,
             size_preset_changed=self.on_size_preset_change,
             apply_custom_size=self.apply_custom_grid_size,
             toggle_grid=self.toggle_grid,
             on_canvas_click=self.on_canvas_click,
             on_canvas_drag=self.on_canvas_drag,
+            
         )
         self.widgets: Widgets = build_ui(
             root=self.root,
@@ -97,10 +99,44 @@ class AutomatonApp:
         # Save settings on exit
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
+        # Bind About menu
+        self._install_about_menu()
+
     def _on_close(self) -> None:
         """Save settings and close the application."""
         self._save_settings()
         self.root.destroy()
+
+    def _install_about_menu(self) -> None:
+        """Install Help/About handler on the menubar."""
+        # Build a simple About dialog via messagebox
+        def show_about() -> None:
+            message = (
+                "LifeGrid\n\n"
+                "Interactive cellular automata workbench.\n"
+                "Repo: https://github.com/James-HoneyBadger/LifeGrid\n"
+            )
+            messagebox.showinfo("About LifeGrid", message)
+
+        # Safely add menu command if a menubar exists
+        try:
+            menu = self.root.nametowidget(self.root["menu"])  # type: ignore[index]
+        except Exception:
+            menu = None
+        if not menu:
+            # Create a menubar and add Help/About
+            menubar = tk.Menu(self.root)
+            help_menu = tk.Menu(menubar, tearoff=0)
+            help_menu.add_command(label="About LifeGrid", command=show_about)
+            menubar.add_cascade(label="Help", menu=help_menu)
+            self.root.config(menu=menubar)
+        else:
+            # Try to find Help menu
+            menubar = tk.Menu(self.root)
+            help_menu = tk.Menu(menubar, tearoff=0)
+            help_menu.add_command(label="About LifeGrid", command=show_about)
+            menubar.add_cascade(label="Help", menu=help_menu)
+            self.root.config(menu=menubar)
 
     # ------------------------------------------------------------------
     # Variable and widget helpers
@@ -587,6 +623,8 @@ class AutomatonApp:
         )
         stats = self.state.update_population_stats(grid)
         self.widgets.population_label.config(text=stats)
+        self._update_population_chart()
+        self._update_cycle_label()
 
     def toggle_grid(self) -> None:
         """Toggle grid line visibility and refresh the canvas."""
@@ -642,6 +680,81 @@ class AutomatonApp:
                 automaton.grid[py, px] = 1
             elif self.tk_vars.draw_mode.get() == "eraser":
                 automaton.grid[py, px] = 0
+
+    # ------------------------------------------------------------------
+    # Metrics helpers
+    # ------------------------------------------------------------------
+    def _update_population_chart(self) -> None:
+        """Render a tiny time-series chart for population, entropy, complexity."""
+
+        canvas = self.widgets.population_canvas
+        state = self.state
+        history = list(state.population_history)
+        entropy = list(state.entropy_history)
+        complexity = list(state.complexity_history)
+        canvas.delete("all")
+        if not history:
+            return
+
+        width = int(canvas.winfo_width() or 240)
+        height = int(canvas.winfo_height() or 80)
+        padding = 4
+        # Normalize series to fit height
+        def normalize(series: list, default_max: float = 1.0) -> list[tuple[int, int]]:
+            if not series:
+                return []
+            max_val = max(series) or default_max
+            span = max_val if max_val else 1.0
+            n = len(series)
+            points = []
+            for idx, val in enumerate(series[-width:]):
+                x = padding + int((idx / max(1, len(series[-width:]) - 1)) * (width - 2 * padding))
+                y = padding + int((1 - (val / span)) * (height - 2 * padding))
+                points.append((x, y))
+            return points
+
+        pop_points = normalize(history)
+        ent_points = normalize(entropy)
+        comp_points = normalize(complexity, default_max=1.0)
+
+        for points, color in ((pop_points, "#2a9d8f"), (ent_points, "#f4a261"), (comp_points, "#e76f51")):
+            if len(points) >= 2:
+                canvas.create_line(points, fill=color, width=2, smooth=True)
+
+    def _update_cycle_label(self) -> None:
+        """Refresh the cycle detection label."""
+
+        label = self.widgets.cycle_label
+        if self.state.cycle_period:
+            label.config(text=f"Cycle detected: {self.state.cycle_period} gens", foreground="#1b5e20")
+        else:
+            label.config(text="Cycle: –", foreground="#555")
+
+    def export_metrics(self) -> None:
+        """Export per-generation metrics to CSV."""
+
+        if not self.state.metrics_log:
+            messagebox.showinfo("No Data", "Run the simulation to collect metrics before exporting.")
+            return
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".csv",
+            filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
+        )
+        if not filename:
+            return
+
+        import csv
+
+        fieldnames = ["generation", "live", "delta", "density", "entropy", "complexity", "cycle_period"]
+        try:
+            with open(filename, "w", encoding="utf-8", newline="") as handle:
+                writer = csv.DictWriter(handle, fieldnames=fieldnames)
+                writer.writeheader()
+                for row in self.state.metrics_log:
+                    writer.writerow(row)
+            messagebox.showinfo("Exported", f"Metrics saved to {filename}")
+        except OSError as exc:
+            messagebox.showerror("Export Failed", f"Could not save CSV: {exc}")
 
 
 def launch() -> None:

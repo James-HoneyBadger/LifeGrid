@@ -1,6 +1,6 @@
-# Project Golem — User Guide
+# LifeGrid — User Guide
 
-This guide explains how to install, run, and use Project Golem. It summarizes controls, available modes, drawing tools, and
+This guide explains how to install, run, and use LifeGrid. It summarizes controls, available modes, drawing tools, and
 workflow tips for saving and exporting.
 
 ## What it is
@@ -12,7 +12,7 @@ A fast, interactive simulator for cellular automata with multiple modes:
 - Langton's Ant
 - Custom Rules (life-like B/S rules)
 
-The app is written in Python with Tkinter and NumPy (SciPy optional for
+LifeGrid is written in Python with Tkinter and NumPy (SciPy optional for
 speed) and exports PNG snapshots when Pillow is installed.
 
 ---

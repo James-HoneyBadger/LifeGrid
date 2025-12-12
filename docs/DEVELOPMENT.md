@@ -4,7 +4,7 @@ This document helps you navigate the codebase and contribute changes.
 
 ## Project structure
 ```
-Project_Golem/
+LifeGrid/
 ├── src/
 │   └── main.py           # Main application (GUI + automata implementations)
 ├── examples/             # Example pattern files (JSON)
@@ -20,7 +20,7 @@ Project_Golem/
 ```
 
 ## Code overview
-Currently, the application logic and GUI live in `src/main.py`. Key areas:
+The application is organized under `src/` (automata + GUI). Key areas:
 
 - Automata base class (`CellularAutomaton`) and implementations:
   - `ConwayGameOfLife`
@@ -29,7 +29,7 @@ Currently, the application logic and GUI live in `src/main.py`. Key areas:
   - `RainbowGame`
   - `LangtonsAnt`
   - `LifeLikeAutomaton` (Custom Rules)
-- GUI (`CellularAutomatonGUI`):
+- GUI:
   - Control panel creation (mode selection, patterns, save/load/export, rules, grid size, draw modes, symmetry, speed, grid toggle)
   - Canvas rendering (`update_display`) with optional grid lines
   - Drawing interactions (`on_canvas_click`, `on_canvas_drag`, `apply_draw_action`)
