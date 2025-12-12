@@ -11,6 +11,7 @@ from tkinter import filedialog, messagebox
 import numpy as np
 
 from automata import LifeLikeAutomaton
+from version import __version__ as LIFEGRID_VERSION
 
 from .config import (
     DEFAULT_CANVAS_HEIGHT,
@@ -112,7 +113,7 @@ class AutomatonApp:
         # Build a simple About dialog via messagebox
         def show_about() -> None:
             message = (
-                "LifeGrid\n\n"
+                f"LifeGrid v{LIFEGRID_VERSION}\n\n"
                 "Interactive cellular automata workbench.\n"
                 "Repo: https://github.com/James-HoneyBadger/LifeGrid\n"
             )
