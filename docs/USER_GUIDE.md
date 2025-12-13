@@ -20,7 +20,7 @@ speed) and exports PNG snapshots when Pillow is installed.
 ## Installation
 
 Requirements:
-- Python 3.8+
+- Python 3.13+
 - NumPy
 - SciPy (for fast convolution-based neighbor counting)
 - Pillow (optional, for PNG export)

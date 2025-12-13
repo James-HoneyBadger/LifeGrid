@@ -1,5 +1,7 @@
 """Generations-style cellular automaton with fading states."""
 
+# pylint: disable=duplicate-code
+
 from __future__ import annotations
 
 from typing import Iterable, Set
@@ -17,9 +19,11 @@ class GenerationsAutomaton(CellularAutomaton):
     """
 
     def __init__(
+        # pylint: disable=too-many-arguments
         self,
         width: int,
         height: int,
+        *,
         birth: Iterable[int] | None = None,
         survival: Iterable[int] | None = None,
         n_states: int = 8,
@@ -78,7 +82,10 @@ class GenerationsAutomaton(CellularAutomaton):
 
         # Decaying states progress; last fades to 0
         decaying_mask = (self.grid >= 2) & (self.grid < self.n_states)
-        new_grid[decaying_mask] = np.minimum(self.grid[decaying_mask] + 1, self.n_states - 1)
+        new_grid[decaying_mask] = np.minimum(
+            self.grid[decaying_mask] + 1,
+            self.n_states - 1,
+        )
         new_grid[self.grid == self.n_states - 1] = 0
 
         self.grid = new_grid
@@ -89,6 +96,3 @@ class GenerationsAutomaton(CellularAutomaton):
     def handle_click(self, x: int, y: int) -> None:
         """Toggle cell state at the given coordinates."""
         self.grid[y, x] = (self.grid[y, x] + 1) % self.n_states
-        """Toggle a cell to live or dead."""
-
-        self.grid[y, x] = 0 if self.grid[y, x] else 1

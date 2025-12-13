@@ -1,6 +1,6 @@
 # LifeGrid — Comprehensive User Guide
 
-**Version:** 1.0.0  
+**Version:** 2.0.0  
 **Last Updated:** December 2025
 
 A complete guide to installing, running, and mastering the LifeGrid cellular automaton simulator.
@@ -65,7 +65,7 @@ This document combines an end-user guide and a technical reference for the LifeG
 LifeGrid is a Tkinter-based desktop simulator for exploring cellular automata. It includes classic rules (Conway, HighLife, Langton's Ant), colorful multi-state variants, and a custom B/S rule editor. Features include drawing tools with symmetry, pattern presets, backward stepping, live metrics, and optional PNG export.
 
 ### 2. Installation
-Requirements: Python 3.8+, Tkinter, NumPy, SciPy, Pillow (optional for PNG export).
+Requirements: Python 3.13+, Tkinter, NumPy, SciPy, Pillow (optional for PNG export).
 
 ```bash
 python -m venv .venv
@@ -668,7 +668,7 @@ Each followed by digits 0–8 (neighbor counts).
 - **Cause:** Tkinter not bundled with your Python installation
 - **Solution:** Install a Python distribution that includes Tkinter, or install separately:
   - Linux (Ubuntu/Debian): `sudo apt-get install python3-tk`
-  - macOS: `brew install python-tk@3.11` (adjust version as needed)
+  - macOS: install a Python build that includes Tk support (or a matching `python-tk` package)
 
 **Error:** "No module named 'numpy'" or "scipy"
 - **Cause:** Dependencies not installed

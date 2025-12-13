@@ -1,3 +1,7 @@
+# pylint: disable=too-many-lines
+# pylint: disable=too-many-instance-attributes, too-many-public-methods
+# pylint: disable=too-many-locals, too-many-statements
+
 """Refactored GUI application composed of focused helper modules."""
 
 from __future__ import annotations

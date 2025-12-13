@@ -350,7 +350,7 @@ def _add_simulation_section(
     speed_frame.pack(fill=tk.X, pady=(4, 0))
     speed_label = ttk.Label(speed_frame, text="Speed")
     speed_label.pack(anchor=tk.W)
-    
+
     speed_scale = tk.Scale(
         frame,
         from_=1,
@@ -414,11 +414,11 @@ def _add_drawing_section(parent: ttk.Frame, variables: TkVars) -> None:
         anchor=tk.W,
         pady=(0, 4),
     )
-    
+
     # Tool options in a compact row
     tools_frame = ttk.Frame(frame)
     tools_frame.pack(fill=tk.X, pady=(0, 8))
-    
+
     toggle_radio = ttk.Radiobutton(
         tools_frame,
         text="Toggle",
@@ -427,7 +427,7 @@ def _add_drawing_section(parent: ttk.Frame, variables: TkVars) -> None:
     )
     toggle_radio.pack(side=tk.LEFT)
     Tooltip(toggle_radio, "Click to toggle cells on/off")
-    
+
     pen_radio = ttk.Radiobutton(
         tools_frame,
         text="Pen",
@@ -436,7 +436,7 @@ def _add_drawing_section(parent: ttk.Frame, variables: TkVars) -> None:
     )
     pen_radio.pack(side=tk.LEFT, padx=(16, 0))
     Tooltip(pen_radio, "Click and drag to draw live cells")
-    
+
     eraser_radio = ttk.Radiobutton(
         tools_frame,
         text="Eraser",

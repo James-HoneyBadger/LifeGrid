@@ -1,4 +1,5 @@
 # pylint: disable=duplicate-code
+# mypy: ignore-errors
 
 """GUI-related smoke tests.
 
@@ -8,19 +9,14 @@ automatically if Tk cannot initialize (e.g., no DISPLAY on Linux).
 
 from __future__ import annotations
 
-import os
-import sys
 import tkinter as tk
 
 import pytest
 
-# Add src/ to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+from gui.app import AutomatonApp
 
 
 def _create_app(root: tk.Tk):
-    from gui.app import AutomatonApp  # type: ignore
-
     return AutomatonApp(root)
 
 

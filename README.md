@@ -1,9 +1,9 @@
 Repository: https://github.com/James-HoneyBadger/LifeGrid
 
-![Python Version](https://img.shields.io/badge/python-3.8%2B-blue)
+![Python Version](https://img.shields.io/badge/python-3.13%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/build-passing-brightgreen)
-![Version](https://img.shields.io/badge/version-1.0.0-purple)
+![Version](https://img.shields.io/badge/version-2.0.0-purple)
 git clone https://github.com/James-HoneyBadger/LifeGrid.git
 ## LifeGrid
 
@@ -29,7 +29,7 @@ editor, drawing tools, and quick exporting to PNG.
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.13+
 - Tkinter (bundled with most Python installations)
 - NumPy 1.24+
 - SciPy 1.11+ (used for fast convolutions)

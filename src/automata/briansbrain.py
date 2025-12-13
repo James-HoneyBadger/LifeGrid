@@ -1,5 +1,7 @@
 """Brian's Brain cellular automaton implementation."""
 
+# pylint: disable=duplicate-code
+
 from __future__ import annotations
 
 import numpy as np
@@ -23,6 +25,7 @@ class BriansBrain(CellularAutomaton):
         self.grid = np.zeros((self.height, self.width), dtype=int)
 
     def load_pattern(self, pattern_name: str) -> None:
+        """Load a named pattern into the grid."""
         self.reset()
         if pattern_name == "Random Soup":
             mask = np.random.random(self.grid.shape) < 0.08

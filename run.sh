@@ -16,6 +16,18 @@ else
     exit 1
 fi
 
+"$PYTHON_BIN" - <<'PY'
+import sys
+
+required = (3, 13)
+current = sys.version_info[:2]
+if current < required:
+    sys.stderr.write(
+        f"Error: Python {required[0]}.{required[1]}+ is required; found {current[0]}.{current[1]}.\n"
+    )
+    raise SystemExit(1)
+PY
+
 if [ ! -d "$VENV_DIR" ]; then
     "$PYTHON_BIN" -m venv "$VENV_DIR"
 fi
