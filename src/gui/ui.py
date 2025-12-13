@@ -119,7 +119,7 @@ def build_ui(
     _configure_style(root)
     sidebar, content = _create_layout(root)
 
-    pattern_combo = _add_automaton_section(
+    pattern_combo, pattern_help = _add_automaton_section(
         sidebar,
         variables,
         callbacks,
@@ -143,6 +143,7 @@ def build_ui(
     return Widgets(
         start_button=start_button,
         pattern_combo=pattern_combo,
+        pattern_help=pattern_help,
         birth_entry=birth_entry,
         survival_entry=survival_entry,
         apply_rules_button=apply_rules_button,
@@ -173,13 +174,59 @@ def _add_menubar(root: tk.Tk, callbacks: Callbacks) -> None:
 
 
 def _configure_style(root: tk.Tk) -> None:
-    """Apply a neutral ttk theme with subtle card styling."""
+    """Apply a minimal, modern theme with light cards and soft accents."""
+
+    base_bg = "#f4f6fb"
+    card_bg = "#ffffff"
+    text = "#0f172a"
+    muted = "#64748b"
+    accent = "#0ea5e9"
+    accent_active = "#38bdf8"
+    accent_pressed = "#0284c7"
+
+    root.configure(background=base_bg)
 
     style = ttk.Style(root)
     if "clam" in style.theme_names():
         style.theme_use("clam")
-    style.configure("Card.TLabelframe", padding=8)
-    style.configure("Card.TFrame", padding=8)
+
+    style.configure(
+        ".",
+        background=base_bg,
+        foreground=text,
+        font=("Segoe UI", 10),
+    )
+    style.configure("TFrame", background=base_bg)
+    style.configure("Card.TFrame", background=card_bg, padding=10)
+    style.configure(
+        "Card.TLabelframe",
+        background=card_bg,
+        relief="flat",
+        padding=10,
+    )
+    style.configure(
+        "Card.TLabelframe.Label",
+        background=card_bg,
+        foreground="#334155",
+        font=("Segoe UI Semibold", 10),
+    )
+    style.configure("TLabel", background=card_bg, foreground=text)
+    style.configure("Muted.TLabel", background=card_bg, foreground=muted)
+    style.configure(
+        "TButton",
+        padding=(10, 6),
+        relief="flat",
+    )
+    style.configure(
+        "Primary.TButton",
+        background=accent,
+        foreground="#ffffff",
+    )
+    style.map(
+        "Primary.TButton",
+        background=[("active", accent_active), ("pressed", accent_pressed)],
+        foreground=[("disabled", muted)],
+    )
 
 
 def _create_layout(root: tk.Tk) -> tuple[ttk.Frame, ttk.Frame]:
@@ -206,8 +253,8 @@ def _add_automaton_section(
     variables: TkVars,
     callbacks: Callbacks,
     show_export: bool,
-) -> ttk.Combobox:
-    """Build the automaton selection area and return the pattern combobox."""
+) -> tuple[ttk.Combobox, ttk.Label]:
+    """Build the automaton selection area and return pattern widgets."""
 
     mode_frame = ttk.Labelframe(
         parent,
@@ -247,8 +294,7 @@ def _add_automaton_section(
         mode_frame,
         text="",
         wraplength=320,
-        style="TLabel",
-        foreground="#555",
+        style="Muted.TLabel",
         justify=tk.LEFT,
     )
     pattern_help.pack(fill=tk.X, pady=(0, 6))
@@ -288,19 +334,26 @@ def _add_simulation_section(
     frame.pack(fill=tk.X, pady=(0, 10))
 
     toolbar = ttk.Frame(frame)
-    toolbar.pack(fill=tk.X)
+    toolbar.pack(fill=tk.X, pady=(2, 0))
 
-    start_button = tk.Button(
+    start_button = ttk.Button(
         toolbar,
         text="Start",
         command=lambda: None,
-        width=9,
-        bg="#4caf50",
-        fg="white",
-        relief=tk.FLAT,
+        width=10,
+        style="Primary.TButton",
     )
     start_button.pack(side=tk.LEFT, padx=(0, 6))
     Tooltip(start_button, "Start or stop the simulation (Space)")
+
+    back_button = ttk.Button(
+        toolbar,
+        text="Step Back",
+        command=callbacks.step_back,
+        width=9,
+    )
+    back_button.pack(side=tk.LEFT, padx=(0, 6))
+    Tooltip(back_button, "Step backward one generation (Left Arrow)")
 
     step_button = ttk.Button(
         toolbar,
@@ -329,7 +382,12 @@ def _add_simulation_section(
     reset_button.pack(side=tk.LEFT, padx=(6, 0))
     Tooltip(reset_button, "Reset to initial pattern")
 
-    ttk.Label(frame, text="Speed").pack(anchor=tk.W, pady=(8, 2))
+    # Speed slider with modern styling
+    speed_frame = ttk.Frame(frame)
+    speed_frame.pack(fill=tk.X, pady=(8, 0))
+    speed_label = ttk.Label(speed_frame, text="Speed")
+    speed_label.pack(anchor=tk.W)
+    
     speed_scale = tk.Scale(
         frame,
         from_=1,
@@ -338,9 +396,14 @@ def _add_simulation_section(
         variable=variables.speed,
         length=200,
         showvalue=False,
+        bg="#ffffff",
+        fg="#0ea5e9",
+        highlightthickness=0,
+        troughcolor="#e2e8f0",
+        activebackground="#38bdf8",
     )
-    speed_scale.pack(fill=tk.X)
-    Tooltip(speed_scale, "Adjust simulation speed (higher = faster)")
+    speed_scale.pack(fill=tk.X, pady=(2, 0))
+    Tooltip(speed_scale, "Adjust simulation speed (1 = slow, 100 = fast)")
 
     grid_button = ttk.Button(frame, text="Toggle Grid", command=callbacks.toggle_grid)
     grid_button.pack(fill=tk.X, pady=(8, 0))
@@ -407,29 +470,60 @@ def _add_custom_rules_section(
     )
     frame.pack(fill=tk.X, pady=(0, 10))
 
-    row = ttk.Frame(frame)
-    row.pack(fill=tk.X)
-    ttk.Label(row, text="B").pack(side=tk.LEFT)
-    birth_entry = ttk.Entry(row, width=8)
-    birth_entry.pack(side=tk.LEFT, padx=(4, 12))
+    # Birth rule row
+    ttk.Label(frame, text="Birth", style="Muted.TLabel").pack(anchor=tk.W, pady=(0, 2))
+    birth_entry = ttk.Entry(frame, width=12)
+    birth_entry.pack(fill=tk.X, pady=(0, 6))
     Tooltip(
         birth_entry,
-        "Birth rule: digits for neighbor counts that create life"
+        "Birth rule: digits (0-8) for neighbor counts that create life\nExample: 3 (Conway's Game of Life)"
     )
-    ttk.Label(row, text="S").pack(side=tk.LEFT)
-    survival_entry = ttk.Entry(row, width=8)
-    survival_entry.pack(side=tk.LEFT, padx=(4, 0))
+
+    # Survival rule row
+    ttk.Label(frame, text="Survival", style="Muted.TLabel").pack(anchor=tk.W, pady=(0, 2))
+    survival_entry = ttk.Entry(frame, width=12)
+    survival_entry.pack(fill=tk.X, pady=(0, 6))
     Tooltip(
         survival_entry,
-        "Survival rule: digits for neighbor counts that sustain life"
+        "Survival rule: digits (0-8) for neighbor counts that sustain life\nExample: 23 (Conway's Game of Life)"
     )
+
+    # Preset buttons row
+    presets_frame = ttk.Frame(frame)
+    presets_frame.pack(fill=tk.X, pady=(0, 6))
+    
+    ttk.Label(presets_frame, text="Presets:", style="Muted.TLabel").pack(side=tk.LEFT, padx=(0, 4))
+    
+    def _apply_preset(birth: str, survival: str) -> None:
+        birth_entry.delete(0, tk.END)
+        birth_entry.insert(0, birth)
+        survival_entry.delete(0, tk.END)
+        survival_entry.insert(0, survival)
+    
+    preset_buttons = [
+        ("Conway", "3", "23"),
+        ("HighLife", "36", "23"),
+        ("Seeds", "2", ""),
+        ("Life", "3", "0123456789"),
+    ]
+    
+    for preset_name, birth, survival in preset_buttons:
+        tooltip_text = f"Load {preset_name}: B{birth}/S{survival}"
+        btn = ttk.Button(
+            presets_frame,
+            text=preset_name,
+            width=8,
+            command=lambda b=birth, s=survival: _apply_preset(b, s),
+        )
+        btn.pack(side=tk.LEFT, padx=(0, 4))
+        Tooltip(btn, tooltip_text)
 
     apply_button = ttk.Button(
         frame,
-        text="Apply",
+        text="Apply Rules",
         command=callbacks.apply_custom_rules,
     )
-    apply_button.pack(fill=tk.X, pady=(6, 0))
+    apply_button.pack(fill=tk.X)
     Tooltip(apply_button, "Apply the custom birth/survival rules")
 
     return birth_entry, survival_entry, apply_button
@@ -498,42 +592,47 @@ def _add_drawing_section(parent: ttk.Frame, variables: TkVars) -> None:
     )
     frame.pack(fill=tk.X)
 
-    ttk.Label(frame, text="Tool").pack(anchor=tk.W)
-    row = ttk.Frame(frame)
-    row.pack(anchor=tk.W, pady=(2, 6))
+    ttk.Label(frame, text="Tool", style="Muted.TLabel").pack(anchor=tk.W, pady=(0, 4))
+    
+    # Tool options in a compact row
+    tools_frame = ttk.Frame(frame)
+    tools_frame.pack(fill=tk.X, pady=(0, 8))
+    
     toggle_radio = ttk.Radiobutton(
-        row,
+        tools_frame,
         text="Toggle",
         variable=variables.draw_mode,
         value="toggle",
     )
     toggle_radio.pack(side=tk.LEFT)
     Tooltip(toggle_radio, "Click to toggle cells on/off")
+    
     pen_radio = ttk.Radiobutton(
-        row,
+        tools_frame,
         text="Pen",
         variable=variables.draw_mode,
         value="pen",
     )
-    pen_radio.pack(side=tk.LEFT, padx=(8, 0))
+    pen_radio.pack(side=tk.LEFT, padx=(16, 0))
     Tooltip(pen_radio, "Click and drag to draw live cells")
+    
     eraser_radio = ttk.Radiobutton(
-        row,
+        tools_frame,
         text="Eraser",
         variable=variables.draw_mode,
         value="eraser",
     )
-    eraser_radio.pack(side=tk.LEFT, padx=(8, 0))
+    eraser_radio.pack(side=tk.LEFT, padx=(16, 0))
     Tooltip(eraser_radio, "Click and drag to erase cells")
 
-    ttk.Label(frame, text="Symmetry").pack(anchor=tk.W)
+    ttk.Label(frame, text="Symmetry", style="Muted.TLabel").pack(anchor=tk.W, pady=(0, 2))
     symmetry_combo = ttk.Combobox(
         frame,
         textvariable=variables.symmetry,
         state="readonly",
         values=["None", "Horizontal", "Vertical", "Both", "Radial"],
     )
-    symmetry_combo.pack(fill=tk.X, pady=(2, 0))
+    symmetry_combo.pack(fill=tk.X)
     Tooltip(symmetry_combo, "Mirror drawing actions across axes")
 
 

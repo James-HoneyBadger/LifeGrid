@@ -12,6 +12,7 @@ import numpy as np
 
 from automata import LifeLikeAutomaton
 from version import __version__ as LIFEGRID_VERSION
+from patterns import get_pattern_description
 
 from .config import (
     DEFAULT_CUSTOM_BIRTH,
@@ -62,6 +63,7 @@ class AutomatonApp:
         callbacks = Callbacks(
             switch_mode=self.switch_mode,
             step_once=self.step_once,
+            step_back=self.step_back,
             clear_grid=self.clear_grid,
             reset_simulation=self.reset_simulation,
             load_pattern=self.load_pattern_handler,
@@ -188,10 +190,34 @@ class AutomatonApp:
         self.widgets.birth_entry.insert(0, birth_values)
         self.widgets.survival_entry.insert(0, survival_values)
 
+    def _snapshot_grid(self) -> None:
+        """Store a copy of the current grid for backward stepping."""
+
+        automaton = self.state.current_automaton
+        if automaton and hasattr(automaton, "grid"):
+            self.state.grid_history.append(np.copy(automaton.grid))  # type: ignore[attr-defined]
+
+    def _reset_history_with_current_grid(self) -> None:
+        """Clear history and seed it with the current grid."""
+
+        self.state.grid_history.clear()
+        self._snapshot_grid()
+
+    def _update_pattern_description(self) -> None:
+        """Show a short description for the selected pattern if available."""
+
+        mode = self.tk_vars.mode.get()
+        pattern = self.tk_vars.pattern.get()
+        description = get_pattern_description(mode, pattern)
+        if not description:
+            description = f"{pattern} pattern preset"
+        self.widgets.pattern_help.config(text=description)
+
     def _configure_bindings(self) -> None:
         self.root.bind("<space>", lambda _event: self.toggle_simulation())
         self.root.bind("<Key-s>", lambda _event: self.step_once())
         self.root.bind("<Key-S>", lambda _event: self.step_once())
+        self.root.bind("<Key-Left>", lambda _event: self.step_back())
         self.root.bind("<Key-c>", lambda _event: self.clear_grid())
         self.root.bind("<Key-C>", lambda _event: self.clear_grid())
         self.root.bind("<Key-g>", lambda _event: self.toggle_grid())
@@ -221,6 +247,7 @@ class AutomatonApp:
                 self.custom_birth,
                 self.custom_survival,
             )
+            self.state.current_automaton = automaton
         else:
             factory = MODE_FACTORIES.get(mode_name)
             if factory is None:
@@ -246,9 +273,11 @@ class AutomatonApp:
             self._sync_custom_entries()
 
         self.state.reset_generation()
+        self._reset_history_with_current_grid()
         self._update_generation_label()
         self._update_widgets_enabled_state()
         self._update_display()
+        self._update_pattern_description()
 
     def _sync_custom_entries(self) -> None:
         """Mirror the active custom rule sets into the entry widgets."""
@@ -272,8 +301,10 @@ class AutomatonApp:
         elif hasattr(automaton, "load_pattern"):
             automaton.load_pattern(pattern_name)  # type: ignore[attr-defined]
         self.state.reset_generation()
+        self._reset_history_with_current_grid()
         self._update_generation_label()
         self._update_display()
+        self._update_pattern_description()
 
     def toggle_simulation(self) -> None:
         """Start or pause the simulation loop."""
@@ -281,19 +312,19 @@ class AutomatonApp:
         self.state.running = not self.state.running
         if self.state.running:
             self.widgets.start_button.config(  # type: ignore[attr-defined]
-                text="Stop", bg="#ff9800"
+                text="Stop"
             )
             self.root.after(0, self._run_simulation_loop)
         else:
             self.widgets.start_button.config(  # type: ignore[attr-defined]
-                text="Start", bg="#4caf50"
+                text="Start"
             )
 
     def stop_simulation(self) -> None:
         """Force the simulation into a stopped state."""
 
         self.state.running = False
-        self.widgets.start_button.config(text="Start", bg="#4caf50")  # type: ignore[attr-defined]
+        self.widgets.start_button.config(text="Start")  # type: ignore[attr-defined]
 
     def _run_simulation_loop(self) -> None:
         """Advance the automaton while the simulation is marked running."""
@@ -310,8 +341,26 @@ class AutomatonApp:
         automaton = self.state.current_automaton
         if not automaton:
             return
+        if not self.state.grid_history:
+            self._snapshot_grid()
         automaton.step()
         self.state.generation += 1
+        self._snapshot_grid()
+        self._update_generation_label()
+        self._update_display()
+
+    def step_back(self) -> None:
+        """Revert to the previous generation if history exists."""
+
+        automaton = self.state.current_automaton
+        history = self.state.grid_history
+        if not (automaton and len(history) > 1 and hasattr(automaton, "grid")):
+            return
+        # Discard current snapshot and restore the previous one
+        history.pop()
+        previous_grid = history[-1]
+        automaton.grid = np.copy(previous_grid)  # type: ignore[attr-defined]
+        self.state.rebuild_stats_from_history()
         self._update_generation_label()
         self._update_display()
 
@@ -328,6 +377,7 @@ class AutomatonApp:
         self.stop_simulation()
         automaton.reset()
         self.state.reset_generation()
+        self._reset_history_with_current_grid()
         self._update_generation_label()
         self._update_display()
 
@@ -340,6 +390,7 @@ class AutomatonApp:
         self.stop_simulation()
         automaton.reset()
         self.state.reset_generation()
+        self._reset_history_with_current_grid()
         self._update_generation_label()
         self._update_display()
 
@@ -392,12 +443,20 @@ class AutomatonApp:
         automaton.set_rules(self.custom_birth, self.custom_survival)
         automaton.reset()
         self.state.reset_generation()
+        self._reset_history_with_current_grid()
         self._update_generation_label()
         self._update_display()
 
+        # Create user-friendly rule description
+        birth_str = "".join(str(n) for n in sorted(birth_set)) if birth_set else "∅"
+        survival_str = "".join(str(n) for n in sorted(survival_set)) if survival_set else "∅"
+        rule_notation = f"B{birth_str}/S{survival_str}"
+
         messagebox.showinfo(
             "Rules Applied",
-            f"Birth: {sorted(birth_set)}\nSurvival: {sorted(survival_set)}",
+            f"Custom rule: {rule_notation}\n\n"
+            f"Birth: {sorted(birth_set) if birth_set else 'Never'}\n"
+            f"Survival: {sorted(survival_set) if survival_set else 'Never'}",
         )
 
     # ------------------------------------------------------------------

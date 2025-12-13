@@ -40,12 +40,63 @@ PATTERN_DATA: Dict[str, Dict[str, Tuple[List[Tuple[int, int]], str]]] = {
             ],
             "Pulsar - period 3 oscillator"
         ),
+        "Classic Mix": (
+            [],
+            "Starter mix of glider, blinker, toad, and LWSS variants",
+        ),
+        "Spaceships": (
+            [],
+            "Lightweight/medium/heavyweight spaceships placed near center",
+        ),
+        "Oscillators": (
+            [],
+            "Set of small-period oscillators (p2/p3)",
+        ),
+        "Puffers": (
+            [],
+            "Sample puffer configurations that leave trails",
+        ),
+        "R-Pentomino": (
+            [],
+            "Famous methuselah that evolves for ~1100 generations",
+        ),
+        "Acorn": (
+            [],
+            "Small methuselah that expands widely",
+        ),
     },
     "High Life": {
         "Replicator": (
             [(1, 0), (0, 1), (1, 1), (2, 1), (0, 2), (2, 2), (1, 3)],
             "Replicator - grows exponentially"
         ),
+        "Random Soup": (
+            [],
+            "Random 15% fill to explore emergent structures",
+        ),
+    },
+    "Immigration Game": {
+        "Color Mix": ([], "Seeds multiple colors for domain competition"),
+        "Random Soup": ([], "Random 15% fill with two-state colors"),
+    },
+    "Rainbow Game": {
+        "Rainbow Mix": ([], "Multi-color seed mix for rainbow rule"),
+        "Random Soup": ([], "Random 15% fill across rainbow states"),
+    },
+    "Langton's Ant": {
+        "Empty": ([], "Blank grid to let the ant roam"),
+    },
+    "Wireworld": {
+        "Random Soup": ([], "Random conductors for Wireworld experiments"),
+    },
+    "Brian's Brain": {
+        "Random Soup": ([], "Random firing/ready cells"),
+    },
+    "Generations": {
+        "Random Soup": ([], "Randomized seeds for multi-state fading"),
+    },
+    "Custom Rules": {
+        "Random Soup": ([], "Random fill using the active custom rule"),
     },
 }
 
