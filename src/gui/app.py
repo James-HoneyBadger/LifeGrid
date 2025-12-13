@@ -173,9 +173,22 @@ class AutomatonApp:
 
     def _create_variables(self) -> TkVars:
         settings = self.settings
+
+        # Ensure we always start from a valid, non-custom default on cold start.
+        default_mode = "Conway's Game of Life"
+        default_pattern = "Classic Mix"
+
+        requested_mode = settings.get("mode", default_mode)
+        valid_modes = set(MODE_FACTORIES.keys()) | {"Custom Rules"}
+        mode = requested_mode if requested_mode in valid_modes else default_mode
+
+        available_patterns = MODE_PATTERNS.get(mode, ["Empty"])
+        requested_pattern = settings.get("pattern", default_pattern)
+        pattern = requested_pattern if requested_pattern in available_patterns else available_patterns[0]
+
         return TkVars(
-            mode=tk.StringVar(value=settings.get("mode", "Conway's Game of Life")),
-            pattern=tk.StringVar(value=settings.get("pattern", "Classic Mix")),
+            mode=tk.StringVar(value=mode),
+            pattern=tk.StringVar(value=pattern),
             speed=tk.IntVar(value=settings.get("speed", DEFAULT_SPEED)),
             grid_size=tk.StringVar(value=settings.get("grid_size", "100x100")),
             custom_width=tk.IntVar(value=settings.get("custom_width", 100)),
