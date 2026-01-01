@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lifegrid"
+version = "2.0.0"
+description = "An interactive Tkinter-based workbench for experimenting with cellular automata"
+readme = "README.md"
+requires-python = ">=3.13"
+license = {text = "MIT"}
+authors = [
+    {name = "James-HoneyBadger", email = "your-email@example.com"}
+]
+keywords = [
+    "cellular-automata",
+    "conway-game-of-life",
+    "tkinter",
+    "simulation",
+    "interactive"
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+dependencies = [
+    "numpy>=1.24.0",
+    "scipy>=1.11.0",
+    "Pillow>=10.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "mypy>=1.0.0",
+    "pylint>=2.17.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/James-HoneyBadger/LifeGrid"
+Repository = "https://github.com/James-HoneyBadger/LifeGrid.git"
+Documentation = "https://github.com/James-HoneyBadger/LifeGrid/tree/master/docs"
+Issues = "https://github.com/James-HoneyBadger/LifeGrid/issues"
+
+[project.scripts]
+lifegrid = "lifegrid.main:main"
+
+[tool.setuptools]
+packages = ["lifegrid", "lifegrid.automata", "lifegrid.gui"]
+
+[tool.setuptools.package-dir]
+lifegrid = "src"
