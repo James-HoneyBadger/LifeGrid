@@ -1,0 +1,2 @@
+total_steps,duration,avg_density,min_density,max_density,avg_births,avg_deaths,avg_stability,final_alive,final_dead
+50,0.004540681838989258,0.02856,0.024,0.0344,26.04,25.84,0.9792479999999998,70,2430

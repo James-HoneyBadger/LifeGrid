@@ -35,4 +35,5 @@ fi
 "$VENV_DIR/bin/python" -m pip install --upgrade pip >/dev/null
 "$VENV_DIR/bin/python" -m pip install -r "$REQUIREMENTS_FILE"
 
-exec "$VENV_DIR/bin/python" "$ROOT_DIR/src/main.py"
+export PYTHONPATH="$ROOT_DIR/src"
+exec "$VENV_DIR/bin/python" -m src.main
