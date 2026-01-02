@@ -125,7 +125,9 @@ def load_pattern(session_id: str, req: PatternRequest) -> Dict[str, str]:
         grid = session.simulator.get_grid()
         grid[:] = 0
         session.simulator.automaton.grid = grid
-    if req.pattern_name and hasattr(session.simulator.automaton, "load_pattern"):
+    if req.pattern_name and hasattr(
+            session.simulator.automaton,
+            "load_pattern"):
         session.simulator.automaton.load_pattern(req.pattern_name)
     session.last_grid = session.simulator.get_grid()
     return {"status": "ok"}

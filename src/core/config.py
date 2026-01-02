@@ -9,7 +9,7 @@ from typing import Optional
 @dataclass
 class SimulatorConfig:
     """Configuration settings for the cellular automaton simulator.
-    
+
     This separates configuration management from the GUI layer,
     making it easier to test and use in different contexts.
     """
@@ -19,12 +19,12 @@ class SimulatorConfig:
     speed: int = 50
     cell_size: int = 8
     show_grid: bool = True
-    
+
     # Automaton settings
     automaton_mode: str = "Conway's Game of Life"
     birth_rule: Optional[set] = None
     survival_rule: Optional[set] = None
-    
+
     # Feature flags
     enable_metrics: bool = True
     enable_cycle_detection: bool = True
@@ -33,7 +33,8 @@ class SimulatorConfig:
     @classmethod
     def from_dict(cls, data: dict) -> SimulatorConfig:
         """Create config from dictionary."""
-        return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
+        return cls(**{k: v for k, v in data.items()
+                   if k in cls.__dataclass_fields__})
 
     def to_dict(self) -> dict:
         """Convert config to dictionary."""

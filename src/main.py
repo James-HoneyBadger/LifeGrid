@@ -39,7 +39,8 @@ def check_dependencies() -> None:
 def main() -> None:
     """Start the Tkinter event loop."""
     check_dependencies()
-    from lifegrid.gui.app import launch  # pylint: disable=import-outside-toplevel
+    # pylint: disable=import-outside-toplevel
+    from lifegrid.gui.app import launch
     launch()
 
 

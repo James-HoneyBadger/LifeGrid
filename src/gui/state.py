@@ -155,9 +155,10 @@ class SimulationState:
         h, w = grid.shape
         for i in range(h - 2):
             for j in range(w - 2):
-                pattern = tuple(grid[i:i+3, j:j+3].flatten())
+                pattern = tuple(grid[i:i + 3, j:j + 3].flatten())
                 patterns.add(pattern)
         return len(patterns)
+
     def add_metric(
         self,
         generation: int,
@@ -177,14 +178,14 @@ class SimulationState:
         """Export metrics as CSV string."""
         if not self.metrics_log:
             return ""
-        
+
         output = StringIO()
         writer = csv.DictWriter(
             output,
             fieldnames=["generation", "population", "peak", "density"]
         )
         writer.writeheader()
-        
+
         for metric in self.metrics_log:
             writer.writerow({
                 "generation": metric.get("generation", ""),
@@ -192,7 +193,7 @@ class SimulationState:
                 "peak": metric.get("peak", ""),
                 "density": metric.get("density", ""),
             })
-        
+
         return output.getvalue()
 
     def save_state(self, filepath: str) -> None:
@@ -210,7 +211,7 @@ class SimulationState:
         """Load state from a JSON file."""
         with open(filepath, 'r') as f:
             state_data = json.load(f)
-        
+
         self.cell_size = state_data.get("cell_size", DEFAULT_CELL_SIZE)
         self.speed = state_data.get("speed", DEFAULT_SPEED)
         self.generation = state_data.get("generation", 0)

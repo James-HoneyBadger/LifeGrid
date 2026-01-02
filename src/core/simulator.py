@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Callable, Any
+from typing import Optional, Callable
 
 import numpy as np
 
@@ -25,14 +25,14 @@ from .undo_manager import UndoManager
 
 class Simulator:
     """High-level simulation engine independent of GUI.
-    
+
     This provides a clean API for running cellular automaton simulations,
     suitable for CLI, notebooks, or other integrations beyond the GUI.
     """
 
     def __init__(self, config: Optional[SimulatorConfig] = None) -> None:
         """Initialize simulator with configuration.
-        
+
         Args:
             config: SimulatorConfig instance or None for defaults
         """
@@ -42,7 +42,7 @@ class Simulator:
         self.metrics_log: list[dict] = []
         self.undo_manager = UndoManager()
         self._on_step_callback: Optional[Callable[[dict], None]] = None
-        
+
         self._automaton_factories = {
             "Conway's Game of Life": ConwayGameOfLife,
             "HighLife": HighLife,
@@ -54,19 +54,22 @@ class Simulator:
             "Rainbow": RainbowGame,
         }
 
-    def initialize(self, mode: Optional[str] = None, pattern: Optional[str] = None) -> None:
+    def initialize(
+            self,
+            mode: Optional[str] = None,
+            pattern: Optional[str] = None) -> None:
         """Initialize the automaton.
-        
+
         Args:
             mode: Automaton mode name, or use config default
             pattern: Pattern preset to load
         """
         mode = mode or self.config.automaton_mode
-        
+
         factory = self._automaton_factories.get(mode)
         if not factory:
             raise ValueError(f"Unknown automaton mode: {mode}")
-        
+
         if mode in ["Wireworld", "Brian's Brain", "Generations"]:
             self.automaton = factory(self.config.width, self.config.height)
         elif mode == "Langton's Ant":
@@ -82,9 +85,9 @@ class Simulator:
             )
         else:
             self.automaton = factory(self.config.width, self.config.height)
-        
+
         self.reset_metrics()
-        
+
         if pattern and hasattr(self.automaton, 'load_pattern'):
             self.automaton.load_pattern(pattern)
 
@@ -102,46 +105,47 @@ class Simulator:
 
     def step(self, num_steps: int = 1) -> list[dict]:
         """Advance simulation by N steps.
-        
+
         Args:
             num_steps: Number of generations to advance
-            
+
         Returns:
             List of metric dicts for each step
         """
         if not self.automaton:
-            raise RuntimeError("Automaton not initialized. Call initialize() first.")
-        
+            raise RuntimeError(
+                "Automaton not initialized. Call initialize() first.")
+
         step_metrics = []
-        
+
         for _ in range(num_steps):
             # Save state for undo before stepping
             self.undo_manager.push_state(
                 f"Generation {self.generation}",
                 np.copy(self.automaton.get_grid())
             )
-            
+
             self.automaton.step()
             self.generation += 1
-            
+
             grid = self.automaton.get_grid()
             metrics = {
                 "generation": self.generation,
                 "population": int(np.count_nonzero(grid)),
                 "density": float(np.count_nonzero(grid) / grid.size),
             }
-            
+
             self.metrics_log.append(metrics)
             step_metrics.append(metrics)
-            
+
             if self._on_step_callback:
                 self._on_step_callback(metrics)
-        
+
         return step_metrics
 
     def set_cell(self, x: int, y: int, value: int = 1) -> None:
         """Set a cell value directly.
-        
+
         Args:
             x: X coordinate
             y: Y coordinate
@@ -149,14 +153,14 @@ class Simulator:
         """
         if not self.automaton:
             raise RuntimeError("Automaton not initialized.")
-        
+
         grid = self.automaton.get_grid()
         if 0 <= x < grid.shape[1] and 0 <= y < grid.shape[0]:
             grid[y, x] = value
 
     def get_grid(self) -> np.ndarray:
         """Get current grid state.
-        
+
         Returns:
             Current grid as numpy array
         """
@@ -166,7 +170,7 @@ class Simulator:
 
     def undo(self) -> bool:
         """Undo the last step.
-        
+
         Returns:
             True if undo was successful
         """
@@ -181,7 +185,7 @@ class Simulator:
 
     def redo(self) -> bool:
         """Redo the last undone step.
-        
+
         Returns:
             True if redo was successful
         """
@@ -194,9 +198,10 @@ class Simulator:
             return True
         return False
 
-    def set_on_step_callback(self, callback: Optional[Callable[[dict], None]]) -> None:
+    def set_on_step_callback(
+            self, callback: Optional[Callable[[dict], None]]) -> None:
         """Set callback to be called on each step.
-        
+
         Args:
             callback: Function that receives metric dict
         """
@@ -204,21 +209,23 @@ class Simulator:
 
     def get_metrics_summary(self) -> dict:
         """Get summary of metrics.
-        
+
         Returns:
             Dict with simulation statistics
         """
         if not self.metrics_log:
             return {"generations": 0}
-        
+
         populations = [m["population"] for m in self.metrics_log]
         densities = [m["density"] for m in self.metrics_log]
-        
+
         return {
             "generations": len(self.metrics_log),
             "current_population": populations[-1] if populations else 0,
             "max_population": max(populations) if populations else 0,
-            "avg_density": sum(densities) / len(densities) if densities else 0.0,
+            "avg_density": (
+                sum(densities) / len(densities) if densities else 0.0
+            ),
             "undo_available": self.undo_manager.can_undo(),
             "redo_available": self.undo_manager.can_redo(),
         }

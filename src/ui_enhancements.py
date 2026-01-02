@@ -33,7 +33,7 @@ class ThemeManager:
 
     def __init__(self, initial_theme: str = "light") -> None:
         """Initialize theme manager.
-        
+
         Args:
             initial_theme: Initial theme name
         """
@@ -42,16 +42,16 @@ class ThemeManager:
 
     def set_theme(self, theme_name: str) -> bool:
         """Set the current theme.
-        
+
         Args:
             theme_name: Theme name
-            
+
         Returns:
             True if theme was changed successfully
         """
         if theme_name not in self.THEMES:
             return False
-        
+
         self.current_theme = theme_name
         if self._on_theme_changed:
             self._on_theme_changed(theme_name)
@@ -59,7 +59,7 @@ class ThemeManager:
 
     def get_theme(self) -> str:
         """Get current theme name.
-        
+
         Returns:
             Current theme name
         """
@@ -67,7 +67,7 @@ class ThemeManager:
 
     def get_colors(self) -> Dict[str, str]:
         """Get color dictionary for current theme.
-        
+
         Returns:
             Dict of color names to hex values
         """
@@ -75,10 +75,10 @@ class ThemeManager:
 
     def get_color(self, color_name: str) -> Optional[str]:
         """Get a specific color.
-        
+
         Args:
             color_name: Color identifier
-            
+
         Returns:
             Hex color value or None
         """
@@ -87,15 +87,16 @@ class ThemeManager:
 
     def available_themes(self) -> list[str]:
         """Get list of available themes.
-        
+
         Returns:
             List of theme names
         """
         return list(self.THEMES.keys())
 
-    def set_on_theme_changed(self, callback: Optional[Callable[[str], None]]) -> None:
+    def set_on_theme_changed(
+            self, callback: Optional[Callable[[str], None]]) -> None:
         """Set callback for theme changes.
-        
+
         Args:
             callback: Function called with new theme name
         """
@@ -127,10 +128,10 @@ class KeyboardShortcuts:
 
     def get_shortcut(self, action: str) -> Optional[str]:
         """Get shortcut for an action.
-        
+
         Args:
             action: Action name
-            
+
         Returns:
             Keyboard shortcut or None
         """
@@ -138,11 +139,11 @@ class KeyboardShortcuts:
 
     def set_shortcut(self, action: str, shortcut: str) -> bool:
         """Set a keyboard shortcut.
-        
+
         Args:
             action: Action name
             shortcut: New shortcut key combination
-            
+
         Returns:
             True if set successfully
         """
@@ -157,7 +158,7 @@ class KeyboardShortcuts:
 
     def get_all_shortcuts(self) -> Dict[str, str]:
         """Get all shortcuts.
-        
+
         Returns:
             Dict of action->shortcut mappings
         """
@@ -183,10 +184,10 @@ class Tooltips:
     @classmethod
     def get_tooltip(cls, element: str) -> Optional[str]:
         """Get tooltip for UI element.
-        
+
         Args:
             element: Element identifier
-            
+
         Returns:
             Tooltip text or None
         """
@@ -195,7 +196,7 @@ class Tooltips:
     @classmethod
     def get_all_tooltips(cls) -> Dict[str, str]:
         """Get all tooltips.
-        
+
         Returns:
             Dict of element->tooltip mappings
         """
@@ -204,7 +205,7 @@ class Tooltips:
     @classmethod
     def add_custom_tooltip(cls, element: str, text: str) -> None:
         """Add custom tooltip.
-        
+
         Args:
             element: Element identifier
             text: Tooltip text
@@ -225,10 +226,10 @@ class SpeedPresets:
     @classmethod
     def get_preset(cls, name: str) -> Optional[int]:
         """Get speed value for preset.
-        
+
         Args:
             name: Preset name
-            
+
         Returns:
             Speed value or None
         """
@@ -237,7 +238,7 @@ class SpeedPresets:
     @classmethod
     def get_all_presets(cls) -> Dict[str, int]:
         """Get all presets.
-        
+
         Returns:
             Dict of preset name->speed value
         """
@@ -246,7 +247,7 @@ class SpeedPresets:
     @classmethod
     def add_preset(cls, name: str, speed: int) -> None:
         """Add custom speed preset.
-        
+
         Args:
             name: Preset name
             speed: Speed value (1-255)
