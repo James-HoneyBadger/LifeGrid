@@ -4,7 +4,8 @@ import numpy as np
 
 
 def place_pattern_centered(
-    target_grid: np.ndarray, pattern: np.ndarray
+    target_grid: np.ndarray,
+    pattern: np.ndarray,
 ) -> None:
     """Place a pattern on the target grid, centered.
 

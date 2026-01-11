@@ -86,7 +86,9 @@ class AppConfig:
                     data = json.load(f)
                 valid_keys = {f.name for f in fields(cls)}
                 return cls(
-                    **{k: v for k, v in data.items() if k in valid_keys}
+                    **{
+                        k: v for k, v in data.items() if k in valid_keys
+                    }
                 )
             except (json.JSONDecodeError, KeyError):
                 return cls()

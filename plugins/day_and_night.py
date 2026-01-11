@@ -1,15 +1,22 @@
+"""Day and Night rule plugin."""
+
 from automata import LifeLikeAutomaton
 from plugin_system import AutomatonPlugin
 
+
 class DayAndNightPlugin(AutomatonPlugin):
+    """Plugin for the Day & Night cellular automaton rule."""
+
     @property
     def name(self) -> str:
         return "Day & Night"
 
     @property
     def description(self) -> str:
-        return "B3678/S34678 - A rule with symmetric behavior for ON/OFF cells."
-    
+        return (
+            "B3678/S34678 - A rule with symmetric behavior for ON/OFF cells."
+        )
+
     @property
     def version(self) -> str:
         return "1.0"

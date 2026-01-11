@@ -82,7 +82,10 @@ class HeatmapGenerator:
         elif self.mode == "births":
             # Track births (cells that were dead and are now alive)
             if self._previous_grid is not None:
-                births = (self._previous_grid == 0) & (grid != 0)
+                # Use separate logic to avoid Pylint confusion on precedence
+                was_dead = self._previous_grid == 0
+                is_alive = grid != 0
+                births = was_dead & is_alive
                 self.data[births] += 1
             self._previous_grid = grid.copy()
 

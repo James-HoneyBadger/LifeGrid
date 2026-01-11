@@ -15,11 +15,6 @@ class HexagonalGameOfLife(CellularAutomaton):
       - Survival on 3 or 4 neighbors.
     """
 
-    def __init__(self, width: int, height: int) -> None:
-        super().__init__(width, height)
-        # We don't perform extensive kernel init here because
-        # we do custom neighbor summing in step()
-
     def reset(self) -> None:
         self.grid = np.zeros((self.height, self.width), dtype=int)
 

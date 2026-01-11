@@ -205,7 +205,11 @@ class BenchmarkSuite:
         self.add_benchmark(benchmark)
 
     def add_simulator_benchmark(
-        self, name: str, simulator: Any, steps: int = 100, iterations: int = 10
+        self,
+        name: str,
+        simulator: Any,
+        steps: int = 100,
+        iterations: int = 10,
     ) -> None:
         """Add a benchmark for a simulator.
 

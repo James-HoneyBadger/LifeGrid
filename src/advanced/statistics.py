@@ -239,7 +239,9 @@ class StatisticsExporter:
             ]
 
         # Write CSV
-        with open(filepath, "w", newline="", encoding="utf-8") as csvfile:
+        with open(
+            filepath, "w", newline="", encoding="utf-8"
+        ) as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(rows)

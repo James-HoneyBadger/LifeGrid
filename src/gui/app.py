@@ -161,7 +161,7 @@ class AutomatonApp:
                 stamp = Stamp(name, points, desc)
                 stamps_menu.add_command(
                     label=name,
-                    command=lambda s=stamp: self.tool_manager.set_stamp(s),
+                    command=lambda s=stamp: self.tool_manager.set_stamp(s),  # type: ignore[misc]
                 )
                 count += 1
                 if count >= 15:
@@ -818,24 +818,24 @@ class AutomatonApp:
     def _push_undo(self, action_name: str = "Edit") -> None:
         """Push the current state to the undo stack."""
         automaton = self.state.current_automaton
-        if getattr(automaton, "grid", None) is None:
+        if getattr(automaton, "grid", None) is None or automaton is None:
             return
 
         # Snapshot current grid and generation
         snapshot = (
-            np.copy(automaton.grid),  # type: ignore[attr-defined]
+            np.copy(automaton.grid),  # type: ignore
             self.state.generation,
         )
         self.state.undo_manager.push_state(action_name, snapshot)
 
-    def undo_action(self, _event: tk.Event = None) -> None:
+    def undo_action(self, _event: tk.Event | None = None) -> None:
         """Undo the last action."""
         automaton = self.state.current_automaton
-        if getattr(automaton, "grid", None) is None:
+        if getattr(automaton, "grid", None) is None or automaton is None:
             return
 
         current_snapshot = (
-            automaton.grid,  # type: ignore[attr-defined]
+            automaton.grid,  # type: ignore
             self.state.generation,
         )
 
@@ -845,14 +845,14 @@ class AutomatonApp:
             self._restore_state(grid, generation)
             self._update_display()
 
-    def redo_action(self, _event: tk.Event = None) -> None:
+    def redo_action(self, _event: tk.Event | None = None) -> None:
         """Redo the last undone action."""
         automaton = self.state.current_automaton
-        if getattr(automaton, "grid", None) is None:
+        if getattr(automaton, "grid", None) is None or automaton is None:
             return
 
         current_snapshot = (
-            automaton.grid,  # type: ignore[attr-defined]
+            automaton.grid,  # type: ignore
             self.state.generation,
         )
 
@@ -866,14 +866,14 @@ class AutomatonApp:
         """Restore internal state from a snapshot."""
         automaton = self.state.current_automaton
         if automaton:
-            automaton.grid = np.copy(grid)  # type: ignore[attr-defined]
+            automaton.grid = np.copy(grid)  # type: ignore
 
         self.state.generation = generation
         self.state.rebuild_stats_from_history()
         self._update_generation_label()
         self._update_display()
 
-    def copy_selection(self, _event: tk.Event = None) -> None:
+    def copy_selection(self, _event: tk.Event | None = None) -> None:
         """Copy the selected area to the clipboard."""
         rect = self.tool_manager.get_selection_rect()
         automaton = self.state.current_automaton
@@ -896,7 +896,7 @@ class AutomatonApp:
         # Visual feedback via clearing selection is optional,
         # but let's keep the selection visible to confirm what was copied.
 
-    def cut_selection(self, _event: tk.Event = None) -> None:
+    def cut_selection(self, _event: tk.Event | None = None) -> None:
         """Cut the selected area to the clipboard."""
         rect = self.tool_manager.get_selection_rect()
         automaton = self.state.current_automaton
@@ -912,7 +912,7 @@ class AutomatonApp:
         self.tool_manager.clear_selection()
         self._update_display()
 
-    def paste_selection(self, _event: tk.Event = None) -> None:
+    def paste_selection(self, _event: tk.Event | None = None) -> None:
         """Enter stamp mode with the clipboard content."""
         stamp = self.tool_manager.get_clipboard()
         if stamp:
@@ -1341,8 +1341,8 @@ class AutomatonApp:
                 outline="#facc15",  # Yellow-400
                 width=2,
                 dash=(4, 2),
-                tag="selection_overlay",
-            )
+                tags="selection_overlay",
+            )  # type: ignore[call-overload]
 
         stats = self.state.update_population_stats(grid)
         self.widgets.population_label.config(  # type: ignore[attr-defined]

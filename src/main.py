@@ -30,7 +30,8 @@ def check_dependencies() -> None:
         print("\nPlease install them using:")
         print("  pip install -r requirements.txt")
         print(
-            "\nFor tkinter, ensure you have Python with Tk support installed."
+            "\nFor tkinter, ensure you have Python with Tk support "
+            "installed."
         )
         sys.exit(1)
 

@@ -18,7 +18,9 @@ def load_pattern_data() -> AllPatterns:
     """Load pattern data from JSON file."""
     try:
         json_path = os.path.join(
-            os.path.dirname(__file__), "data", "patterns.json"
+            os.path.dirname(__file__),
+            "data",
+            "patterns.json",
         )
         with open(json_path, "r", encoding="utf-8") as f:
             data = json.load(f)

@@ -33,7 +33,9 @@ class UndoManager:
             state: State object (typically a grid)
         """
         # Copy grid if it's a numpy array
-        state_copy = np.copy(state) if isinstance(state, np.ndarray) else state
+        state_copy = (
+            np.copy(state) if isinstance(state, np.ndarray) else state
+        )
         self.undo_stack.append((action_name, state_copy))
         self.redo_stack.clear()
 

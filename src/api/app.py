@@ -135,7 +135,8 @@ def load_pattern(session_id: str, req: PatternRequest) -> Dict[str, str]:
     session = _get_session(session_id)
     if session.simulator.automaton is None:
         raise HTTPException(
-            status_code=500, detail="Simulator not initialized"
+            status_code=500,
+            detail="Simulator not initialized",
         )
 
     if req.rle:
@@ -153,7 +154,8 @@ def load_pattern(session_id: str, req: PatternRequest) -> Dict[str, str]:
 
         except Exception as e:
             raise HTTPException(
-                status_code=400, detail=f"Failed to parse RLE: {str(e)}"
+                status_code=400,
+                detail=f"Failed to parse RLE: {str(e)}",
             ) from e
 
     if req.pattern_name and hasattr(
