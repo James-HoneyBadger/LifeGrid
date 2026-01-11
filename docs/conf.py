@@ -11,9 +11,9 @@ sys.path.insert(0, os.path.abspath('../src'))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = 'LifeGrid'
-copyright = '2026, James-HoneyBadger'
-author = 'James-HoneyBadger'
-release = '2.0.0'
+copyright = '2026, Honey Badger Universe'
+author = 'Honey Badger Universe'
+release = '3.0.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

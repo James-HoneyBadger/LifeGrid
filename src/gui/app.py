@@ -248,6 +248,7 @@ class AutomatonApp:
             message = (
                 f"LifeGrid v{LIFEGRID_VERSION}\n\n"
                 "Interactive cellular automata workbench.\n"
+                "Copyright (c) 2026 Honey Badger Universe\n\n"
                 "Repo: https://github.com/James-HoneyBadger/LifeGrid\n"
             )
             messagebox.showinfo("About LifeGrid", message)

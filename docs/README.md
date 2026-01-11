@@ -56,7 +56,7 @@ LifeGrid is an interactive, extensible cellular automaton simulator built with P
 
 ## Version Information
 
-- **Current Version**: 2.0.0
+- **Current Version**: 3.0.0
 - **Python Requirement**: 3.11+
 - **License**: MIT
 
