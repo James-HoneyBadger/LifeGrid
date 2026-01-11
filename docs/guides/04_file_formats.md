@@ -10,7 +10,7 @@ LifeGrid uses JSON for pattern persistence.
 
 ```json
 {
-  "version": "2.0",
+  "version": "3.0",
   "metadata": {
     "name": "Glider",
     "author": "John Conway",
@@ -38,7 +38,7 @@ LifeGrid uses JSON for pattern persistence.
 ```
 
 **Fields**:
-- `version`: LifeGrid version (usually "2.0")
+- `version`: LifeGrid version (usually "3.0")
 - `metadata`: Name, author, tags for organization
 - `config`: Grid dimensions and display settings
 - `grid`: Cell coordinates in [x, y] format

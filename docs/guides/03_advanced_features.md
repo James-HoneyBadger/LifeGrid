@@ -143,7 +143,7 @@ Patterns are stored as JSON with metadata:
 
 ```json
 {
-  "version": "2.0",
+  "version": "3.0",
   "mode": "conway",
   "width": 100,
   "height": 100,
