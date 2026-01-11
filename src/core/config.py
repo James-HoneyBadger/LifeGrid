@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from typing import Optional
 
 
@@ -13,6 +13,8 @@ class SimulatorConfig:
     This separates configuration management from the GUI layer,
     making it easier to test and use in different contexts.
     """
+
+    # pylint: disable=too-many-instance-attributes
 
     width: int = 100
     height: int = 100
@@ -33,8 +35,8 @@ class SimulatorConfig:
     @classmethod
     def from_dict(cls, data: dict) -> SimulatorConfig:
         """Create config from dictionary."""
-        return cls(**{k: v for k, v in data.items()
-                   if k in cls.__dataclass_fields__})
+        valid_keys = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in data.items() if k in valid_keys})
 
     def to_dict(self) -> dict:
         """Convert config to dictionary."""

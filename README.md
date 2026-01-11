@@ -101,6 +101,27 @@ Mouse interactions:
 
 ---
 
+## Development & Testing
+
+To run the test suite:
+
+```bash
+# Install dependencies including dev tools
+pip install -r requirements.txt
+
+# Run all tests
+python -m pytest tests
+```
+
+To run type checks:
+
+```bash
+# Ensure mypy is installed
+python -m mypy src
+```
+
+---
+
 ## Project Structure
 
 ```

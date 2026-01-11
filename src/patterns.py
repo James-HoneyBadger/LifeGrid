@@ -2,73 +2,49 @@
 
 from __future__ import annotations
 
+import json
+import logging
+import os
 from typing import Dict, List, Tuple
 
 import numpy as np
 
+PatternInfo = Tuple[List[Tuple[int, int]], str]
+CategoryData = Dict[str, PatternInfo]
+AllPatterns = Dict[str, CategoryData]
 
-# Pattern data as (relative_coords, description)
-PATTERN_DATA: Dict[str, Dict[str, Tuple[List[Tuple[int, int]], str]]] = {
-    "Conway's Game of Life": {
-        "Glider Gun": (
-            [
-                (0, 4), (0, 5), (1, 4), (1, 5), (10, 4), (10, 5), (10, 6),
-                (11, 3), (11, 7), (12, 2), (12, 8), (13, 2), (13, 8),
-                (14, 5), (15, 3), (15, 7), (16, 4), (16, 5), (16, 6),
-                (17, 5), (20, 2), (20, 3), (20, 4), (21, 2), (21, 3),
-                (21, 4), (22, 1), (22, 5), (24, 0), (24, 1), (24, 5),
-                (24, 6), (34, 2), (34, 3), (35, 2), (35, 3),
-            ],
-            "Gosper glider gun - produces gliders periodically"
-        ),
-        "Beacon": (
-            [(0, 0), (1, 0), (0, 1), (3, 2), (2, 3), (3, 3)],
-            "Beacon - period 2 oscillator"
-        ),
-        "Pulsar": (
-            [
-                (2, 0), (3, 0), (4, 0), (8, 0), (9, 0), (10, 0),
-                (0, 2), (5, 2), (7, 2), (12, 2),
-                (0, 3), (5, 3), (7, 3), (12, 3),
-                (0, 4), (5, 4), (7, 4), (12, 4),
-                (2, 5), (3, 5), (4, 5), (8, 5), (9, 5), (10, 5),
-                (2, 7), (3, 7), (4, 7), (8, 7), (9, 7), (10, 7),
-                (0, 8), (5, 8), (7, 8), (12, 8),
-                (0, 9), (5, 9), (7, 9), (12, 9),
-                (0, 10), (5, 10), (7, 10), (12, 10),
-                (2, 12), (3, 12), (4, 12), (8, 12), (9, 12), (10, 12),
-            ],
-            "Pulsar - period 3 oscillator"
-        ),
-        "Classic Mix": (
-            [],
-            "Starter mix of glider, blinker, toad, and LWSS variants",
-        ),
-        "Spaceships": (
-            [],
-            "Lightweight/medium/heavyweight spaceships placed near center",
-        ),
-        "Oscillators": (
-            [],
-            "Set of small-period oscillators (p2/p3)",
-        ),
-        "Puffers": (
-            [],
-            "Sample puffer configurations that leave trails",
-        ),
-        "R-Pentomino": (
-            [],
-            "Famous methuselah that evolves for ~1100 generations",
-        ),
-        "Acorn": (
-            [],
-            "Small methuselah that expands widely",
-        ),
-    },
+
+def load_pattern_data() -> AllPatterns:
+    """Load pattern data from JSON file."""
+    try:
+        json_path = os.path.join(
+            os.path.dirname(__file__), "data", "patterns.json"
+        )
+        with open(json_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        # Convert list of lists to list of tuples for compatibility
+        processed_data: AllPatterns = {}
+        for category, patterns in data.items():
+            processed_data[category] = {}
+            for name, details in patterns.items():
+                points = [tuple(p) for p in details["points"]]
+                processed_data[category][name] = (
+                    points,
+                    details["description"],
+                )
+        return processed_data
+    except (IOError, ValueError, json.JSONDecodeError) as e:
+        logging.error("Failed to load patterns.json: %s", e)
+        return {}
+
+
+# Base pattern data structure
+BASE_PATTERNS: AllPatterns = {
     "High Life": {
         "Replicator": (
             [(1, 0), (0, 1), (1, 1), (2, 1), (0, 2), (2, 2), (1, 3)],
-            "Replicator - grows exponentially"
+            "Replicator - grows exponentially",
         ),
         "Random Soup": (
             [],
@@ -100,6 +76,21 @@ PATTERN_DATA: Dict[str, Dict[str, Tuple[List[Tuple[int, int]], str]]] = {
     },
 }
 
+# Merge JSON data with base patterns
+JSON_PATTERNS = load_pattern_data()
+PATTERN_DATA: AllPatterns = {**BASE_PATTERNS}
+if "conway" in JSON_PATTERNS:
+    PATTERN_DATA["Conway's Game of Life"] = JSON_PATTERNS["conway"]
+else:
+    # Fallback if load failed
+    PATTERN_DATA["Conway's Game of Life"] = {}
+
+# Add Random Soup to Conway manually since it's procedural
+PATTERN_DATA["Conway's Game of Life"]["Random Soup"] = (
+    [],
+    "Random 15% fill to explore emergent structures",
+)
+
 
 def get_pattern_coords(mode: str, pattern_name: str) -> List[Tuple[int, int]]:
     """Get the coordinates for a named pattern."""
@@ -119,7 +110,7 @@ def apply_pattern_to_grid(
     grid: np.ndarray,
     pattern_coords: List[Tuple[int, int]],
     center_x: int,
-    center_y: int
+    center_y: int,
 ) -> None:
     """Apply a pattern to the grid centered at the given coordinates."""
     height, width = grid.shape

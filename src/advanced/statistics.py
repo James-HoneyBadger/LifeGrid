@@ -7,9 +7,10 @@ them to CSV format for analysis and visualization.
 
 import csv
 import time
-from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import numpy as np
 
 
@@ -29,6 +30,9 @@ class SimulationStatistics:
         entropy: Shannon entropy of the grid
         metadata: Additional custom metrics
     """
+
+    # pylint: disable=too-many-instance-attributes
+
     step: int
     timestamp: float
     alive_cells: int
@@ -44,8 +48,8 @@ class SimulationStatistics:
         """Convert to dictionary."""
         data = asdict(self)
         # Flatten metadata
-        metadata = data.pop('metadata', {})
-        data.update({f'meta_{k}': v for k, v in metadata.items()})
+        metadata = data.pop("metadata", {})
+        data.update({f"meta_{k}": v for k, v in metadata.items()})
         return data
 
 
@@ -62,9 +66,7 @@ class StatisticsCollector:
     """
 
     def __init__(
-        self,
-        track_changes: bool = True,
-        calculate_entropy: bool = False
+        self, track_changes: bool = True, calculate_entropy: bool = False
     ):
         self.track_changes = track_changes
         self.calculate_entropy = calculate_entropy
@@ -76,7 +78,7 @@ class StatisticsCollector:
         self,
         step: int,
         grid: np.ndarray,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> SimulationStatistics:
         """Collect statistics for the current step.
 
@@ -105,9 +107,7 @@ class StatisticsCollector:
             # Deaths: cells that were alive and are now dead
             deaths = int(np.sum((self._previous_grid != 0) & (grid == 0)))
             # Stability: proportion of cells that didn't change
-            unchanged = np.sum(
-                (self._previous_grid == 0) == (grid == 0)
-            )
+            unchanged = np.sum((self._previous_grid == 0) == (grid == 0))
             stability = unchanged / total_cells if total_cells > 0 else 1.0
 
         # Calculate entropy if requested
@@ -126,7 +126,7 @@ class StatisticsCollector:
             deaths=int(deaths),
             stability=stability,
             entropy=entropy,
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         self.statistics.append(stats)
@@ -153,9 +153,7 @@ class StatisticsCollector:
         probabilities = counts / grid.size
 
         # Calculate entropy: -sum(p * log2(p))
-        entropy = -np.sum(
-            probabilities * np.log2(probabilities + 1e-10)
-        )
+        entropy = -np.sum(probabilities * np.log2(probabilities + 1e-10))
 
         return float(entropy)
 
@@ -182,18 +180,18 @@ class StatisticsCollector:
         stabilities = [s.stability for s in self.statistics]
 
         return {
-            'total_steps': len(self.statistics),
-            'duration': (
+            "total_steps": len(self.statistics),
+            "duration": (
                 self.statistics[-1].timestamp if self.statistics else 0
             ),
-            'avg_density': np.mean(densities),
-            'min_density': np.min(densities),
-            'max_density': np.max(densities),
-            'avg_births': np.mean(births),
-            'avg_deaths': np.mean(deaths),
-            'avg_stability': np.mean(stabilities),
-            'final_alive': self.statistics[-1].alive_cells,
-            'final_dead': self.statistics[-1].dead_cells,
+            "avg_density": np.mean(densities),
+            "min_density": np.min(densities),
+            "max_density": np.max(densities),
+            "avg_births": np.mean(births),
+            "avg_deaths": np.mean(deaths),
+            "avg_stability": np.mean(stabilities),
+            "final_alive": self.statistics[-1].alive_cells,
+            "final_dead": self.statistics[-1].dead_cells,
         }
 
     def reset(self) -> None:
@@ -214,7 +212,7 @@ class StatisticsExporter:
     def export_csv(
         statistics: List[SimulationStatistics],
         filepath: str,
-        include_metadata: bool = True
+        include_metadata: bool = True,
     ) -> None:
         """Export statistics to CSV file.
 
@@ -234,20 +232,21 @@ class StatisticsExporter:
 
         # Optionally remove metadata fields
         if not include_metadata:
-            fieldnames = [f for f in fieldnames if not f.startswith('meta_')]
-            rows = [{k: v for k, v in row.items() if not k.startswith('meta_')}
-                    for row in rows]
+            fieldnames = [f for f in fieldnames if not f.startswith("meta_")]
+            rows = [
+                {k: v for k, v in row.items() if not k.startswith("meta_")}
+                for row in rows
+            ]
 
         # Write CSV
-        with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(filepath, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
             writer.writerows(rows)
 
     @staticmethod
     def export_summary(
-        statistics: List[SimulationStatistics],
-        filepath: str
+        statistics: List[SimulationStatistics], filepath: str
     ) -> None:
         """Export summary statistics to CSV.
 
@@ -263,7 +262,7 @@ class StatisticsExporter:
         summary = collector.get_summary()
 
         # Write summary CSV
-        with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
+        with open(filepath, "w", newline="", encoding="utf-8") as csvfile:
             writer = csv.DictWriter(csvfile, fieldnames=summary.keys())
             writer.writeheader()
             writer.writerow(summary)
@@ -272,7 +271,7 @@ class StatisticsExporter:
     def generate_plots(
         statistics: List[SimulationStatistics],
         output_dir: str,
-        plot_types: Optional[List[str]] = None
+        plot_types: Optional[List[str]] = None,
     ) -> List[str]:
         """Generate plots from statistics.
 
@@ -288,15 +287,17 @@ class StatisticsExporter:
         Raises:
             ImportError: If matplotlib is not available
         """
+        # pylint: disable=import-outside-toplevel, too-many-statements
         try:
             import matplotlib  # type: ignore[import-not-found]
-            matplotlib.use('Agg')  # Use non-interactive backend
+
+            matplotlib.use("Agg")  # Use non-interactive backend
             import matplotlib.pyplot as plt  # type: ignore[import-not-found]
-        except ImportError:
+        except ImportError as exc:
             raise ImportError(
                 "matplotlib is required for plot generation. "
                 "Install with: pip install matplotlib"
-            )
+            ) from exc
 
         if not statistics:
             raise ValueError("No statistics to plot")
@@ -304,54 +305,54 @@ class StatisticsExporter:
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
 
-        plot_types = plot_types or ['density', 'births_deaths', 'stability']
+        plot_types = plot_types or ["density", "births_deaths", "stability"]
         generated_files = []
 
         steps = [s.step for s in statistics]
 
         # Density plot
-        if 'density' in plot_types:
+        if "density" in plot_types:
             plt.figure(figsize=(10, 6))
             densities = [s.density for s in statistics]
             plt.plot(steps, densities, linewidth=2)
-            plt.xlabel('Step')
-            plt.ylabel('Density')
-            plt.title('Cell Density Over Time')
+            plt.xlabel("Step")
+            plt.ylabel("Density")
+            plt.title("Cell Density Over Time")
             plt.grid(True, alpha=0.3)
-            filepath = output_path / 'density_plot.png'
-            plt.savefig(filepath, dpi=150, bbox_inches='tight')
+            filepath = output_path / "density_plot.png"
+            plt.savefig(filepath, dpi=150, bbox_inches="tight")
             plt.close()
             generated_files.append(str(filepath))
 
         # Births and deaths plot
-        if 'births_deaths' in plot_types:
+        if "births_deaths" in plot_types:
             plt.figure(figsize=(10, 6))
             births = [s.births for s in statistics]
             deaths = [s.deaths for s in statistics]
-            plt.plot(steps, births, label='Births', linewidth=2)
-            plt.plot(steps, deaths, label='Deaths', linewidth=2)
-            plt.xlabel('Step')
-            plt.ylabel('Count')
-            plt.title('Births and Deaths Over Time')
+            plt.plot(steps, births, label="Births", linewidth=2)
+            plt.plot(steps, deaths, label="Deaths", linewidth=2)
+            plt.xlabel("Step")
+            plt.ylabel("Count")
+            plt.title("Births and Deaths Over Time")
             plt.legend()
             plt.grid(True, alpha=0.3)
-            filepath = output_path / 'births_deaths_plot.png'
-            plt.savefig(filepath, dpi=150, bbox_inches='tight')
+            filepath = output_path / "births_deaths_plot.png"
+            plt.savefig(filepath, dpi=150, bbox_inches="tight")
             plt.close()
             generated_files.append(str(filepath))
 
         # Stability plot
-        if 'stability' in plot_types:
+        if "stability" in plot_types:
             plt.figure(figsize=(10, 6))
             stabilities = [s.stability for s in statistics]
-            plt.plot(steps, stabilities, linewidth=2, color='green')
-            plt.xlabel('Step')
-            plt.ylabel('Stability')
-            plt.title('Grid Stability Over Time')
+            plt.plot(steps, stabilities, linewidth=2, color="green")
+            plt.xlabel("Step")
+            plt.ylabel("Stability")
+            plt.title("Grid Stability Over Time")
             plt.ylim(0, 1.05)
             plt.grid(True, alpha=0.3)
-            filepath = output_path / 'stability_plot.png'
-            plt.savefig(filepath, dpi=150, bbox_inches='tight')
+            filepath = output_path / "stability_plot.png"
+            plt.savefig(filepath, dpi=150, bbox_inches="tight")
             plt.close()
             generated_files.append(str(filepath))
 

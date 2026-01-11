@@ -5,10 +5,13 @@ This module provides utilities for analyzing cellular automaton patterns,
 detecting oscillators, still lifes, and other interesting structures.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Tuple, Optional, Set, Dict
-import numpy as np
 from collections import deque
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional, Set, Tuple
+
+import numpy as np
+
+from .visualization import SymmetryAnalyzer
 
 
 @dataclass
@@ -26,6 +29,7 @@ class PatternMetrics:
         velocity: Movement velocity (dx, dy) per step
         symmetries: List of detected symmetries
     """
+
     bounding_box: Tuple[int, int, int, int]
     cell_count: int
     density: float
@@ -72,7 +76,7 @@ class PatternAnalyzer:
     @staticmethod
     def extract_pattern(
         grid: np.ndarray,
-        bounding_box: Optional[Tuple[int, int, int, int]] = None
+        bounding_box: Optional[Tuple[int, int, int, int]] = None,
     ) -> np.ndarray:
         """Extract pattern from grid.
 
@@ -95,8 +99,7 @@ class PatternAnalyzer:
 
     @staticmethod
     def detect_period(
-        grid_history: List[np.ndarray],
-        max_period: int = 100
+        grid_history: List[np.ndarray], max_period: int = 100
     ) -> int:
         """Detect oscillation period from grid history.
 
@@ -139,8 +142,7 @@ class PatternAnalyzer:
 
     @staticmethod
     def detect_displacement(
-        before: np.ndarray,
-        after: np.ndarray
+        before: np.ndarray, after: np.ndarray
     ) -> Tuple[int, int]:
         """Detect pattern displacement between two grids.
 
@@ -171,8 +173,7 @@ class PatternAnalyzer:
 
     @staticmethod
     def analyze_pattern(
-        grid_history: List[np.ndarray],
-        check_symmetry: bool = True
+        grid_history: List[np.ndarray], check_symmetry: bool = True
     ) -> PatternMetrics:
         """Analyze a pattern from its history.
 
@@ -185,9 +186,7 @@ class PatternAnalyzer:
         """
         if not grid_history:
             return PatternMetrics(
-                bounding_box=(0, 0, 0, 0),
-                cell_count=0,
-                density=0.0
+                bounding_box=(0, 0, 0, 0), cell_count=0, density=0.0
             )
 
         current = grid_history[-1]
@@ -205,8 +204,8 @@ class PatternAnalyzer:
         period = PatternAnalyzer.detect_period(grid_history)
 
         # Classify pattern type
-        is_still_life = (period == 1)
-        is_oscillator = (period > 1)
+        is_still_life = period == 1
+        is_oscillator = period > 1
 
         # Detect spaceship (moving pattern)
         velocity = (0.0, 0.0)
@@ -214,16 +213,14 @@ class PatternAnalyzer:
 
         if len(grid_history) >= 2:
             displacement = PatternAnalyzer.detect_displacement(
-                grid_history[-2],
-                grid_history[-1]
+                grid_history[-2], grid_history[-1]
             )
             velocity = (float(displacement[0]), float(displacement[1]))
-            is_spaceship = (displacement[0] != 0 or displacement[1] != 0)
+            is_spaceship = displacement[0] != 0 or displacement[1] != 0
 
         # Analyze symmetries if requested
         symmetries = []
         if check_symmetry:
-            from .visualization import SymmetryAnalyzer
             sym_types = SymmetryAnalyzer.detect_symmetries(current)
             symmetries = [s.value for s in sym_types]
 
@@ -236,7 +233,7 @@ class PatternAnalyzer:
             is_oscillator=is_oscillator,
             is_spaceship=is_spaceship,
             velocity=velocity,
-            symmetries=symmetries
+            symmetries=symmetries,
         )
 
     @staticmethod
@@ -261,8 +258,14 @@ class PatternAnalyzer:
             while queue:
                 y, x = queue.popleft()
 
-                if (y < 0 or y >= height or x < 0 or x >= width or
-                        visited[y, x] or grid[y, x] == 0):
+                if (
+                    y < 0
+                    or y >= height
+                    or x < 0
+                    or x >= width
+                    or visited[y, x]
+                    or grid[y, x] == 0
+                ):
                     continue
 
                 visited[y, x] = True
@@ -294,8 +297,7 @@ class PatternAnalyzer:
                         comp_width = max_x - min_x + 1
 
                         component_grid = np.zeros(
-                            (comp_height, comp_width),
-                            dtype=grid.dtype
+                            (comp_height, comp_width), dtype=grid.dtype
                         )
 
                         for y, x in component_coords:
@@ -307,7 +309,7 @@ class PatternAnalyzer:
 
     @staticmethod
     def calculate_population_statistics(
-        grid_history: List[np.ndarray]
+        grid_history: List[np.ndarray],
     ) -> Dict[str, float]:
         """Calculate population statistics from history.
 
@@ -320,22 +322,21 @@ class PatternAnalyzer:
         if not grid_history:
             return {}
 
-        populations = [np.count_nonzero(grid) for grid in grid_history]
+        populations = [int(np.count_nonzero(grid)) for grid in grid_history]
 
         return {
-            'initial_population': float(populations[0]),
-            'final_population': float(populations[-1]),
-            'min_population': float(min(populations)),
-            'max_population': float(max(populations)),
-            'mean_population': float(np.mean(populations)),
-            'std_population': float(np.std(populations)),
-            'population_change': float(populations[-1] - populations[0]),
+            "initial_population": float(populations[0]),
+            "final_population": float(populations[-1]),
+            "min_population": float(min(populations)),
+            "max_population": float(max(populations)),
+            "mean_population": float(np.mean(populations)),
+            "std_population": float(np.std(populations)),
+            "population_change": float(populations[-1] - populations[0]),
         }
 
     @staticmethod
     def is_pattern_stable(
-        grid_history: List[np.ndarray],
-        stability_window: int = 10
+        grid_history: List[np.ndarray], stability_window: int = 10
     ) -> bool:
         """Check if pattern has stabilized.
 
@@ -351,8 +352,7 @@ class PatternAnalyzer:
 
         # Check if pattern repeats with period ≤ stability_window
         period = PatternAnalyzer.detect_period(
-            grid_history[-stability_window:],
-            max_period=stability_window
+            grid_history[-stability_window:], max_period=stability_window
         )
 
         return period > 0

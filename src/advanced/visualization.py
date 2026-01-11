@@ -5,13 +5,15 @@ This module provides visualization utilities for analyzing patterns
 and their properties.
 """
 
-from typing import Dict, List, Optional, Tuple, cast
-import numpy as np
 from enum import Enum
+from typing import Dict, List, Optional, Tuple, cast
+
+import numpy as np
 
 
 class SymmetryType(Enum):
     """Types of symmetry."""
+
     NONE = "none"
     HORIZONTAL = "horizontal"
     VERTICAL = "vertical"
@@ -33,22 +35,18 @@ class HeatmapGenerator:
         mode: Type of heatmap ('activity', 'age', or 'births')
     """
 
-    def __init__(
-        self,
-        grid_shape: Tuple[int, int],
-        mode: str = 'activity'
-    ):
-        if mode not in ('activity', 'age', 'births'):
+    def __init__(self, grid_shape: Tuple[int, int], mode: str = "activity"):
+        if mode not in ("activity", "age", "births"):
             raise ValueError(f"Unknown mode: {mode}")
 
         self.grid_shape = grid_shape
         self.mode = mode
 
         # Initialize tracking arrays
-        if mode == 'activity':
+        if mode == "activity":
             # Count how many times each cell was alive
             self.data = np.zeros(grid_shape, dtype=np.int32)
-        elif mode == 'age':
+        elif mode == "age":
             # Track how long each cell has been alive
             self.data = np.zeros(grid_shape, dtype=np.int32)
         else:  # births
@@ -68,19 +66,20 @@ class HeatmapGenerator:
             raise ValueError(
                 f"Grid shape {
                     grid.shape} doesn't match {
-                    self.grid_shape}")
+                    self.grid_shape}"
+            )
 
-        if self.mode == 'activity':
+        if self.mode == "activity":
             # Increment counter for alive cells
             self.data += (grid != 0).astype(np.int32)
 
-        elif self.mode == 'age':
+        elif self.mode == "age":
             # Increment age for alive cells, reset for dead cells
-            alive_mask = (grid != 0)
+            alive_mask = grid != 0
             self.data[alive_mask] += 1
             self.data[~alive_mask] = 0
 
-        elif self.mode == 'births':
+        elif self.mode == "births":
             # Track births (cells that were dead and are now alive)
             if self._previous_grid is not None:
                 births = (self._previous_grid == 0) & (grid != 0)
@@ -90,9 +89,7 @@ class HeatmapGenerator:
         self._step_count += 1
 
     def get_heatmap(
-        self,
-        normalize: bool = True,
-        clip_max: Optional[float] = None
+        self, normalize: bool = True, clip_max: Optional[float] = None
     ) -> np.ndarray:
         """Get the heatmap data.
 
@@ -113,10 +110,7 @@ class HeatmapGenerator:
 
         return heatmap
 
-    def get_colormap_data(
-        self,
-        heatmap: str = 'hot'
-    ) -> np.ndarray:
+    def get_colormap_data(self, heatmap: str = "hot") -> np.ndarray:
         """Get heatmap as RGB data.
 
         Args:
@@ -127,17 +121,17 @@ class HeatmapGenerator:
         """
         hmap = self.get_heatmap(normalize=True)
 
-        if heatmap == 'hot':
+        if heatmap == "hot":
             # Hot colormap: black -> red -> yellow -> white
             r = np.clip(hmap * 3, 0, 1)
             g = np.clip(hmap * 3 - 1, 0, 1)
             b = np.clip(hmap * 3 - 2, 0, 1)
-        elif heatmap == 'cool':
+        elif heatmap == "cool":
             # Cool colormap: cyan -> blue -> magenta
             r = hmap
             g = 1 - hmap
             b = np.ones_like(hmap) * 1.0
-        elif heatmap == 'viridis':
+        elif heatmap == "viridis":
             # Simplified viridis: purple -> green -> yellow
             r = np.clip(hmap * 2 - 0.5, 0, 1)
             g = np.clip(hmap * 1.5, 0, 1)
@@ -164,12 +158,12 @@ class HeatmapGenerator:
             Dictionary with statistics
         """
         return {
-            'steps': self._step_count,
-            'min': float(self.data.min()),
-            'max': float(self.data.max()),
-            'mean': float(self.data.mean()),
-            'median': float(np.median(self.data)),
-            'std': float(self.data.std()),
+            "steps": self._step_count,
+            "min": float(self.data.min()),
+            "max": float(self.data.max()),
+            "mean": float(self.data.mean()),
+            "median": float(np.median(self.data)),
+            "std": float(self.data.std()),
         }
 
 
@@ -336,8 +330,7 @@ class SymmetryAnalyzer:
 
     @staticmethod
     def apply_symmetry(
-        grid: np.ndarray,
-        symmetry_type: SymmetryType
+        grid: np.ndarray, symmetry_type: SymmetryType
     ) -> np.ndarray:
         """Apply a symmetry transformation to make grid symmetric.
 

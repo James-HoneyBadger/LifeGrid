@@ -4,20 +4,22 @@ from __future__ import annotations
 
 from typing import Callable, Dict, List
 
-# pylint: disable=import-error
-
 from automata import (
+    BriansBrain,
     CellularAutomaton,
     ConwayGameOfLife,
+    GenerationsAutomaton,
+    HexagonalGameOfLife,
     HighLife,
     ImmigrationGame,
     LangtonsAnt,
     RainbowGame,
     Wireworld,
-    BriansBrain,
-    GenerationsAutomaton,
     parse_bs,
 )
+
+# pylint: disable=import-error
+
 
 # Default custom rule (Conway)
 DEFAULT_CUSTOM_RULE = "B3/S23"
@@ -26,6 +28,7 @@ DEFAULT_CUSTOM_BIRTH, DEFAULT_CUSTOM_SURVIVAL = parse_bs(DEFAULT_CUSTOM_RULE)
 # Factory registry for standard modes
 MODE_FACTORIES: Dict[str, Callable[[int, int], CellularAutomaton]] = {
     "Conway's Game of Life": ConwayGameOfLife,
+    "Hexagonal Life": HexagonalGameOfLife,
     "High Life": HighLife,
     "Immigration Game": ImmigrationGame,
     "Rainbow Game": RainbowGame,

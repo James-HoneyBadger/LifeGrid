@@ -5,10 +5,12 @@ This module provides comprehensive benchmarking capabilities for measuring
 the performance of different aspects of LifeGrid simulations.
 """
 
-import time
+import json
 import statistics
+import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Callable, Optional, Any
+from typing import Any, Callable, Dict, List, Optional
+
 import numpy as np
 
 
@@ -28,6 +30,9 @@ class BenchmarkResult:
         throughput: Iterations per second
         metadata: Additional metadata about the benchmark
     """
+
+    # pylint: disable=too-many-instance-attributes
+
     name: str
     iterations: int
     total_time: float
@@ -56,20 +61,21 @@ class BenchmarkResult:
     def to_dict(self) -> Dict[str, Any]:
         """Convert results to dictionary format."""
         return {
-            'name': self.name,
-            'iterations': self.iterations,
-            'total_time': self.total_time,
-            'mean_time': self.mean_time,
-            'median_time': self.median_time,
-            'std_dev': self.std_dev,
-            'min_time': self.min_time,
-            'max_time': self.max_time,
-            'throughput': self.throughput,
-            'metadata': self.metadata
+            "name": self.name,
+            "iterations": self.iterations,
+            "total_time": self.total_time,
+            "mean_time": self.mean_time,
+            "median_time": self.median_time,
+            "std_dev": self.std_dev,
+            "min_time": self.min_time,
+            "max_time": self.max_time,
+            "throughput": self.throughput,
+            "metadata": self.metadata,
         }
 
 
 class Benchmark:
+    # pylint: disable=too-few-public-methods
     """A single benchmark test.
 
     Args:
@@ -86,8 +92,9 @@ class Benchmark:
         function: Callable[[], None],
         iterations: int = 100,
         warmup_iterations: int = 10,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
+        # pylint: disable=too-many-arguments, too-many-positional-arguments
         self.name = name
         self.function = function
         self.iterations = iterations
@@ -135,7 +142,7 @@ class Benchmark:
             min_time=min_time,
             max_time=max_time,
             throughput=throughput,
-            metadata=self.metadata
+            metadata=self.metadata,
         )
 
 
@@ -165,7 +172,7 @@ class BenchmarkSuite:
         automaton: Any,
         grid_size: tuple[int, int],
         steps: int = 100,
-        iterations: int = 10
+        iterations: int = 10,
     ) -> None:
         """Add a benchmark for an automaton.
 
@@ -176,31 +183,29 @@ class BenchmarkSuite:
             steps: Number of simulation steps per iteration
             iterations: Number of benchmark iterations
         """
+        # pylint: disable=too-many-arguments, too-many-positional-arguments
+
         def benchmark_func():
             for _ in range(steps):
                 automaton.step()
 
         metadata = {
-            'automaton': type(automaton).__name__,
-            'grid_size': grid_size,
-            'steps': steps,
-            'total_cells': grid_size[0] * grid_size[1]
+            "automaton": type(automaton).__name__,
+            "grid_size": grid_size,
+            "steps": steps,
+            "total_cells": grid_size[0] * grid_size[1],
         }
 
         benchmark = Benchmark(
             name=name,
             function=benchmark_func,
             iterations=iterations,
-            metadata=metadata
+            metadata=metadata,
         )
         self.add_benchmark(benchmark)
 
     def add_simulator_benchmark(
-        self,
-        name: str,
-        simulator: Any,
-        steps: int = 100,
-        iterations: int = 10
+        self, name: str, simulator: Any, steps: int = 100, iterations: int = 10
     ) -> None:
         """Add a benchmark for a simulator.
 
@@ -210,26 +215,29 @@ class BenchmarkSuite:
             steps: Number of simulation steps per iteration
             iterations: Number of benchmark iterations
         """
+
         def benchmark_func():
             for _ in range(steps):
                 simulator.step()
 
-        grid_shape = getattr(simulator, 'grid', np.array([[]])).shape
+        grid_shape = getattr(simulator, "grid", np.array([[]])).shape
 
         metadata = {
-            'automaton': type(
-                simulator.automaton).__name__ if hasattr(
-                simulator,
-                'automaton') else 'Unknown',
-            'grid_size': grid_shape,
-            'steps': steps,
-            'total_cells': np.prod(grid_shape) if grid_shape else 0}
+            "automaton": (
+                type(simulator.automaton).__name__
+                if hasattr(simulator, "automaton")
+                else "Unknown"
+            ),
+            "grid_size": grid_shape,
+            "steps": steps,
+            "total_cells": np.prod(grid_shape) if grid_shape else 0,
+        }
 
         benchmark = Benchmark(
             name=name,
             function=benchmark_func,
             iterations=iterations,
-            metadata=metadata
+            metadata=metadata,
         )
         self.add_benchmark(benchmark)
 
@@ -287,7 +295,7 @@ class BenchmarkSuite:
             f"\n{'=' * 70}",
             f"{self.name} - Summary",
             f"{'=' * 70}\n",
-            f"Total Benchmarks: {len(self.results)}\n"
+            f"Total Benchmarks: {len(self.results)}\n",
         ]
 
         # Sort by mean time for easy comparison
@@ -312,12 +320,14 @@ class BenchmarkSuite:
             f"Fastest: {
                 fastest.name} ({
                 fastest.mean_time *
-                1000:.2f}ms)")
+                1000:.2f}ms)"
+        )
         lines.append(
             f"Slowest: {
                 slowest.name} ({
                 slowest.mean_time *
-                1000:.2f}ms)")
+                1000:.2f}ms)"
+        )
 
         if len(sorted_results) > 1:
             speedup = slowest.mean_time / fastest.mean_time
@@ -325,12 +335,10 @@ class BenchmarkSuite:
 
         lines.append(f"{'=' * 70}\n")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def compare_results(
-        self,
-        metric: str = 'mean_time',
-        ascending: bool = True
+        self, metric: str = "mean_time", ascending: bool = True
     ) -> List[BenchmarkResult]:
         """Compare benchmark results by a specific metric.
 
@@ -344,7 +352,7 @@ class BenchmarkSuite:
         return sorted(
             self.results,
             key=lambda r: getattr(r, metric),
-            reverse=not ascending
+            reverse=not ascending,
         )
 
     def export_results(self, filepath: str) -> None:
@@ -353,13 +361,11 @@ class BenchmarkSuite:
         Args:
             filepath: Path to save the results
         """
-        import json
-
         data = {
-            'suite_name': self.name,
-            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S'),
-            'benchmarks': [r.to_dict() for r in self.results]
+            "suite_name": self.name,
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "benchmarks": [r.to_dict() for r in self.results],
         }
 
-        with open(filepath, 'w') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2)

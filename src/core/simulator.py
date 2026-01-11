@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Optional, Callable
+from typing import Callable, Optional
 
 import numpy as np
 
 from automata import (
+    BriansBrain,
     CellularAutomaton,
     ConwayGameOfLife,
-    HighLife,
-    LifeLikeAutomaton,
-    LangtonsAnt,
-    Wireworld,
-    BriansBrain,
     GenerationsAutomaton,
+    HighLife,
     ImmigrationGame,
+    LangtonsAnt,
+    LifeLikeAutomaton,
     RainbowGame,
+    Wireworld,
 )
 
 from .config import SimulatorConfig
@@ -55,9 +55,8 @@ class Simulator:
         }
 
     def initialize(
-            self,
-            mode: Optional[str] = None,
-            pattern: Optional[str] = None) -> None:
+        self, mode: Optional[str] = None, pattern: Optional[str] = None
+    ) -> None:
         """Initialize the automaton.
 
         Args:
@@ -88,7 +87,7 @@ class Simulator:
 
         self.reset_metrics()
 
-        if pattern and hasattr(self.automaton, 'load_pattern'):
+        if pattern and hasattr(self.automaton, "load_pattern"):
             self.automaton.load_pattern(pattern)
 
     def reset(self) -> None:
@@ -114,7 +113,8 @@ class Simulator:
         """
         if not self.automaton:
             raise RuntimeError(
-                "Automaton not initialized. Call initialize() first.")
+                "Automaton not initialized. Call initialize() first."
+            )
 
         step_metrics = []
 
@@ -122,7 +122,7 @@ class Simulator:
             # Save state for undo before stepping
             self.undo_manager.push_state(
                 f"Generation {self.generation}",
-                np.copy(self.automaton.get_grid())
+                np.copy(self.automaton.get_grid()),
             )
 
             self.automaton.step()
@@ -199,7 +199,8 @@ class Simulator:
         return False
 
     def set_on_step_callback(
-            self, callback: Optional[Callable[[dict], None]]) -> None:
+        self, callback: Optional[Callable[[dict], None]]
+    ) -> None:
         """Set callback to be called on each step.
 
         Args:

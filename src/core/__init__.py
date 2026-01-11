@@ -5,8 +5,8 @@ without any GUI dependencies. It enables CLI usage and easier integration with
 other tools.
 """
 
-from .simulator import Simulator
 from .config import SimulatorConfig
+from .simulator import Simulator
 from .undo_manager import UndoManager
 
 __all__ = [

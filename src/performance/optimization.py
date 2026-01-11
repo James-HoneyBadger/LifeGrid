@@ -5,10 +5,11 @@ This module provides tools for parallel processing and viewport culling
 to improve the performance of large simulations.
 """
 
-import numpy as np
-from typing import Optional, Tuple, Callable
-from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
 import multiprocessing as mp
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from typing import Any, Callable, Optional, Tuple
+
+import numpy as np
 
 
 class ParallelProcessor:
@@ -23,9 +24,7 @@ class ParallelProcessor:
     """
 
     def __init__(
-        self,
-        num_workers: Optional[int] = None,
-        use_processes: bool = True
+        self, num_workers: Optional[int] = None, use_processes: bool = True
     ):
         self.num_workers = num_workers or mp.cpu_count()
         self.use_processes = use_processes
@@ -45,28 +44,10 @@ class ParallelProcessor:
             self._executor.shutdown(wait=True)
             self._executor = None
 
-    def parallel_grid_update(
-        self,
-        grid: np.ndarray,
-        update_func: Callable[[np.ndarray], np.ndarray],
-        chunk_size: Optional[int] = None
-    ) -> np.ndarray:
-        """Update grid in parallel by splitting into chunks.
-
-        Args:
-            grid: The grid to update
-            update_func: Function that takes a grid and returns updated grid
-            chunk_size: Size of chunks (default: grid_height / num_workers)
-
-        Returns:
-            Updated grid
-        """
-        height, width = grid.shape[:2]
-
-        if chunk_size is None:
-            chunk_size = max(1, height // self.num_workers)
-
-        # Split grid into horizontal chunks
+    def _split_chunks(
+        self, grid: np.ndarray, height: int, chunk_size: int
+    ) -> tuple[list[np.ndarray], list[tuple[int, int, int]]]:
+        """Split grid into chunks with overlap."""
         chunks = []
         chunk_indices = []
 
@@ -79,6 +60,32 @@ class ParallelProcessor:
             chunk = grid[start_overlap:end_overlap].copy()
             chunks.append(chunk)
             chunk_indices.append((i, end, start_overlap))
+
+        return chunks, chunk_indices
+
+    def parallel_grid_update(
+        self,
+        grid: np.ndarray,
+        update_func: Callable[[np.ndarray], np.ndarray],
+        chunk_size: Optional[int] = None,
+    ) -> np.ndarray:
+        """Update grid in parallel by splitting into chunks.
+
+        Args:
+            grid: The grid to update
+            update_func: Function that takes a grid and returns updated grid
+            chunk_size: Size of chunks (default: grid_height / num_workers)
+
+        Returns:
+            Updated grid
+        """
+        height, _ = grid.shape[:2]
+
+        if chunk_size is None:
+            chunk_size = max(1, height // self.num_workers)
+
+        # Split grid into horizontal chunks
+        chunks, chunk_indices = self._split_chunks(grid, height, chunk_size)
 
         # Process chunks in parallel
         if not self._executor:
@@ -99,15 +106,17 @@ class ParallelProcessor:
         for (start, end, start_overlap), result in zip(chunk_indices, results):
             # Extract the non-overlap portion
             overlap_offset = start - start_overlap
-            result_slice = result[overlap_offset:overlap_offset +
-                                  (end - start)]
+            result_slice = result[
+                overlap_offset:overlap_offset + (end - start)
+            ]
             output[start:end] = result_slice
 
         return output
 
     @staticmethod
     def should_use_parallel(
-            grid_size: Tuple[int, int], threshold: int = 500) -> bool:
+        grid_size: Tuple[int, int], threshold: int = 500
+    ) -> bool:
         """Determine if parallel processing would be beneficial.
 
         Args:
@@ -137,12 +146,7 @@ class ViewportCuller:
         self._viewport_buffer = 0
 
     def set_viewport(
-        self,
-        x: int,
-        y: int,
-        width: int,
-        height: int,
-        buffer: int = 10
+        self, x: int, y: int, width: int, height: int, buffer: int = 10
     ) -> None:
         """Set the viewport area.
 
@@ -177,7 +181,8 @@ class ViewportCuller:
         return (x_start, y_start, x_end, y_end)
 
     def extract_visible_grid(
-            self, grid: np.ndarray) -> Tuple[np.ndarray, Tuple[int, int]]:
+        self, grid: np.ndarray
+    ) -> Tuple[np.ndarray, Tuple[int, int]]:
         """Extract only the visible portion of the grid.
 
         Args:
@@ -194,7 +199,7 @@ class ViewportCuller:
         self,
         full_grid: np.ndarray,
         visible_grid: np.ndarray,
-        offset: Tuple[int, int]
+        offset: Tuple[int, int],
     ) -> np.ndarray:
         """Merge the updated visible grid back into the full grid.
 
@@ -210,8 +215,9 @@ class ViewportCuller:
         height, width = visible_grid.shape[:2]
 
         result = full_grid.copy()
-        result[y_offset:y_offset + height,
-               x_offset:x_offset + width] = visible_grid
+        result[y_offset:y_offset + height, x_offset:x_offset + width] = (
+            visible_grid
+        )
 
         return result
 
@@ -258,6 +264,7 @@ def optimize_grid_dtype(grid: np.ndarray, num_states: int) -> np.ndarray:
     Returns:
         Grid with optimized dtype
     """
+    dtype: Any
     if num_states <= 2:
         dtype = np.bool_
     elif num_states <= 256:
@@ -271,9 +278,7 @@ def optimize_grid_dtype(grid: np.ndarray, num_states: int) -> np.ndarray:
 
 
 def calculate_optimal_chunk_size(
-    grid_size: Tuple[int, int],
-    num_workers: int,
-    min_chunk_size: int = 50
+    grid_size: Tuple[int, int], num_workers: int, min_chunk_size: int = 50
 ) -> int:
     """Calculate optimal chunk size for parallel processing.
 
@@ -291,7 +296,8 @@ def calculate_optimal_chunk_size(
 
 
 def estimate_memory_usage(
-        grid_shape: Tuple[int, int], dtype: np.dtype) -> float:
+    grid_shape: Tuple[int, int], dtype: np.dtype
+) -> float:
     """Estimate memory usage for a grid.
 
     Args:

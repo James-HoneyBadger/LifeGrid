@@ -7,9 +7,9 @@ identifying performance bottlenecks in simulations.
 
 import time
 import tracemalloc
-from dataclasses import dataclass
-from typing import Optional, Dict, List, Any, Callable
 from contextlib import contextmanager
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional
 
 
 @dataclass
@@ -22,6 +22,7 @@ class MemorySnapshot:
         peak_mb: Peak memory usage in MB
         label: Optional label for the snapshot
     """
+
     timestamp: float
     current_mb: float
     peak_mb: float
@@ -86,7 +87,7 @@ class MemoryProfiler:
             timestamp=time.time() - (self._start_time or 0),
             current_mb=current / (1024 * 1024),
             peak_mb=peak / (1024 * 1024),
-            label=label
+            label=label,
         )
         self.snapshots.append(snapshot)
         return snapshot
@@ -129,7 +130,7 @@ class MemoryProfiler:
             f"Total Snapshots: {len(self.snapshots)}",
             f"Duration: {self.snapshots[-1].timestamp:.2f}s\n",
             f"{'Label':<20} {'Time':<12} {'Current':<12} {'Peak':<12}",
-            "-" * 70
+            "-" * 70,
         ]
 
         for snapshot in self.snapshots:
@@ -145,7 +146,7 @@ class MemoryProfiler:
         lines.append(f"Peak Memory: {self.get_peak_memory():.2f}MB")
         lines.append("=" * 70 + "\n")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     @contextmanager
     def profile_section(self, label: str):
@@ -183,6 +184,7 @@ class ProfileResult:
         memory_used: Memory used in MB
         metadata: Additional metadata
     """
+
     name: str
     duration: float
     call_count: int
@@ -264,7 +266,7 @@ class PerformanceProfiler:
                     duration=duration,
                     call_count=1,
                     memory_used=memory_used,
-                    metadata=metadata or {}
+                    metadata=metadata or {},
                 )
 
     def get_profile(self, name: str) -> Optional[ProfileResult]:
@@ -301,14 +303,12 @@ class PerformanceProfiler:
             "=" * 70 + "\n",
             f"Total Profiles: {len(self.profiles)}\n",
             f"{'Name':<25} {'Calls':<10} {'Total Time':<15} {'Avg Time':<15}",
-            "-" * 70
+            "-" * 70,
         ]
 
         # Sort by total duration
         sorted_profiles = sorted(
-            self.profiles.values(),
-            key=lambda p: p.duration,
-            reverse=True
+            self.profiles.values(), key=lambda p: p.duration, reverse=True
         )
 
         total_time = sum(p.duration for p in sorted_profiles)
@@ -316,9 +316,8 @@ class PerformanceProfiler:
         for profile in sorted_profiles:
             avg_time = profile.duration / profile.call_count
             percentage = (
-                profile.duration /
-                total_time *
-                100) if total_time > 0 else 0
+                (profile.duration / total_time * 100) if total_time > 0 else 0
+            )
 
             lines.append(
                 f"{profile.name:<25} "
@@ -331,7 +330,7 @@ class PerformanceProfiler:
         lines.append(f"Total Time: {total_time * 1000:.2f}ms")
         lines.append("=" * 70 + "\n")
 
-        return '\n'.join(lines)
+        return "\n".join(lines)
 
     def reset(self) -> None:
         """Reset all profiling data."""
@@ -346,7 +345,7 @@ class PerformanceProfiler:
         *args,
         name: Optional[str] = None,
         iterations: int = 1,
-        **kwargs
+        **kwargs,
     ) -> ProfileResult:
         """Measure the performance of a function.
 

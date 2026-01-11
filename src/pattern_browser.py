@@ -15,7 +15,9 @@ class PatternBrowser:
 
     def __init__(self) -> None:
         """Initialize pattern browser."""
-        self.patterns: Dict[str, Dict[str, tuple]] = PATTERN_DATA
+        # Using Any to avoid deep type matching issues across modules
+        # without shared alias
+        self.patterns = PATTERN_DATA  # type: ignore
 
     def get_modes(self) -> list[str]:
         """Get available automaton modes.
@@ -48,7 +50,7 @@ class PatternBrowser:
         """
         mode_patterns = self.patterns.get(mode, {})
         if pattern in mode_patterns:
-            coords, description = mode_patterns[pattern]
+            _, description = mode_patterns[pattern]
             return description
         return ""
 
@@ -64,7 +66,7 @@ class PatternBrowser:
         """
         mode_patterns = self.patterns.get(mode, {})
         if pattern in mode_patterns:
-            coords, description = mode_patterns[pattern]
+            coords, _ = mode_patterns[pattern]
             return coords
         return []
 
@@ -82,8 +84,7 @@ class PatternBrowser:
 
         for mode, patterns in self.patterns.items():
             matching = [
-                name for name in patterns.keys()
-                if query_lower in name.lower()
+                name for name in patterns if query_lower in name.lower()
             ]
             if matching:
                 results[mode] = matching
@@ -104,7 +105,7 @@ class PatternBrowser:
 
         for mode, patterns in self.patterns.items():
             matching = []
-            for name, (coords, desc) in patterns.items():
+            for name, (_, desc) in patterns.items():
                 if query_lower in desc.lower():
                     matching.append(name)
 
@@ -136,9 +137,8 @@ class PatternBrowser:
         return None
 
     def get_most_popular_patterns(
-            self,
-            mode: str,
-            limit: int = 5) -> list[str]:
+        self, mode: str, limit: int = 5
+    ) -> list[str]:
         """Get most popular patterns for a mode.
 
         Returns the first N patterns (typically most popular).

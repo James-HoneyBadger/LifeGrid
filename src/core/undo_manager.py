@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from typing import Any, Deque
 from collections import deque
+from typing import Any, Deque
 
 import numpy as np
 
@@ -37,8 +37,11 @@ class UndoManager:
         self.undo_stack.append((action_name, state_copy))
         self.redo_stack.clear()
 
-    def undo(self) -> tuple[str, Any] | None:
+    def undo(self, current_state: Any) -> tuple[str, Any] | None:
         """Undo the last action.
+
+        Args:
+            current_state: The current state to push to redo stack.
 
         Returns:
             Tuple of (action_name, state) or None if no undo available
@@ -46,12 +49,23 @@ class UndoManager:
         if not self.undo_stack:
             return None
 
-        action_name, state = self.undo_stack.pop()
-        self.redo_stack.append((action_name, state))
-        return (action_name, state)
+        action_name, prev_state = self.undo_stack.pop()
 
-    def redo(self) -> tuple[str, Any] | None:
+        # Copy current state for redo stack
+        state_copy = (
+            np.copy(current_state)
+            if isinstance(current_state, np.ndarray)
+            else current_state
+        )
+        self.redo_stack.append((action_name, state_copy))
+
+        return (action_name, prev_state)
+
+    def redo(self, current_state: Any) -> tuple[str, Any] | None:
         """Redo the last undone action.
+
+        Args:
+            current_state: The current state to push to undo stack.
 
         Returns:
             Tuple of (action_name, state) or None if no redo available
@@ -59,9 +73,17 @@ class UndoManager:
         if not self.redo_stack:
             return None
 
-        action_name, state = self.redo_stack.pop()
-        self.undo_stack.append((action_name, state))
-        return (action_name, state)
+        action_name, next_state = self.redo_stack.pop()
+
+        # Copy current state for undo stack
+        state_copy = (
+            np.copy(current_state)
+            if isinstance(current_state, np.ndarray)
+            else current_state
+        )
+        self.undo_stack.append((action_name, state_copy))
+
+        return (action_name, next_state)
 
     def can_undo(self) -> bool:
         """Check if undo is available."""

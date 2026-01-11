@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Callable
-
 import tkinter as tk
+from dataclasses import dataclass
 from tkinter import ttk
+from typing import Callable
 
 from .config import DEFAULT_CANVAS_HEIGHT, DEFAULT_CANVAS_WIDTH, MODE_PATTERNS
 

@@ -5,10 +5,11 @@ This module provides tools for analyzing grid patterns and discovering
 the underlying rules that govern cell behavior.
 """
 
+from collections import Counter
 from dataclasses import dataclass
 from typing import Any, Dict, List, Set, Tuple
+
 import numpy as np
-from collections import Counter
 
 
 @dataclass
@@ -22,6 +23,7 @@ class RulePattern:
         confidence: Confidence score (0-1) based on observations
         occurrences: Number of times this pattern was observed
     """
+
     neighborhood: Tuple[int, ...]
     current_state: int
     next_state: int
@@ -30,7 +32,7 @@ class RulePattern:
 
     def __str__(self) -> str:
         """String representation."""
-        neighbor_str = ''.join(str(n) for n in self.neighborhood)
+        neighbor_str = "".join(str(n) for n in self.neighborhood)
         return (
             f"Pattern: {neighbor_str} + state={self.current_state} "
             f"→ {self.next_state} "
@@ -49,8 +51,8 @@ class RuleDiscovery:
         neighborhood_type: Type of neighborhood ('moore' or 'von_neumann')
     """
 
-    def __init__(self, neighborhood_type: str = 'moore'):
-        if neighborhood_type not in ('moore', 'von_neumann'):
+    def __init__(self, neighborhood_type: str = "moore"):
+        if neighborhood_type not in ("moore", "von_neumann"):
             raise ValueError(
                 f"Unknown neighborhood type: {neighborhood_type}. "
                 "Use 'moore' or 'von_neumann'"
@@ -58,11 +60,7 @@ class RuleDiscovery:
         self.neighborhood_type = neighborhood_type
         self.observations: Dict[Tuple, List[int]] = {}
 
-    def observe_transition(
-        self,
-        before: np.ndarray,
-        after: np.ndarray
-    ) -> int:
+    def observe_transition(self, before: np.ndarray, after: np.ndarray) -> int:
         """Observe a grid transition and record patterns.
 
         Args:
@@ -97,12 +95,7 @@ class RuleDiscovery:
 
         return patterns_found
 
-    def _get_neighborhood(
-        self,
-        grid: np.ndarray,
-        x: int,
-        y: int
-    ) -> List[int]:
+    def _get_neighborhood(self, grid: np.ndarray, x: int, y: int) -> List[int]:
         """Get neighborhood of a cell.
 
         Args:
@@ -116,20 +109,21 @@ class RuleDiscovery:
         height, width = grid.shape
         neighbors = []
 
-        if self.neighborhood_type == 'moore':
+        if self.neighborhood_type == "moore":
             # Moore neighborhood (8 neighbors)
             offsets = [
-                (-1, -1), (0, -1), (1, -1),
-                (-1, 0), (1, 0),
-                (-1, 1), (0, 1), (1, 1)
+                (-1, -1),
+                (0, -1),
+                (1, -1),
+                (-1, 0),
+                (1, 0),
+                (-1, 1),
+                (0, 1),
+                (1, 1),
             ]
         else:
             # Von Neumann neighborhood (4 neighbors)
-            offsets = [
-                (0, -1),
-                (-1, 0), (1, 0),
-                (0, 1)
-            ]
+            offsets = [(0, -1), (-1, 0), (1, 0), (0, 1)]
 
         for dx, dy in offsets:
             nx, ny = x + dx, y + dy
@@ -143,9 +137,7 @@ class RuleDiscovery:
         return neighbors
 
     def get_discovered_rules(
-        self,
-        min_confidence: float = 0.8,
-        min_occurrences: int = 5
+        self, min_confidence: float = 0.8, min_occurrences: int = 5
     ) -> List[RulePattern]:
         """Get discovered rules that meet confidence thresholds.
 
@@ -178,7 +170,7 @@ class RuleDiscovery:
                     current_state=current_state,
                     next_state=most_common_state,
                     confidence=confidence,
-                    occurrences=len(next_states)
+                    occurrences=len(next_states),
                 )
                 rules.append(rule)
 
@@ -188,8 +180,7 @@ class RuleDiscovery:
         return rules
 
     def infer_birth_survival_rules(
-        self,
-        min_confidence: float = 0.9
+        self, min_confidence: float = 0.9
     ) -> Dict[str, Set[int]]:
         """Infer birth/survival rules (for Life-like automata).
 
@@ -216,15 +207,10 @@ class RuleDiscovery:
             elif rule.current_state != 0 and rule.next_state != 0:
                 survival_counts.add(alive_neighbors)
 
-        return {
-            'birth': birth_counts,
-            'survival': survival_counts
-        }
+        return {"birth": birth_counts, "survival": survival_counts}
 
     def format_birth_survival_notation(
-        self,
-        birth: Set[int],
-        survival: Set[int]
+        self, birth: Set[int], survival: Set[int]
     ) -> str:
         """Format rules in B/S notation (e.g., B3/S23 for Conway's Life).
 
@@ -235,8 +221,8 @@ class RuleDiscovery:
         Returns:
             Rule string in B/S notation
         """
-        birth_str = ''.join(str(n) for n in sorted(birth))
-        survival_str = ''.join(str(n) for n in sorted(survival))
+        birth_str = "".join(str(n) for n in sorted(birth))
+        survival_str = "".join(str(n) for n in sorted(survival))
         return f"B{birth_str}/S{survival_str}"
 
     def get_rule_summary(self) -> Dict[str, Any]:
@@ -255,11 +241,11 @@ class RuleDiscovery:
         medium_confidence_rules = self.get_discovered_rules(min_confidence=0.7)
 
         return {
-            'total_observations': total_observations,
-            'unique_patterns': unique_patterns,
-            'high_confidence_rules': len(high_confidence_rules),
-            'medium_confidence_rules': len(medium_confidence_rules),
-            'neighborhood_type': self.neighborhood_type
+            "total_observations": total_observations,
+            "unique_patterns": unique_patterns,
+            "high_confidence_rules": len(high_confidence_rules),
+            "medium_confidence_rules": len(medium_confidence_rules),
+            "neighborhood_type": self.neighborhood_type,
         }
 
     def reset(self) -> None:
@@ -274,7 +260,7 @@ class RuleDiscovery:
         """
         rules = self.get_discovered_rules(min_confidence=0.7)
 
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write("Cellular Automaton Rules Discovery\n")
             f.write(f"Neighborhood Type: {self.neighborhood_type}\n")
             f.write(f"Total Unique Patterns: {len(self.observations)}\n")
@@ -285,15 +271,15 @@ class RuleDiscovery:
             try:
                 bs_rules = self.infer_birth_survival_rules(min_confidence=0.9)
                 bs_notation = self.format_birth_survival_notation(
-                    bs_rules['birth'],
-                    bs_rules['survival']
+                    bs_rules["birth"], bs_rules["survival"]
                 )
                 f.write(f"Inferred B/S Notation: {bs_notation}\n")
                 f.write(f"Birth: {sorted(bs_rules['birth'])}\n")
                 f.write(f"Survival: {sorted(bs_rules['survival'])}\n")
                 f.write("\n" + "=" * 70 + "\n\n")
-            except Exception:
-                pass
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                f.write(f"Could not infer B/S Notation: {e}\n")
+                f.write("\n" + "=" * 70 + "\n\n")
 
             # Write detailed rules
             f.write("Detailed Rules:\n\n")

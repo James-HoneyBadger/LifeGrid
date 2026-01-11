@@ -11,6 +11,7 @@ from typing import Deque, List, Optional
 
 import numpy as np
 
+from core.undo_manager import UndoManager
 from automata import CellularAutomaton
 
 from .config import DEFAULT_CELL_SIZE, DEFAULT_SPEED, MAX_HISTORY_LENGTH
@@ -35,6 +36,9 @@ class SimulationState:
     )
     grid_history: Deque[np.ndarray] = field(
         default_factory=lambda: deque(maxlen=MAX_HISTORY_LENGTH)
+    )
+    undo_manager: UndoManager = field(
+        default_factory=lambda: UndoManager(max_history=MAX_HISTORY_LENGTH)
     )
     population_peak: int = 0
     entropy_history: Deque[float] = field(
@@ -155,24 +159,22 @@ class SimulationState:
         h, w = grid.shape
         for i in range(h - 2):
             for j in range(w - 2):
-                pattern = tuple(grid[i:i + 3, j:j + 3].flatten())
+                pattern = tuple(grid[i : i + 3, j : j + 3].flatten())
                 patterns.add(pattern)
         return len(patterns)
 
     def add_metric(
-        self,
-        generation: int,
-        population: int,
-        peak: int,
-        density: float
+        self, generation: int, population: int, peak: int, density: float
     ) -> None:
         """Add a metric entry to the log."""
-        self.metrics_log.append({
-            "generation": generation,
-            "population": population,
-            "peak": peak,
-            "density": density,
-        })
+        self.metrics_log.append(
+            {
+                "generation": generation,
+                "population": population,
+                "peak": peak,
+                "density": density,
+            }
+        )
 
     def export_metrics_csv(self) -> str:
         """Export metrics as CSV string."""
@@ -181,18 +183,19 @@ class SimulationState:
 
         output = StringIO()
         writer = csv.DictWriter(
-            output,
-            fieldnames=["generation", "population", "peak", "density"]
+            output, fieldnames=["generation", "population", "peak", "density"]
         )
         writer.writeheader()
 
         for metric in self.metrics_log:
-            writer.writerow({
-                "generation": metric.get("generation", ""),
-                "population": metric.get("population", ""),
-                "peak": metric.get("peak", ""),
-                "density": metric.get("density", ""),
-            })
+            writer.writerow(
+                {
+                    "generation": metric.get("generation", ""),
+                    "population": metric.get("population", ""),
+                    "peak": metric.get("peak", ""),
+                    "density": metric.get("density", ""),
+                }
+            )
 
         return output.getvalue()
 
@@ -204,12 +207,12 @@ class SimulationState:
             "generation": self.generation,
             "metrics_log": self.metrics_log,
         }
-        with open(filepath, 'w') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(state_data, f, indent=2)
 
     def load_state(self, filepath: str) -> None:
         """Load state from a JSON file."""
-        with open(filepath, 'r') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             state_data = json.load(f)
 
         self.cell_size = state_data.get("cell_size", DEFAULT_CELL_SIZE)

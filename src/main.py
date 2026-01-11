@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-import sys
 import importlib.util
+import sys
 
 
 def check_dependencies() -> None:
@@ -30,8 +30,7 @@ def check_dependencies() -> None:
         print("\nPlease install them using:")
         print("  pip install -r requirements.txt")
         print(
-            "\nFor tkinter, ensure you have "
-            "Python with Tk support installed."
+            "\nFor tkinter, ensure you have Python with Tk support installed."
         )
         sys.exit(1)
 
@@ -40,7 +39,8 @@ def main() -> None:
     """Start the Tkinter event loop."""
     check_dependencies()
     # pylint: disable=import-outside-toplevel
-    from lifegrid.gui.app import launch
+    from gui.app import launch
+
     launch()
 
 

@@ -1,25 +1,25 @@
 """FastAPI service scaffold for LifeGrid.
 
-Exposes minimal endpoints for session management, stepping, and streaming.
-This is an initial stub that wraps the core Simulator for HTTP and WebSocket
-clients.
+Exposes endpoints for session management, stepping, pattern loading,
+and streaming. Wraps the core Simulator for HTTP and WebSocket clients.
 """
 
 from __future__ import annotations
 
 import asyncio
+import uuid
 from dataclasses import dataclass, field
 from typing import Dict, Optional
-import uuid
 
 import numpy as np
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from core.simulator import Simulator
+from advanced.rle_format import RLEParser
 from core.config import SimulatorConfig
-
+from core.utils import place_pattern_centered
+from core.simulator import Simulator
 
 app = FastAPI(title="LifeGrid API", version="0.1.0")
 app.add_middleware(
@@ -33,6 +33,8 @@ app.add_middleware(
 
 @dataclass
 class SessionState:
+    """Holds the state for a single simulation session."""
+
     simulator: Simulator
     session_id: str
     last_grid: Optional[np.ndarray] = None
@@ -40,6 +42,8 @@ class SessionState:
 
 
 class CreateSessionRequest(BaseModel):
+    """Request schema for creating a new session."""
+
     width: int = Field(64, ge=4, le=2048)
     height: int = Field(64, ge=4, le=2048)
     mode: str = "Conway's Game of Life"
@@ -49,10 +53,14 @@ class CreateSessionRequest(BaseModel):
 
 
 class StepRequest(BaseModel):
+    """Request schema for stepping the simulation."""
+
     steps: int = Field(1, ge=1, le=1000)
 
 
 class PatternRequest(BaseModel):
+    """Request schema for applying a pattern."""
+
     rle: Optional[str] = None
     pattern_name: Optional[str] = None
 
@@ -77,11 +85,13 @@ def _get_session(session_id: str) -> SessionState:
 
 @app.get("/health")
 def health() -> Dict[str, str]:
+    """Health check endpoint."""
     return {"status": "ok"}
 
 
 @app.post("/session")
 def create_session(req: CreateSessionRequest) -> Dict[str, str]:
+    """Create and initialize a new simulation session."""
     session_id = str(uuid.uuid4())
     config = SimulatorConfig(
         width=req.width,
@@ -98,6 +108,7 @@ def create_session(req: CreateSessionRequest) -> Dict[str, str]:
 
 @app.post("/session/{session_id}/step")
 def step_session(session_id: str, req: StepRequest) -> Dict[str, int]:
+    """Advance the simulation by a number of steps."""
     session = _get_session(session_id)
     session.simulator.step(req.steps)
     session.last_grid = session.simulator.get_grid()
@@ -106,6 +117,7 @@ def step_session(session_id: str, req: StepRequest) -> Dict[str, int]:
 
 @app.get("/session/{session_id}/state")
 def get_state(session_id: str) -> Dict[str, object]:
+    """Retrieve the current grid state and generation."""
     session = _get_session(session_id)
     grid = session.simulator.get_grid()
     session.last_grid = grid
@@ -119,15 +131,34 @@ def get_state(session_id: str) -> Dict[str, object]:
 
 @app.post("/session/{session_id}/pattern")
 def load_pattern(session_id: str, req: PatternRequest) -> Dict[str, str]:
+    """Load a pattern (RLE or named) into the grid."""
     session = _get_session(session_id)
+    if session.simulator.automaton is None:
+        raise HTTPException(
+            status_code=500, detail="Simulator not initialized"
+        )
+
     if req.rle:
-        # TODO: integrate proper RLE parsing; for now, clear grid
-        grid = session.simulator.get_grid()
-        grid[:] = 0
-        session.simulator.automaton.grid = grid
+        try:
+            pattern, _ = RLEParser.parse(req.rle)
+
+            # Create new grid with session dimensions
+            current_grid = session.simulator.automaton.grid
+            h, w = current_grid.shape
+            # Create new grid and place pattern
+            new_grid = np.zeros((h, w), dtype=int)
+            place_pattern_centered(new_grid, pattern)
+
+            session.simulator.automaton.grid = new_grid
+
+        except Exception as e:
+            raise HTTPException(
+                status_code=400, detail=f"Failed to parse RLE: {str(e)}"
+            ) from e
+
     if req.pattern_name and hasattr(
-            session.simulator.automaton,
-            "load_pattern"):
+        session.simulator.automaton, "load_pattern"
+    ):
         session.simulator.automaton.load_pattern(req.pattern_name)
     session.last_grid = session.simulator.get_grid()
     return {"status": "ok"}
@@ -135,6 +166,7 @@ def load_pattern(session_id: str, req: PatternRequest) -> Dict[str, str]:
 
 @app.websocket("/session/{session_id}/stream")
 async def stream_state(websocket: WebSocket, session_id: str) -> None:
+    """Stream simulation state via WebSocket."""
     await websocket.accept()
     session = _get_session(session_id)
     try:

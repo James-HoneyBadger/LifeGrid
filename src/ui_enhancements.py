@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Optional, Callable, Dict
+from typing import Callable, Dict, Optional
 
 
 class ThemeManager:
@@ -94,7 +94,8 @@ class ThemeManager:
         return list(self.THEMES.keys())
 
     def set_on_theme_changed(
-            self, callback: Optional[Callable[[str], None]]) -> None:
+        self, callback: Optional[Callable[[str], None]]
+    ) -> None:
         """Set callback for theme changes.
 
         Args:

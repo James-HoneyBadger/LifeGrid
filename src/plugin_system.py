@@ -84,7 +84,8 @@ class PluginManager:
 
             try:
                 spec = importlib.util.spec_from_file_location(
-                    py_file.stem, py_file)
+                    py_file.stem, py_file
+                )
                 if spec and spec.loader:
                     module = importlib.util.module_from_spec(spec)
                     spec.loader.exec_module(module)
@@ -101,8 +102,10 @@ class PluginManager:
                                 plugin_instance = attr()
                                 self.register_plugin(plugin_instance)
                                 loaded_count += 1
+                            # pylint: disable=broad-exception-caught
                             except Exception:
                                 continue
+            # pylint: disable=broad-exception-caught
             except Exception:
                 continue
 
@@ -129,10 +132,8 @@ class PluginManager:
         return list(self.plugins.keys())
 
     def create_automaton(
-            self,
-            plugin_name: str,
-            width: int,
-            height: int) -> Optional[CellularAutomaton]:
+        self, plugin_name: str, width: int, height: int
+    ) -> Optional[CellularAutomaton]:
         """Create an automaton from a plugin.
 
         Args:

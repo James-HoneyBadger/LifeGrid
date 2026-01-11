@@ -6,7 +6,7 @@ This replaces hardcoded settings with a proper dataclass-based approach.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from typing import Optional
 
@@ -18,6 +18,8 @@ class AppConfig:
     Centralizes configuration management without depending on the GUI layer.
     """
 
+    # pylint: disable=too-many-instance-attributes
+
     # Window settings
     window_width: int = 1200
     window_height: int = 800
@@ -26,6 +28,7 @@ class AppConfig:
     # Grid settings
     grid_width: int = 100
     grid_height: int = 100
+    grid_size_selection: str = "100x100"
 
     # Display settings
     cell_size: int = 8
@@ -36,6 +39,16 @@ class AppConfig:
     speed: int = 50
     automaton_mode: str = "Conway's Game of Life"
     default_pattern: str = "Random Soup"
+
+    # Advanced Simulation State
+    custom_birth: str = "3"
+    custom_survival: str = "23"
+    draw_mode: str = "Draw"
+    symmetry: str = "None"
+
+    # Custom Dimensions
+    custom_width: int = 100
+    custom_height: int = 100
 
     # Export settings
     export_format: str = "png"
@@ -69,10 +82,12 @@ class AppConfig:
         config_path = Path(filepath)
         if config_path.exists():
             try:
-                with open(config_path, 'r') as f:
+                with open(config_path, "r", encoding="utf-8") as f:
                     data = json.load(f)
-                return cls(**{k: v for k, v in data.items()
-                           if k in cls.__dataclass_fields__})
+                valid_keys = {f.name for f in fields(cls)}
+                return cls(
+                    **{k: v for k, v in data.items() if k in valid_keys}
+                )
             except (json.JSONDecodeError, KeyError):
                 return cls()
 
@@ -90,7 +105,7 @@ class AppConfig:
         config_path = Path(filepath)
         config_path.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(config_path, 'w') as f:
+        with open(config_path, "w", encoding="utf-8") as f:
             json.dump(asdict(self), f, indent=2)
 
     def to_dict(self) -> dict:
@@ -99,6 +114,6 @@ class AppConfig:
 
     @classmethod
     def from_dict(cls, data: dict) -> AppConfig:
-        """Create from dictionary."""
-        return cls(**{k: v for k, v in data.items()
-                   if k in cls.__dataclass_fields__})
+        """Create configuration from dictionary."""
+        valid_keys = {f.name for f in fields(cls)}
+        return cls(**{k: v for k, v in data.items() if k in valid_keys})

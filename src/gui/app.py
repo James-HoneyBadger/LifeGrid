@@ -8,35 +8,40 @@ from __future__ import annotations
 
 import csv
 import json
-
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 
 import numpy as np
 
-from automata import LifeLikeAutomaton
+from advanced.rle_format import RLEParser
+from core.utils import place_pattern_centered
+from automata import LifeLikeAutomaton, HexagonalGameOfLife
+from config_manager import AppConfig
+from patterns import get_pattern_description, PATTERN_DATA
+from plugin_system import PluginManager
+from ui_enhancements import ThemeManager
 from version import __version__ as LIFEGRID_VERSION
-from patterns import get_pattern_description
 
 from .config import (
     DEFAULT_CUSTOM_BIRTH,
     DEFAULT_CUSTOM_SURVIVAL,
-    DEFAULT_SPEED,
-    DEFAULT_CELL_SIZE,
-    MIN_CELL_SIZE,
-    MAX_CELL_SIZE,
     EXPORT_COLOR_MAP,
+    MAX_CELL_SIZE,
     MAX_GRID_SIZE,
+    MIN_CELL_SIZE,
     MIN_GRID_SIZE,
     MODE_FACTORIES,
     MODE_PATTERNS,
+    CELL_COLORS,
 )
 from .rendering import draw_grid, symmetry_positions
 from .state import SimulationState
+from .tools import ToolManager, Stamp
 from .ui import Callbacks, TkVars, Widgets, build_ui
 
 try:
     from PIL import Image as PILImage
+
     PIL_AVAILABLE = True
 except ImportError:
     PILImage = None  # type: ignore[assignment]
@@ -59,19 +64,35 @@ class AutomatonApp:
         self.root = root
         self.root.title("LifeGrid")
 
-        self.settings_file = "settings.json"
-        self.settings = self._load_settings()
+        self.theme_manager = ThemeManager()
+        self.config = AppConfig.load("settings.json")
+
+        # Load saved theme preference
+        self.theme_manager.set_theme(self.config.theme)
 
         self.state = SimulationState()
+
+        # Initialize Plugin System
+        self.plugin_manager = PluginManager()
+        self._load_plugins()
+
         self.custom_birth = set(DEFAULT_CUSTOM_BIRTH)
         self.custom_survival = set(DEFAULT_CUSTOM_SURVIVAL)
-        self.custom_birth_text = "".join(
-            str(n) for n in sorted(self.custom_birth)
-        )
-        self.custom_survival_text = "".join(
-            str(n) for n in sorted(self.custom_survival)
-        )
-        self._load_custom_rules_from_settings()
+
+        # Load custom rule if present in config
+        if self.config.custom_birth:
+            self.custom_birth_text = self.config.custom_birth
+        else:
+            self.custom_birth_text = "".join(
+                str(n) for n in sorted(self.custom_birth)
+            )
+
+        if self.config.custom_survival:
+            self.custom_survival_text = self.config.custom_survival
+        else:
+            self.custom_survival_text = "".join(
+                str(n) for n in sorted(self.custom_survival)
+            )
 
         self.tk_vars: TkVars = self._create_variables()
         self.state.cell_size = self.tk_vars.cell_size.get()
@@ -93,8 +114,12 @@ class AutomatonApp:
             command=self.toggle_simulation
         )
 
-        self.state.show_grid = self.settings.get("show_grid", True)
+        # Apply theme
+        self._apply_theme_colors()
 
+        self.state.show_grid = self.config.show_grid
+
+        self.tool_manager = ToolManager()
         self._configure_bindings()
         self.switch_mode(self.tk_vars.mode.get())
         self._update_widgets_enabled_state()
@@ -105,6 +130,111 @@ class AutomatonApp:
 
         # Menubar
         self._install_menubar()
+
+    def _create_tools_menu(self, parent_menu: tk.Menu) -> None:
+        """Create the Tools menu with available stamps."""
+        tools_menu = tk.Menu(parent_menu, tearoff=0)
+
+        tools_menu.add_command(
+            label="Pencil (Draw Individual Cells)",
+            command=self.tool_manager.set_pencil,
+        )
+        tools_menu.add_command(
+            label="Eraser (Clear Individual Cells)",
+            command=self.tool_manager.set_eraser,
+        )
+        tools_menu.add_command(
+            label="Selection Box",
+            command=self.tool_manager.set_selection,
+        )
+        tools_menu.add_separator()
+
+        # Add stamps from loaded patterns
+        stamps_menu = tk.Menu(tools_menu, tearoff=0)
+
+        # We'll use Conway patterns for generic stamping for now
+        # Ideally this would filter by current mode
+        cats = PATTERN_DATA.get("Conway's Game of Life", {})
+        count = 0
+        for name, (points, desc) in cats.items():
+            if len(points) < 50:  # Limit to smaller stamps
+                stamp = Stamp(name, points, desc)
+                stamps_menu.add_command(
+                    label=name,
+                    command=lambda s=stamp: self.tool_manager.set_stamp(s),
+                )
+                count += 1
+                if count >= 15:
+                    break  # Don't overwhelm the menu
+
+        tools_menu.add_cascade(label="Stamps", menu=stamps_menu)
+        parent_menu.add_cascade(label="Tools", menu=tools_menu)
+
+    def set_app_theme(self, theme_name: str) -> None:
+        """Switch application theme."""
+        if self.theme_manager.set_theme(theme_name):
+            self.config.theme = theme_name
+            self._apply_theme_colors()
+            self._update_display()
+
+    def _apply_theme_colors(self) -> None:
+        """Apply current theme colors to widgets."""
+        colors = self.theme_manager.get_colors()
+        bg = colors["bg"]
+        fg = colors["fg"]
+        btn_bg = colors["button_bg"]
+        btn_fg = colors["button_fg"]
+
+        style = ttk.Style(self.root)
+        style.configure("TFrame", background=bg)
+        style.configure("TLabel", background=bg, foreground=fg)
+        style.configure("TButton", background=btn_bg, foreground=btn_fg)
+        style.configure("TLabelframe", background=bg, foreground=fg)
+        style.configure("TLabelframe.Label", background=bg, foreground=fg)
+        style.configure("TCheckbutton", background=bg, foreground=fg)
+        style.configure("TRadiobutton", background=bg, foreground=fg)
+
+        self.root.configure(bg=bg)
+        if self.widgets.canvas:
+            self.widgets.canvas.configure(bg=colors["cell_dead"])
+
+    def load_rle_pattern(self) -> None:
+        """Load a pattern from an RLE file."""
+        filename = filedialog.askopenfilename(
+            title="Import RLE Pattern",
+            filetypes=[("RLE Files", "*.rle"), ("All Files", "*.*")],
+        )
+        if not filename:
+            return
+
+        try:
+            with open(filename, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            pattern, _ = RLEParser.parse(content)
+
+            # Apply to current grid centered
+            automaton = self.state.current_automaton
+            if not automaton:
+                return
+
+            current_grid = automaton.get_grid()
+
+            # Reset grid
+            current_grid[:] = 0
+
+            # Center the pattern
+            place_pattern_centered(current_grid, pattern)
+
+            automaton.grid = (
+                current_grid  # Some automata might need explicit set
+            )
+
+            self._update_display()
+            messagebox.showinfo("Success", "RLE pattern loaded successfully.")
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            messagebox.showerror("Error", f"Failed to load RLE file:\n{e}")
 
     def _on_close(self) -> None:
         """Save settings and close the application."""
@@ -141,6 +271,10 @@ class AutomatonApp:
             label="Load Pattern…",
             command=self.load_saved_pattern,
         )
+        file_menu.add_command(
+            label="Import RLE…",
+            command=self.load_rle_pattern,
+        )
         file_menu.add_separator()
         file_menu.add_command(
             label="Export Metrics (CSV)…",
@@ -153,6 +287,25 @@ class AutomatonApp:
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self._on_close)
         menubar.add_cascade(label="File", menu=file_menu)
+
+        edit_menu = tk.Menu(menubar, tearoff=0)
+        edit_menu.add_command(
+            label="Undo", accelerator="Ctrl+Z", command=self.undo_action
+        )
+        edit_menu.add_command(
+            label="Redo", accelerator="Ctrl+Y", command=self.redo_action
+        )
+        edit_menu.add_separator()
+        edit_menu.add_command(
+            label="Copy", accelerator="Ctrl+C", command=self.copy_selection
+        )
+        edit_menu.add_command(
+            label="Cut", accelerator="Ctrl+X", command=self.cut_selection
+        )
+        edit_menu.add_command(
+            label="Paste", accelerator="Ctrl+V", command=self.paste_selection
+        )
+        menubar.add_cascade(label="Edit", menu=edit_menu)
 
         sim_menu = tk.Menu(menubar, tearoff=0)
         # Keep vital play/step controls in the sidebar to avoid redundancy.
@@ -193,7 +346,22 @@ class AutomatonApp:
             label="Toggle Grid",
             command=self.toggle_grid,
         )
+
+        settings_menu.add_separator()
+        theme_menu = tk.Menu(settings_menu, tearoff=0)
+        theme_menu.add_command(
+            label="Light",
+            command=lambda: self.set_app_theme("light"),
+        )
+        theme_menu.add_command(
+            label="Dark",
+            command=lambda: self.set_app_theme("dark"),
+        )
+        settings_menu.add_cascade(label="Theme", menu=theme_menu)
+
         menubar.add_cascade(label="Settings", menu=settings_menu)
+
+        self._create_tools_menu(menubar)
 
         help_menu = tk.Menu(menubar, tearoff=0)
         help_menu.add_command(label="Shortcuts", command=show_shortcuts)
@@ -380,8 +548,8 @@ class AutomatonApp:
             if grid_size_var.get() == "Custom":
                 self.apply_custom_grid_size()
             else:
-                self.on_size_preset_change(
-                    tk.Event()  # type: ignore[call-arg]
+                self.on_size_preset_change(  # type: ignore[call-arg]
+                    tk.Event()
                 )
 
             # Cell size
@@ -403,53 +571,63 @@ class AutomatonApp:
     # ------------------------------------------------------------------
     # Variable and widget helpers
     # ------------------------------------------------------------------
-    def _load_settings(self) -> dict:
-        """Load user settings from file."""
-        try:
-            with open(self.settings_file, "r", encoding="utf-8") as f:
-                return json.load(f)  # type: ignore[no-any-return]
-        except (FileNotFoundError, json.JSONDecodeError):
-            return {}
 
     def _save_settings(self) -> None:
-        """Save current settings to file."""
-        settings = {
-            "mode": self.tk_vars.mode.get(),
-            "pattern": self.tk_vars.pattern.get(),
-            "speed": self.tk_vars.speed.get(),
-            "grid_size": self.tk_vars.grid_size.get(),
-            "custom_width": self.tk_vars.custom_width.get(),
-            "custom_height": self.tk_vars.custom_height.get(),
-            "cell_size": self.tk_vars.cell_size.get(),
-            "draw_mode": self.tk_vars.draw_mode.get(),
-            "symmetry": self.tk_vars.symmetry.get(),
-            "show_grid": self.state.show_grid,
-            "custom_birth": self.custom_birth_text,
-            "custom_survival": self.custom_survival_text,
-        }
+        """Apply current state to config and save to file."""
+        self.config.automaton_mode = self.tk_vars.mode.get()
+        self.config.default_pattern = self.tk_vars.pattern.get()
+        self.config.speed = self.tk_vars.speed.get()
+
+        # Grid settings
+        self.config.grid_size_selection = self.tk_vars.grid_size.get()
+        self.config.custom_width = self.tk_vars.custom_width.get()
+        self.config.custom_height = self.tk_vars.custom_height.get()
+
+        # View settings
+        self.config.cell_size = self.tk_vars.cell_size.get()
+        self.config.draw_mode = self.tk_vars.draw_mode.get()
+        self.config.symmetry = self.tk_vars.symmetry.get()
+        self.config.show_grid = self.state.show_grid
+
+        # Rules
+        self.config.custom_birth = self.custom_birth_text
+        self.config.custom_survival = self.custom_survival_text
+        self.config.theme = self.theme_manager.get_theme()
+
         try:
-            with open(self.settings_file, "w", encoding="utf-8") as f:
-                json.dump(settings, f, indent=2)
-        except OSError:
-            pass  # Silently fail if can't save
+            self.config.save("settings.json")
+        except OSError as e:
+            print(f"Warning: Failed to save settings: {e}")
+
+    def _load_plugins(self) -> None:
+        """Load plugins and register them."""
+        # Load from project 'plugins' directory
+        plugin_dir = "plugins"
+        count = self.plugin_manager.load_plugins_from_directory(plugin_dir)
+        if count > 0:
+            print(f"Loaded {count} plugins from {plugin_dir}")
+
+        # Register plugins into factory and pattern lists
+        for name in self.plugin_manager.list_plugins():
+            plugin = self.plugin_manager.get_plugin(name)
+            if plugin:
+                # Add factory
+                MODE_FACTORIES[name] = plugin.create_automaton
+                # Add default pattern
+                MODE_PATTERNS[name] = ["Random Soup"]
 
     def _create_variables(self) -> TkVars:
-        settings = self.settings
-
         # Ensure we always start from a valid default on cold start.
         default_mode = "Conway's Game of Life"
-        default_pattern = "Classic Mix"
 
-        requested_mode = settings.get("mode", default_mode)
+        requested_mode = self.config.automaton_mode
         valid_modes = set(MODE_FACTORIES.keys()) | {"Custom Rules"}
         mode = (
-            requested_mode
-            if requested_mode in valid_modes
-            else default_mode
+            requested_mode if requested_mode in valid_modes else default_mode
         )
 
         available_patterns = MODE_PATTERNS.get(mode, ["Empty"])
-        requested_pattern = settings.get("pattern", default_pattern)
+        requested_pattern = self.config.default_pattern
         pattern = (
             requested_pattern
             if requested_pattern in available_patterns
@@ -459,44 +637,14 @@ class AutomatonApp:
         return TkVars(
             mode=tk.StringVar(value=mode),
             pattern=tk.StringVar(value=pattern),
-            speed=tk.IntVar(value=settings.get("speed", DEFAULT_SPEED)),
-            grid_size=tk.StringVar(value=settings.get("grid_size", "100x100")),
-            custom_width=tk.IntVar(value=settings.get("custom_width", 100)),
-            custom_height=tk.IntVar(value=settings.get("custom_height", 100)),
-            cell_size=tk.IntVar(
-                value=settings.get("cell_size", DEFAULT_CELL_SIZE)
-            ),
-            draw_mode=tk.StringVar(value=settings.get("draw_mode", "toggle")),
-            symmetry=tk.StringVar(value=settings.get("symmetry", "None")),
+            speed=tk.IntVar(value=self.config.speed),
+            grid_size=tk.StringVar(value=self.config.grid_size_selection),
+            custom_width=tk.IntVar(value=self.config.custom_width),
+            custom_height=tk.IntVar(value=self.config.custom_height),
+            cell_size=tk.IntVar(value=self.config.cell_size),
+            draw_mode=tk.StringVar(value=self.config.draw_mode),
+            symmetry=tk.StringVar(value=self.config.symmetry),
         )
-
-    def _load_custom_rules_from_settings(self) -> None:
-        """Load custom B/S rule strings from settings if present."""
-
-        birth = self.settings.get("custom_birth")
-        survival = self.settings.get("custom_survival")
-        if isinstance(birth, str):
-            self.custom_birth_text = birth.strip()
-        if isinstance(survival, str):
-            self.custom_survival_text = survival.strip()
-
-        # Try to prime the rule sets as well.
-        try:
-            self.custom_birth = {
-                int(ch) for ch in self.custom_birth_text if ch.isdigit()
-            }
-            self.custom_survival = {
-                int(ch) for ch in self.custom_survival_text if ch.isdigit()
-            }
-        except ValueError:
-            self.custom_birth = set(DEFAULT_CUSTOM_BIRTH)
-            self.custom_survival = set(DEFAULT_CUSTOM_SURVIVAL)
-            self.custom_birth_text = "".join(
-                str(n) for n in sorted(self.custom_birth)
-            )
-            self.custom_survival_text = "".join(
-                str(n) for n in sorted(self.custom_survival)
-            )
 
     def _snapshot_grid(self) -> None:
         """Store a copy of the current grid for backward stepping."""
@@ -532,6 +680,16 @@ class AutomatonApp:
         self.root.bind("<Key-C>", lambda _event: self.clear_grid())
         self.root.bind("<Key-g>", lambda _event: self.toggle_grid())
         self.root.bind("<Key-G>", lambda _event: self.toggle_grid())
+        self.root.bind("<Control-z>", self.undo_action)
+        self.root.bind("<Control-Z>", self.redo_action)
+        self.root.bind("<Control-y>", self.redo_action)
+        self.root.bind("<Control-Y>", self.redo_action)
+        self.root.bind("<Control-c>", self.copy_selection)
+        self.root.bind("<Control-C>", self.copy_selection)
+        self.root.bind("<Control-x>", self.cut_selection)
+        self.root.bind("<Control-X>", self.cut_selection)
+        self.root.bind("<Control-v>", self.paste_selection)
+        self.root.bind("<Control-V>", self.paste_selection)
 
     def _update_widgets_enabled_state(self) -> None:
         # Custom-rules controls are now in the Settings menu.
@@ -657,6 +815,111 @@ class AutomatonApp:
         self._update_generation_label()
         self._update_display()
 
+    def _push_undo(self, action_name: str = "Edit") -> None:
+        """Push the current state to the undo stack."""
+        automaton = self.state.current_automaton
+        if getattr(automaton, "grid", None) is None:
+            return
+
+        # Snapshot current grid and generation
+        snapshot = (
+            np.copy(automaton.grid),  # type: ignore[attr-defined]
+            self.state.generation,
+        )
+        self.state.undo_manager.push_state(action_name, snapshot)
+
+    def undo_action(self, _event: tk.Event = None) -> None:
+        """Undo the last action."""
+        automaton = self.state.current_automaton
+        if getattr(automaton, "grid", None) is None:
+            return
+
+        current_snapshot = (
+            automaton.grid,  # type: ignore[attr-defined]
+            self.state.generation,
+        )
+
+        result = self.state.undo_manager.undo(current_snapshot)
+        if result:
+            _, (grid, generation) = result
+            self._restore_state(grid, generation)
+            self._update_display()
+
+    def redo_action(self, _event: tk.Event = None) -> None:
+        """Redo the last undone action."""
+        automaton = self.state.current_automaton
+        if getattr(automaton, "grid", None) is None:
+            return
+
+        current_snapshot = (
+            automaton.grid,  # type: ignore[attr-defined]
+            self.state.generation,
+        )
+
+        result = self.state.undo_manager.redo(current_snapshot)
+        if result:
+            _, (grid, generation) = result
+            self._restore_state(grid, generation)
+            self._update_display()
+
+    def _restore_state(self, grid: np.ndarray, generation: int) -> None:
+        """Restore internal state from a snapshot."""
+        automaton = self.state.current_automaton
+        if automaton:
+            automaton.grid = np.copy(grid)  # type: ignore[attr-defined]
+
+        self.state.generation = generation
+        self.state.rebuild_stats_from_history()
+        self._update_generation_label()
+        self._update_display()
+
+    def copy_selection(self, _event: tk.Event = None) -> None:
+        """Copy the selected area to the clipboard."""
+        rect = self.tool_manager.get_selection_rect()
+        automaton = self.state.current_automaton
+        if not (rect and automaton):
+            return
+
+        x1, y1, x2, y2 = rect
+        # Slicing is exclusive at the end, so add 1
+        region = automaton.grid[y1 : y2 + 1, x1 : x2 + 1]
+
+        points = []
+        rows, cols = region.shape
+        for r in range(rows):
+            for c in range(cols):
+                if region[r, c] == 1:
+                    points.append((c, r))
+
+        stamp = Stamp("Clipboard", points)
+        self.tool_manager.set_clipboard(stamp)
+        # Visual feedback via clearing selection is optional,
+        # but let's keep the selection visible to confirm what was copied.
+
+    def cut_selection(self, _event: tk.Event = None) -> None:
+        """Cut the selected area to the clipboard."""
+        rect = self.tool_manager.get_selection_rect()
+        automaton = self.state.current_automaton
+        if not (rect and automaton):
+            return
+
+        self._push_undo("Cut")
+        self.copy_selection()
+
+        x1, y1, x2, y2 = rect
+        automaton.grid[y1 : y2 + 1, x1 : x2 + 1] = 0
+
+        self.tool_manager.clear_selection()
+        self._update_display()
+
+    def paste_selection(self, _event: tk.Event = None) -> None:
+        """Enter stamp mode with the clipboard content."""
+        stamp = self.tool_manager.get_clipboard()
+        if stamp:
+            self.tool_manager.set_stamp(stamp)
+        else:
+            messagebox.showwarning("Paste", "Clipboard is empty.")
+
     def _update_generation_label(self) -> None:
         generation_text = f"Generation: {self.state.generation}"
         self.widgets.gen_label.config(  # type: ignore[attr-defined]
@@ -670,6 +933,7 @@ class AutomatonApp:
         if not automaton:
             return
         self.stop_simulation()
+        self._push_undo("Reset Simulation")
         automaton.reset()
         self.state.reset_generation()
         self._reset_history_with_current_grid()
@@ -683,6 +947,7 @@ class AutomatonApp:
         if not automaton:
             return
         self.stop_simulation()
+        self._push_undo("Clear Grid")
         automaton.reset()
         self.state.reset_generation()
         self._reset_history_with_current_grid()
@@ -706,9 +971,7 @@ class AutomatonApp:
             return
 
         birth_text = (
-            birth_text
-            if birth_text is not None
-            else self.custom_birth_text
+            birth_text if birth_text is not None else self.custom_birth_text
         ).strip()
         survival_text = (
             survival_text
@@ -759,9 +1022,7 @@ class AutomatonApp:
 
         # Create user-friendly rule description
         birth_str = (
-            "".join(str(n) for n in sorted(birth_set))
-            if birth_set
-            else "∅"
+            "".join(str(n) for n in sorted(birth_set)) if birth_set else "∅"
         )
         survival_str = (
             "".join(str(n) for n in sorted(survival_set))
@@ -882,9 +1143,7 @@ class AutomatonApp:
         # Validate required fields
         required_fields = ["mode", "width", "height", "grid"]
         missing_fields = [
-            field
-            for field in required_fields
-            if field not in data
+            field for field in required_fields if field not in data
         ]
         if missing_fields:
             messagebox.showerror(
@@ -961,9 +1220,7 @@ class AutomatonApp:
                 )
 
         try:
-            expected_shape = (
-                self.state.grid_height, self.state.grid_width
-            )
+            expected_shape = (self.state.grid_height, self.state.grid_width)
             if automaton is not None and hasattr(automaton, "grid"):
                 setattr(
                     automaton,
@@ -1046,12 +1303,47 @@ class AutomatonApp:
         if not (automaton and self.widgets.canvas):
             return
         grid = automaton.get_grid()
+
+        # Build color map for rendering
+        theme = self.theme_manager.get_colors()
+
+        # Override 0/1 with theme colors
+        colors = CELL_COLORS.copy()
+        colors[0] = theme["cell_dead"]
+        colors[1] = theme["cell_alive"]
+
+        geometry = (
+            "hexagonal"
+            if isinstance(automaton, HexagonalGameOfLife)
+            else "square"
+        )
+
         draw_grid(
             self.widgets.canvas,
             grid,
             self.state.cell_size,
             self.state.show_grid,
+            colors=colors,
+            grid_line_color=theme["grid_line"],
+            geometry=geometry,
         )
+
+        # Overlay selection box if active
+        sel_rect = self.tool_manager.get_selection_rect()
+        if sel_rect and geometry == "square":
+            x1, y1, x2, y2 = sel_rect
+            cs = self.state.cell_size
+            self.widgets.canvas.create_rectangle(
+                x1 * cs,
+                y1 * cs,
+                (x2 + 1) * cs,
+                (y2 + 1) * cs,
+                outline="#facc15",  # Yellow-400
+                width=2,
+                dash=(4, 2),
+                tag="selection_overlay",
+            )
+
         stats = self.state.update_population_stats(grid)
         self.widgets.population_label.config(  # type: ignore[attr-defined]
             text=stats
@@ -1063,29 +1355,69 @@ class AutomatonApp:
         self.state.show_grid = not self.state.show_grid
         self._update_display()
 
+    def _get_grid_coordinates(
+        self, event: tk.Event[tk.Misc]
+    ) -> tuple[int, int]:
+        """Convert canvas coordinates to grid indices."""
+        automaton = self.state.current_automaton
+        if not (automaton and self.widgets.canvas):
+            return -1, -1
+
+        canvas_x = self.widgets.canvas.canvasx(event.x)
+        canvas_y = self.widgets.canvas.canvasy(event.y)
+
+        if isinstance(automaton, HexagonalGameOfLife):
+            # Approximate hex hit test
+            # Geometry matching _draw_hex_grid in rendering.py
+            cell_size = self.state.cell_size
+            radius = cell_size / 1.73205  # sqrt(3)
+            row_height = 1.5 * radius
+
+            y = int(canvas_y / row_height)
+
+            # Odd-r offset logic
+            x_shift = (cell_size / 2) if (y % 2) else 0
+            x = int((canvas_x - x_shift) / cell_size)
+        else:
+            x = int(canvas_x // self.state.cell_size)
+            y = int(canvas_y // self.state.cell_size)
+
+        return x, y
+
     def on_canvas_click(self, event: tk.Event[tk.Misc]) -> None:
         """Handle a canvas click based on the active draw mode."""
+        x, y = self._get_grid_coordinates(event)
+        if not (
+            0 <= x < self.state.grid_width and 0 <= y < self.state.grid_height
+        ):
+            return
 
-        self._handle_canvas_interaction(event)
+        if self.tool_manager.active_tool == "selection":
+            self.tool_manager.selection_start = (x, y)
+            self.tool_manager.selection_end = (x, y)
+            self._update_display()
+            return
+
+        self._push_undo("Draw")
+        self._apply_draw_action(x, y)
+        self._update_display()
 
     def on_canvas_drag(self, event: tk.Event[tk.Misc]) -> None:
         """Handle a canvas drag while the pointer button is held."""
-
-        self._handle_canvas_interaction(event)
-
-    def _handle_canvas_interaction(self, event: tk.Event[tk.Misc]) -> None:
-        """Translate canvas coordinates into grid mutations."""
-
-        automaton = self.state.current_automaton
-        if not (automaton and self.widgets.canvas):
+        x, y = self._get_grid_coordinates(event)
+        if not (
+            0 <= x < self.state.grid_width and 0 <= y < self.state.grid_height
+        ):
             return
-        canvas_x = self.widgets.canvas.canvasx(event.x)
-        canvas_y = self.widgets.canvas.canvasy(event.y)
-        x = int(canvas_x // self.state.cell_size)
-        y = int(canvas_y // self.state.cell_size)
-        if 0 <= x < self.state.grid_width and 0 <= y < self.state.grid_height:
-            self._apply_draw_action(x, y)
-            self._update_display()
+
+        if self.tool_manager.active_tool == "selection":
+            if self.tool_manager.selection_start:
+                self.tool_manager.selection_end = (x, y)
+                self._update_display()
+            return
+
+        self._apply_draw_action(x, y)
+        self._update_display()
 
     def _apply_draw_action(self, x: int, y: int) -> None:
         """Apply the selected drawing action at the given grid coordinate."""
@@ -1093,6 +1425,21 @@ class AutomatonApp:
         automaton = self.state.current_automaton
         if not automaton:
             return
+
+        # Stamp Logic
+        if self.tool_manager.is_stamp_active():
+            stamp = self.tool_manager.get_stamp()
+            if stamp and stamp.points:
+                for dx, dy in stamp.points:
+                    target_x = x + dx
+                    target_y = y + dy
+                    if (
+                        0 <= target_x < self.state.grid_width
+                        and 0 <= target_y < self.state.grid_height
+                    ):
+                        automaton.grid[target_y, target_x] = 1
+            return
+
         positions = symmetry_positions(
             x,
             y,
@@ -1100,21 +1447,25 @@ class AutomatonApp:
             self.state.grid_height,
             self.tk_vars.symmetry.get(),
         )
+
         for px, py in positions:
             within_width = 0 <= px < self.state.grid_width
             within_height = 0 <= py < self.state.grid_height
             if not (within_width and within_height):
                 continue
-            if self.tk_vars.draw_mode.get() == "toggle":
-                automaton.handle_click(px, py)
-            elif self.tk_vars.draw_mode.get() == "pen" and hasattr(
-                automaton, 'grid'
-            ):
-                automaton.grid[py, px] = 1  # type: ignore[attr-defined]
-            elif self.tk_vars.draw_mode.get() == "eraser" and hasattr(
-                automaton, 'grid'
-            ):
-                automaton.grid[py, px] = 0  # type: ignore[attr-defined]
+
+            # Tools override 'Toggle' vs 'Pen' behavior from draw_mode
+            if self.tool_manager.active_tool == "eraser":
+                automaton.grid[py, px] = 0
+            elif self.tool_manager.active_tool == "pencil":
+                # Use existing Draw Mode logic for pencil
+                if self.tk_vars.draw_mode.get() == "toggle":
+                    automaton.handle_click(px, py)
+                elif self.tk_vars.draw_mode.get() == "pen":
+                    automaton.grid[py, px] = 1
+                elif self.tk_vars.draw_mode.get() == "eraser":
+                    # Fallback if UI still has Eraser in legacy dropdown
+                    automaton.grid[py, px] = 0
 
     def export_metrics(self) -> None:
         """Export per-generation metrics to CSV."""

@@ -1,19 +1,21 @@
 """Cellular Automaton implementations"""
 
+from .ant import LangtonsAnt
 from .base import CellularAutomaton
+from .briansbrain import BriansBrain
 from .conway import ConwayGameOfLife
+from .generations import GenerationsAutomaton
+from .hexagonal import HexagonalGameOfLife
 from .highlife import HighLife
 from .immigration import ImmigrationGame
-from .rainbow import RainbowGame
-from .ant import LangtonsAnt
 from .lifelike import LifeLikeAutomaton, parse_bs
+from .rainbow import RainbowGame
 from .wireworld import Wireworld
-from .briansbrain import BriansBrain
-from .generations import GenerationsAutomaton
 
 __all__ = [
     "CellularAutomaton",
     "ConwayGameOfLife",
+    "HexagonalGameOfLife",
     "HighLife",
     "ImmigrationGame",
     "RainbowGame",
