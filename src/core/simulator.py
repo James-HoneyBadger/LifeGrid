@@ -174,12 +174,14 @@ class Simulator:
         Returns:
             True if undo was successful
         """
-        result = self.undo_manager.undo()
+        if not self.automaton:
+            return False
+        current_grid = np.copy(self.automaton.get_grid())
+        result = self.undo_manager.undo(current_grid)
         if result:
             _, grid = result
-            if self.automaton:
-                self.automaton.grid = np.copy(grid)
-                self.generation = max(0, self.generation - 1)
+            self.automaton.grid = np.copy(grid)
+            self.generation = max(0, self.generation - 1)
             return True
         return False
 
@@ -189,12 +191,14 @@ class Simulator:
         Returns:
             True if redo was successful
         """
-        result = self.undo_manager.redo()
+        if not self.automaton:
+            return False
+        current_grid = np.copy(self.automaton.get_grid())
+        result = self.undo_manager.redo(current_grid)
         if result:
             _, grid = result
-            if self.automaton:
-                self.automaton.grid = np.copy(grid)
-                self.generation += 1
+            self.automaton.grid = np.copy(grid)
+            self.generation += 1
             return True
         return False
 

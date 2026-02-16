@@ -1,119 +1,246 @@
 # LifeGrid
 
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-3.0.0-green.svg)](https://github.com/James-HoneyBadger/LifeGrid)
+A feature-rich cellular automata simulator with a modern Tkinter GUI, headless CLI, REST/WebSocket API, GPU acceleration, and plugin support.
 
-**LifeGrid** is an extensible cellular automaton simulator featuring a graphical user interface, robust pattern management, and a plugin system. Built with Python and Tkinter, it offers a rich environment for exploring Conway's Game of Life and many other automata variations.
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
+![License MIT](https://img.shields.io/badge/license-MIT-green)
+![Version 3.1.0](https://img.shields.io/badge/version-3.1.0-orange)
 
-## Table of Contents
-
-- [About](#about)
-- [Features](#features)
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-- [Contributing](#contributing)
-- [License](#license)
-
-## About
-
-LifeGrid provides a powerful platform for simulating, analyzing, and visualizing cellular automata. Whether you are a student exploring emergence, a researcher testing new rules, or a hobbyist creating intricate patterns, LifeGrid offers the tools you need.
+---
 
 ## Features
 
-- **Multiple Automata Modes**: 
-  - Conway's Game of Life
-  - HighLife
-  - Immigration Game
-  - Rainbow Game
-  - Brian's Brain
-  - Wireworld
-  - Langton's Ant
-  - Custom Rule Support (B/S notation)
-- **Interactive GUI**:
-  - Drawing tools (Pen, Eraser, Toggle)
-  - Symmetry modes (Horizontal, Vertical, Diagonal, Point)
-  - Zoom and Pan controls
-  - Real-time speed adjustment
-- **Pattern Management**:
-  - Built-in library of diverse patterns
-  - Load/Save functionality (supports RLE and JSON)
-  - Pattern Browser with previews
-- **Advanced Capabilities**:
-  - Undo/Redo history
-  - Statistics tracking (Population, Density, Births/Deaths)
-  - Export to Image (PNG) or Animation (GIF)
-  - Plugin system for extensions
+### Automata Modes
+
+| Mode | Rule / Description |
+|------|--------------------|
+| Conway's Game of Life | B3/S23 — the classic |
+| HighLife | B36/S23 — supports replicators |
+| Immigration | Two-color Conway variant |
+| Rainbow | Multi-color Conway variant |
+| Langton's Ant | Turing-complete ant on a grid |
+| Wireworld | 4-state electronic circuit simulation |
+| Brian's Brain | 3-state firing/refractory model |
+| Generations | Multi-state fading automaton |
+| Hexagonal Life | Hexagonal grid variant |
+| Custom Rules | Arbitrary B/S rule strings |
+
+### GUI
+
+- **Drawing tools** — pencil, eraser, stamp, and selection with configurable brush size and shape (square / circle / diamond)
+- **Simulation controls** — start, stop, step, reset, speed slider, undo/redo (up to 100 states)
+- **Pattern library** — built-in patterns per mode with a pattern browser and RLE import/export
+- **Themes** — light and dark themes plus a visual theme editor with custom presets
+- **Generation timeline** — scrub backward and forward through simulation history
+- **Population graph** — real-time population-over-time chart in the sidebar
+- **Breakpoint system** — pause the simulation when population, generation, or density conditions are met
+- **Rule explorer** — browse 10 named rulesets (Seeds, Day & Night, Diamoeba, etc.) and apply them instantly
+- **Command palette** — `Ctrl+Shift+P` quick-access to every action
+- **Pattern shape search** — draw a shape and find matching patterns by similarity
+- **Grid overlays** — symmetry guides, cell age heatmaps, activity heatmaps
+- **Export** — PNG snapshots, animated GIF, MP4/WebM video, JSON state, CSV statistics
+
+### CLI
+
+Run simulations headlessly for scripting and batch processing:
+
+```bash
+python src/cli.py --mode conway --steps 500 --export output/result.gif --fps 15
+```
+
+Supports `--mode`, `--rule` (custom B/S), `--width`, `--height`, `--cell-size`, `--export` (png/gif/mp4/webm/csv/json), `--fps`, `--snapshot-every`, and `--quiet`.
+
+### REST & WebSocket API
+
+Start the API server:
+
+```bash
+uvicorn src.api.app:app --reload
+```
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/health` | Health check |
+| `POST` | `/session` | Create a simulation session |
+| `POST` | `/session/{id}/step` | Advance one or more generations |
+| `GET` | `/session/{id}/state` | Get grid state as JSON |
+| `POST` | `/session/{id}/pattern` | Load a pattern by name or RLE |
+| `WS` | `/session/{id}/stream` | Stream simulation frames at ~20 Hz |
+| `WS` | `/collab/{id}` | Multi-user collaborative editing |
+
+### GPU Acceleration
+
+Optional CUDA-based acceleration via CuPy. Falls back to NumPy automatically when no GPU is available.
+
+```bash
+pip install cupy-cuda12x   # match your CUDA version
+```
+
+### Plugin System
+
+Drop a `.py` file into the `plugins/` directory to add a new automaton mode. See [docs/plugin_development.md](docs/plugin_development.md) for details.
+
+Included plugin: **Day & Night** (B3678/S34678).
+
+---
 
 ## Installation
 
-### Prerequisites
+### Requirements
 
-- Python 3.11 or higher
-- Git (optional, for cloning)
+- Python 3.11 or later
+- Tcl/Tk (included with most Python distributions)
 
-### Steps
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/James-HoneyBadger/LifeGrid.git
-   cd LifeGrid
-   ```
-
-2. **Create and activate a virtual environment (recommended):**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-## Quick Start
-
-### Running the GUI Application
-
-To launch the main simulator interface:
+### Quick Start
 
 ```bash
+git clone https://github.com/James-HoneyBadger/LifeGrid.git
+cd LifeGrid
+pip install -r requirements.txt
 python src/main.py
 ```
 
-### Using as a Library
+### Development Install
 
-LifeGrid's core can be used in your own scripts for headless simulation:
-
-```python
-from src.core.simulator import Simulator
-from src.core.config import SimulatorConfig
-
-# Initialize simulator
-config = SimulatorConfig(width=100, height=100)
-sim = Simulator(config)
-
-# Setup a pattern (e.g., a Glider)
-sim.initialize(mode='conway', pattern='glider')
-
-# Run for 100 generations
-for _ in range(100):
-    stats = sim.step()
-    print(f"Gen {stats[0]['generation']}: Pop {stats[0]['population']}")
+```bash
+make install-dev
 ```
+
+This installs LifeGrid in editable mode with all optional dependencies (docs, export, dev tools).
+
+### Build a Standalone Executable
+
+```bash
+make executable
+```
+
+Uses PyInstaller with the included `lifegrid.spec`.
+
+---
+
+## Usage
+
+### GUI
+
+```bash
+python src/main.py
+# or
+make run
+```
+
+#### Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `Space` | Start / Stop |
+| `S` | Single step |
+| `R` | Reset grid |
+| `G` | Toggle grid lines |
+| `C` | Clear grid |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Y` | Redo |
+| `Ctrl+S` | Export PNG |
+| `Ctrl+Shift+P` | Command palette |
+| `D` | Toggle drawing mode |
+| `B` | Open breakpoint manager |
+| `+` / `-` | Zoom in / out |
+| `Ctrl+Shift+R` | Open rule explorer |
+
+### CLI
+
+```bash
+# Run Conway for 1000 steps, export animated GIF
+python src/cli.py --mode conway --steps 1000 --export sim.gif
+
+# Run HighLife with a 200x200 grid, export MP4 at 30 fps
+python src/cli.py --mode highlife -W 200 -H 200 --steps 500 --export video.mp4 --fps 30
+
+# Custom B/S rule, export CSV statistics
+python src/cli.py --rule B36/S23 --steps 2000 --export stats.csv
+
+# Take a PNG snapshot every 100 generations
+python src/cli.py --mode wireworld --steps 1000 --snapshot-every 100 --export frames/snap.png
+```
+
+### API
+
+```bash
+# Start the server
+uvicorn src.api.app:app --host 0.0.0.0 --port 8000
+
+# Create a session
+curl -X POST http://localhost:8000/session \
+  -H "Content-Type: application/json" \
+  -d '{"width": 64, "height": 64, "mode": "conway"}'
+
+# Step the simulation
+curl -X POST http://localhost:8000/session/<id>/step \
+  -H "Content-Type: application/json" \
+  -d '{"steps": 10}'
+```
+
+---
+
+## Project Structure
+
+```
+LifeGrid/
+├── src/
+│   ├── main.py              # GUI entry point
+│   ├── cli.py               # Headless CLI
+│   ├── patterns.py           # Pattern definitions
+│   ├── plugin_system.py      # Plugin loader
+│   ├── export_manager.py     # PNG/GIF/MP4/WebM/JSON export
+│   ├── config_manager.py     # Persistent app settings
+│   ├── ui_enhancements.py    # Theme manager
+│   ├── automata/             # All automaton implementations
+│   ├── core/                 # Simulator, config, undo, boundary modes
+│   ├── gui/                  # GUI app, rendering, tools, new features
+│   ├── api/                  # FastAPI REST + WebSocket + collaboration
+│   ├── advanced/             # Statistics, pattern analysis, RLE, heatmaps
+│   └── performance/          # GPU acceleration, benchmarking
+├── plugins/                  # User-installable automaton plugins
+├── tests/                    # Test suite (71 tests)
+├── examples/                 # Example scripts
+├── output/                   # Default export directory
+└── docs/                     # Documentation
+```
+
+---
+
+## Testing
+
+```bash
+# Run the full test suite
+make test
+
+# Run with coverage report
+make coverage
+```
+
+71 tests covering the simulator, all automata modes, boundary conditions, GPU module, CLI, REST API, collaborative sessions, breakpoints, pattern system, statistics, and more.
+
+---
 
 ## Documentation
 
-Full documentation is available in the `docs/` directory.
+Full documentation is in the [`docs/`](docs/) directory:
 
-- **[User Guide](docs/guides/02_user_guide.md)**: Detailed instructions on using the GUI and features.
-- **[Installation Guide](docs/guides/01_installation.md)**: Comprehensive installation options.
-- **[API Reference](docs/reference/01_core_api.md)**: Technical specifics for developers.
-- **[Pattern Formats](docs/guides/04_file_formats.md)**: Understanding supported file types.
+- [Installation](docs/installation.md)
+- [User Guide](docs/user_guide.md)
+- [CLI Reference](docs/cli_reference.md)
+- [API Reference](docs/api_reference.md)
+- [Architecture](docs/architecture.md)
+- [Plugin Development](docs/plugin_development.md)
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE) for details.
 
-Copyright (c) 2026 Honey Badger Universe
+---
+
+## Author
+
+**Honey Badger Universe**

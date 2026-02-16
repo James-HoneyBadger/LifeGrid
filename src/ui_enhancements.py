@@ -73,6 +73,22 @@ class ThemeManager:
         """
         return self.THEMES.get(self.current_theme, self.THEMES["light"]).copy()
 
+    def set_custom_colors(self, colors: Dict[str, str]) -> None:
+        """Apply a user-defined color palette as a 'custom' theme.
+
+        The palette is merged on top of the current theme so that omitted
+        keys keep their previous value.
+
+        Args:
+            colors: Dict mapping color names to hex values.
+        """
+        base = self.get_colors()
+        base.update(colors)
+        self.THEMES["custom"] = base
+        self.current_theme = "custom"
+        if self._on_theme_changed:
+            self._on_theme_changed("custom")
+
     def get_color(self, color_name: str) -> Optional[str]:
         """Get a specific color.
 

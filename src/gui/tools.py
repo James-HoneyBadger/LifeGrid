@@ -25,6 +25,8 @@ class ToolManager:
         self._clipboard: Optional[Stamp] = None
         self.selection_start: Optional[Tuple[int, int]] = None
         self.selection_end: Optional[Tuple[int, int]] = None
+        self.brush_size: int = 1  # Brush radius (1 = single cell)
+        self.brush_shape: str = "square"  # square, circle, diamond
 
     def set_pencil(self) -> None:
         """Set the active tool to pencil."""
@@ -81,3 +83,50 @@ class ToolManager:
         x1, y1 = start
         x2, y2 = end
         return (min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
+
+    def set_brush_size(self, size: int) -> None:
+        """Set brush size (radius).
+
+        Args:
+            size: Brush radius (1 = single cell, 2 = 3x3, etc.)
+        """
+        self.brush_size = max(1, min(size, 10))
+
+    def set_brush_shape(self, shape: str) -> None:
+        """Set brush shape.
+
+        Args:
+            shape: 'square', 'circle', or 'diamond'
+        """
+        if shape in ("square", "circle", "diamond"):
+            self.brush_shape = shape
+
+    def get_brush_cells(self, x: int, y: int) -> List[Tuple[int, int]]:
+        """Get list of cells affected by brush at position.
+
+        Args:
+            x: Center x coordinate
+            y: Center y coordinate
+
+        Returns:
+            List of (x, y) tuples for cells in brush area
+        """
+        cells = []
+        radius = self.brush_size
+
+        for dy in range(-radius + 1, radius):
+            for dx in range(-radius + 1, radius):
+                cx, cy = x + dx, y + dy
+
+                # Check if cell is within brush shape
+                if self.brush_shape == "square":
+                    cells.append((cx, cy))
+                elif self.brush_shape == "circle":
+                    dist_sq = dx * dx + dy * dy
+                    if dist_sq < radius * radius:
+                        cells.append((cx, cy))
+                elif self.brush_shape == "diamond":
+                    if abs(dx) + abs(dy) < radius:
+                        cells.append((cx, cy))
+
+        return cells

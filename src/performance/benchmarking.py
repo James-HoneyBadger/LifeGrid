@@ -321,16 +321,12 @@ class BenchmarkSuite:
 
         lines.append(f"\n{'-' * 70}")
         lines.append(
-            f"Fastest: {
-                fastest.name} ({
-                fastest.mean_time *
-                1000:.2f}ms)"
+            f"Fastest: {fastest.name}"
+            f" ({fastest.mean_time * 1000:.2f}ms)"
         )
         lines.append(
-            f"Slowest: {
-                slowest.name} ({
-                slowest.mean_time *
-                1000:.2f}ms)"
+            f"Slowest: {slowest.name}"
+            f" ({slowest.mean_time * 1000:.2f}ms)"
         )
 
         if len(sorted_results) > 1:

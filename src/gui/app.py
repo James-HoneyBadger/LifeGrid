@@ -38,6 +38,17 @@ from .rendering import draw_grid, symmetry_positions
 from .state import SimulationState
 from .tools import ToolManager, Stamp
 from .ui import Callbacks, TkVars, Widgets, build_ui
+from .new_features import (
+    GenerationTimeline,
+    PopulationGraph,
+    BreakpointManager,
+    BreakpointDialog,
+    RuleExplorer,
+    CommandPalette,
+    ThemeEditorDialog,
+    PatternShapeSearch,
+)
+from core.boundary import BoundaryMode
 
 try:
     from PIL import Image as PILImage
@@ -124,6 +135,34 @@ class AutomatonApp:
         self.switch_mode(self.tk_vars.mode.get())
         self._update_widgets_enabled_state()
         self._update_display()
+
+        # -- New feature initialization --
+        self.boundary_mode = BoundaryMode.WRAP
+        self.breakpoint_manager = BreakpointManager()
+
+        # Command palette
+        self.command_palette = CommandPalette(self.root)
+        self._register_palette_commands()
+
+        # Timeline scrubber (below canvas area inside content frame)
+        # canvas → scroll_frame → content
+        _canvas_parent = self.widgets.canvas.master
+        assert _canvas_parent is not None
+        content_frame = _canvas_parent.master or self.root
+        self._timeline = GenerationTimeline(
+            content_frame, on_seek=self._seek_generation,
+        )
+        self._timeline.grid(
+            row=1, column=0, sticky="ew", padx=4, pady=(4, 0),
+        )
+
+        # Population graph (below timeline in content frame)
+        self._pop_graph = PopulationGraph(
+            content_frame, width=280, height=90,
+        )
+        self._pop_graph.grid(
+            row=2, column=0, sticky="ew", padx=4, pady=(4, 4),
+        )
 
         # Save settings on exit
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
@@ -256,11 +295,20 @@ class AutomatonApp:
         def show_shortcuts() -> None:
             message = (
                 "Keyboard shortcuts:\n\n"
-                "Space  — Start/Stop\n"
-                "S      — Step\n"
-                "Left   — Step Back\n"
-                "C      — Clear\n"
-                "G      — Toggle grid\n"
+                "Space       — Start/Stop\n"
+                "S           — Step Forward\n"
+                "Left Arrow  — Step Back\n"
+                "C           — Clear Grid\n"
+                "G           — Toggle Grid Lines\n"
+                "D           — Toggle Dark/Light Theme\n"
+                "R           — Rule Explorer\n"
+                "B           — Breakpoints\n"
+                "Ctrl+Z      — Undo\n"
+                "Ctrl+Y      — Redo\n"
+                "Ctrl+C      — Copy Selection\n"
+                "Ctrl+X      — Cut Selection\n"
+                "Ctrl+V      — Paste Selection\n"
+                "Ctrl+Shift+P — Command Palette\n"
             )
             messagebox.showinfo("Shortcuts", message)
 
@@ -312,6 +360,36 @@ class AutomatonApp:
         # Keep vital play/step controls in the sidebar to avoid redundancy.
         sim_menu.add_command(label="Reset", command=self.reset_simulation)
         sim_menu.add_command(label="Clear", command=self.clear_grid)
+        sim_menu.add_separator()
+        sim_menu.add_command(
+            label="Rule Explorer…",
+            accelerator="R",
+            command=self.open_rule_explorer,
+        )
+        sim_menu.add_command(
+            label="Breakpoints…",
+            accelerator="B",
+            command=self.open_breakpoints_dialog,
+        )
+        sim_menu.add_command(
+            label="Pattern Shape Search…",
+            command=self.open_pattern_shape_search,
+        )
+        sim_menu.add_separator()
+        boundary_menu = tk.Menu(sim_menu, tearoff=0)
+        boundary_menu.add_command(
+            label="Wrap (toroidal)",
+            command=lambda: self._set_boundary("wrap"),
+        )
+        boundary_menu.add_command(
+            label="Fixed (dead edges)",
+            command=lambda: self._set_boundary("fixed"),
+        )
+        boundary_menu.add_command(
+            label="Reflect (mirror)",
+            command=lambda: self._set_boundary("reflect"),
+        )
+        sim_menu.add_cascade(label="Boundary Mode", menu=boundary_menu)
         menubar.add_cascade(label="Simulation", menu=sim_menu)
 
         settings_menu = tk.Menu(menubar, tearoff=0)
@@ -357,6 +435,16 @@ class AutomatonApp:
         theme_menu.add_command(
             label="Dark",
             command=lambda: self.set_app_theme("dark"),
+        )
+        theme_menu.add_separator()
+        theme_menu.add_command(
+            label="Toggle Dark/Light",
+            accelerator="D",
+            command=self._toggle_dark_light,
+        )
+        theme_menu.add_command(
+            label="Theme Editor…",
+            command=self.open_theme_editor,
         )
         settings_menu.add_cascade(label="Theme", menu=theme_menu)
 
@@ -691,6 +779,27 @@ class AutomatonApp:
         self.root.bind("<Control-X>", self.cut_selection)
         self.root.bind("<Control-v>", self.paste_selection)
         self.root.bind("<Control-V>", self.paste_selection)
+        # New bindings
+        self.root.bind(
+            "<Control-Shift-P>",
+            lambda _e: self.command_palette.toggle(),
+        )
+        self.root.bind(
+            "<Control-Shift-p>",
+            lambda _e: self.command_palette.toggle(),
+        )
+        self.root.bind(
+            "<Key-d>",
+            lambda _e: self._toggle_dark_light(),
+        )
+        self.root.bind(
+            "<Key-b>",
+            lambda _e: self.open_breakpoints_dialog(),
+        )
+        self.root.bind(
+            "<Key-r>",
+            lambda _e: self.open_rule_explorer(),
+        )
 
     def _update_widgets_enabled_state(self) -> None:
         # Custom-rules controls are now in the Settings menu.
@@ -800,6 +909,23 @@ class AutomatonApp:
         self._snapshot_grid()
         self._update_generation_label()
         self._update_display()
+
+        # Feed timeline + graph + breakpoints
+        history_len = len(self.state.grid_history)
+        self._timeline.update_range(
+            max(0, history_len - 1), self.state.generation,
+        )
+        grid = automaton.get_grid()
+        pop = int(np.count_nonzero(grid))
+        ent = 0.0
+        cplx = 0
+        if self.state.entropy_history:
+            ent = self.state.entropy_history[-1]
+        if self.state.complexity_history:
+            cplx = self.state.complexity_history[-1]
+        self._pop_graph.push(pop, ent, cplx)
+
+        self._check_breakpoints()
 
     def step_back(self) -> None:
         """Revert to the previous generation if history exists."""
@@ -940,6 +1066,8 @@ class AutomatonApp:
         self._reset_history_with_current_grid()
         self._update_generation_label()
         self._update_display()
+        self._pop_graph.clear_data()
+        self._timeline.update_range(0, 0)
 
     def clear_grid(self) -> None:
         """Clear the grid and pause the simulation."""
@@ -954,6 +1082,8 @@ class AutomatonApp:
         self._reset_history_with_current_grid()
         self._update_generation_label()
         self._update_display()
+        self._pop_graph.clear_data()
+        self._timeline.update_range(0, 0)
 
     def apply_custom_rules(
         self,
@@ -1502,6 +1632,144 @@ class AutomatonApp:
             messagebox.showinfo("Exported", f"Metrics saved to {filename}")
         except OSError as exc:
             messagebox.showerror("Export Failed", f"Could not save CSV: {exc}")
+
+    # ------------------------------------------------------------------
+    # New features
+    # ------------------------------------------------------------------
+
+    def _seek_generation(self, idx: int) -> None:
+        """Jump to a specific generation in the grid history."""
+        history = list(self.state.grid_history)
+        if not history:
+            return
+        idx = max(0, min(idx, len(history) - 1))
+        automaton = self.state.current_automaton
+        if automaton and hasattr(automaton, "grid"):
+            automaton.grid = np.copy(history[idx])
+            self.state.generation = idx
+            self._update_generation_label()
+            self._update_display()
+
+    def _register_palette_commands(self) -> None:
+        """Register all commands in the command palette."""
+        p = self.command_palette
+        p.register("Start / Stop Simulation", self.toggle_simulation)
+        p.register("Step Forward", self.step_once)
+        p.register("Step Backward", self.step_back)
+        p.register("Clear Grid", self.clear_grid)
+        p.register("Reset Simulation", self.reset_simulation)
+        p.register("Toggle Grid Lines", self.toggle_grid)
+        p.register("Save Pattern...", self.save_pattern)
+        p.register("Load Pattern...", self.load_saved_pattern)
+        p.register("Import RLE...", self.load_rle_pattern)
+        p.register("Export Metrics (CSV)...", self.export_metrics)
+        if PIL_AVAILABLE:
+            p.register("Export PNG...", self.export_png)
+        p.register("Undo", self.undo_action)
+        p.register("Redo", self.redo_action)
+        p.register("Open Rule Explorer", self.open_rule_explorer)
+        p.register("Open Breakpoints", self.open_breakpoints_dialog)
+        p.register("Open Theme Editor", self.open_theme_editor)
+        p.register(
+            "Open Pattern Shape Search",
+            self.open_pattern_shape_search,
+        )
+        p.register("Switch to Dark Theme", lambda: self.set_app_theme("dark"))
+        p.register(
+            "Switch to Light Theme", lambda: self.set_app_theme("light"),
+        )
+        p.register("Boundary: Wrap", lambda: self._set_boundary("wrap"))
+        p.register("Boundary: Fixed", lambda: self._set_boundary("fixed"))
+        p.register("Boundary: Reflect", lambda: self._set_boundary("reflect"))
+        p.register(
+            "Toggle Dark/Light",
+            self._toggle_dark_light,
+        )
+
+    def _set_boundary(self, mode_name: str) -> None:
+        """Change the boundary mode."""
+        self.boundary_mode = BoundaryMode.from_string(mode_name)
+
+    def _toggle_dark_light(self) -> None:
+        """Quick toggle between dark and light themes."""
+        current = self.theme_manager.get_theme()
+        new = "dark" if current == "light" else "light"
+        self.set_app_theme(new)
+
+    def open_rule_explorer(self) -> None:
+        """Open the interactive Rule Explorer dialog."""
+        def apply_rule(b_text: str, s_text: str) -> None:
+            self.apply_rule_preset(b_text, s_text)
+
+        RuleExplorer(self.root, on_apply=apply_rule)
+
+    def open_breakpoints_dialog(self) -> None:
+        """Open the simulation breakpoints manager."""
+        BreakpointDialog(self.root, self.breakpoint_manager)
+
+    def open_theme_editor(self) -> None:
+        """Open the custom theme editor."""
+        current = self.theme_manager.get_colors()
+
+        def apply_custom(colors: dict[str, str]) -> None:
+            self.theme_manager.set_custom_colors(colors)
+            self._apply_theme_colors()
+            self._update_display()
+
+        ThemeEditorDialog(self.root, current, on_apply=apply_custom)
+
+    def open_pattern_shape_search(self) -> None:
+        """Open the visual pattern search dialog."""
+        # Build pattern dict from PATTERN_DATA
+        all_patterns: dict[str, list[tuple[int, int]]] = {}
+        for mode_pats in PATTERN_DATA.values():
+            if isinstance(mode_pats, dict):
+                for name, (points, _desc) in mode_pats.items():
+                    all_patterns[name] = points
+
+        def on_select(name: str) -> None:
+            automaton = self.state.current_automaton
+            if not automaton:
+                return
+            # Find the points
+            pts = all_patterns.get(name)
+            if pts and hasattr(automaton, "grid"):
+                automaton.grid[:] = 0
+                cx = self.state.grid_width // 2
+                cy = self.state.grid_height // 2
+                for dx, dy in pts:
+                    x, y = cx + dx, cy + dy
+                    if (
+                        0 <= x < self.state.grid_width
+                        and 0 <= y < self.state.grid_height
+                    ):
+                        automaton.grid[y, x] = 1
+                self.state.reset_generation()
+                self._reset_history_with_current_grid()
+                self._update_generation_label()
+                self._update_display()
+
+        PatternShapeSearch(self.root, on_select, all_patterns)
+
+    def _check_breakpoints(self) -> None:
+        """Check if any breakpoint conditions are met."""
+        if not self.state.metrics_log:
+            return
+        last = self.state.metrics_log[-1]
+        # Map metric keys to breakpoint keys
+        metrics_for_bp = {
+            "population": last.get("live", 0),
+            "entropy": last.get("entropy", 0.0),
+            "complexity": last.get("complexity", 0),
+            "generation": self.state.generation,
+        }
+        triggered = self.breakpoint_manager.check_all(metrics_for_bp)
+        if triggered:
+            self.stop_simulation()
+            messagebox.showinfo(
+                "Breakpoint Hit",
+                f"Breakpoint triggered: {triggered}",
+            )
 
 
 def launch() -> None:

@@ -72,3 +72,13 @@ class ConwayGameOfLife(CellularAutomaton):
 
     def handle_click(self, x: int, y: int) -> None:
         self.grid[y, x] = 1 - self.grid[y, x]
+
+    def get_available_patterns(self) -> list[str]:
+        """Get list of available patterns for Conway's Game of Life."""
+        try:
+            pattern_data_dict = PATTERN_DATA.get("Conway's Game of Life", {})
+            patterns = list(pattern_data_dict.keys())
+            patterns.append("Random Soup")
+            return sorted(patterns)
+        except Exception:
+            return ["Random Soup"]

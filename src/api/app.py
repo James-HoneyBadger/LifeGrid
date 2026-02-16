@@ -20,6 +20,7 @@ from advanced.rle_format import RLEParser
 from core.config import SimulatorConfig
 from core.utils import place_pattern_centered
 from core.simulator import Simulator
+from .collab import collab_websocket_handler
 
 app = FastAPI(title="LifeGrid API", version="0.1.0")
 app.add_middleware(
@@ -185,3 +186,14 @@ async def stream_state(websocket: WebSocket, session_id: str) -> None:
             await asyncio.sleep(0.05)
     except WebSocketDisconnect:
         return
+
+
+@app.websocket("/collab/{session_id}")
+async def collab_stream(
+    websocket: WebSocket,
+    session_id: str,
+    width: int = 64,
+    height: int = 64,
+) -> None:
+    """Collaborative multi-user simulation via WebSocket."""
+    await collab_websocket_handler(websocket, session_id, width, height)
