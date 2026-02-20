@@ -5,9 +5,9 @@ pytest>=7.4.0
 imageio>=2.31.0
 imageio-ffmpeg>=0.4.9
 
-fastapi
-uvicorn
-httpx
+fastapi>=0.100.0
+uvicorn>=0.24.0
+httpx>=0.25.0
 
 # Optional: GPU acceleration (requires CUDA)
 # cupy-cuda12x

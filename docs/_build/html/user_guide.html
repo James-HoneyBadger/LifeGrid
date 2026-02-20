@@ -1,0 +1,561 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>User Guide &mdash; LifeGrid 3.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4f6ddb47"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="CLI Reference" href="cli_reference.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            LifeGrid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">User Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#launching-the-gui">Launching the GUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#simulation-controls">Simulation Controls</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#undo-redo">Undo / Redo</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generation-timeline">Generation Timeline</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#drawing-tools">Drawing Tools</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#brush-settings">Brush Settings</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#stamps">Stamps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#modes">Modes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#patterns">Patterns</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#loading-patterns">Loading Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#importing-rle">Importing RLE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exporting-rle">Exporting RLE</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#themes">Themes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#theme-editor">Theme Editor</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#breakpoints">Breakpoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rule-explorer">Rule Explorer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#command-palette">Command Palette</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#population-graph">Population Graph</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pattern-shape-search">Pattern Shape Search</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#grid-display">Grid Display</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#scroll-wheel-zoom">Scroll-Wheel Zoom</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#boundary-mode">Boundary Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overlays">Overlays</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#exporting">Exporting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#from-the-gui">From the GUI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#from-the-cli">From the CLI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#autosave">AutoSave</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#settings-persistence">Settings Persistence</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#keyboard-shortcut-reference">Keyboard Shortcut Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin_development.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LifeGrid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">User Guide</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/user_guide.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="user-guide">
+<h1>User Guide<a class="headerlink" href="#user-guide" title="Link to this heading"></a></h1>
+<p>This guide covers everyday use of LifeGrid’s GUI, drawing tools, simulation controls, and export features.</p>
+<hr class="docutils" />
+<section id="launching-the-gui">
+<h2>Launching the GUI<a class="headerlink" href="#launching-the-gui" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>src/main.py
+<span class="c1"># or</span>
+make<span class="w"> </span>run
+</pre></div>
+</div>
+<p>The main window opens with a grid canvas, toolbar, sidebar, and status bar.</p>
+</section>
+<hr class="docutils" />
+<section id="simulation-controls">
+<h2>Simulation Controls<a class="headerlink" href="#simulation-controls" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Control</p></th>
+<th class="head"><p>Location</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Start / Stop</strong></p></td>
+<td><p>Toolbar or <code class="docutils literal notranslate"><span class="pre">Space</span></code></p></td>
+<td><p>Toggle continuous simulation</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Step</strong></p></td>
+<td><p>Toolbar or <code class="docutils literal notranslate"><span class="pre">S</span></code></p></td>
+<td><p>Advance one generation</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Run N Steps</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Simulation</span> <span class="pre">→</span> <span class="pre">Run</span> <span class="pre">N</span> <span class="pre">Steps…</span></code> or <code class="docutils literal notranslate"><span class="pre">N</span></code></p></td>
+<td><p>Show a dialog and run any number of steps at once</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Reset</strong></p></td>
+<td><p>Toolbar or <code class="docutils literal notranslate"><span class="pre">R</span></code></p></td>
+<td><p>Restore the grid to its initial state</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Randomize</strong></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">F5</span></code></p></td>
+<td><p>Fill the grid with a random soup</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Clear</strong></p></td>
+<td><p>Menu or <code class="docutils literal notranslate"><span class="pre">C</span></code></p></td>
+<td><p>Set all cells to dead</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Speed</strong></p></td>
+<td><p>Sidebar slider</p></td>
+<td><p>Adjust simulation speed (1–100)</p></td>
+</tr>
+</tbody>
+</table>
+<section id="undo-redo">
+<h3>Undo / Redo<a class="headerlink" href="#undo-redo" title="Link to this heading"></a></h3>
+<p>Every step is recorded. Use <code class="docutils literal notranslate"><span class="pre">Ctrl+Z</span></code> to undo and <code class="docutils literal notranslate"><span class="pre">Ctrl+Y</span></code> to redo (up to 100 states).</p>
+<blockquote>
+<div><p><strong>Drag drawing</strong>: LifeGrid places a single undo checkpoint at the start of each drag gesture so that one undo reverses the entire stroke, not just the last cell.</p>
+</div></blockquote>
+</section>
+<section id="generation-timeline">
+<h3>Generation Timeline<a class="headerlink" href="#generation-timeline" title="Link to this heading"></a></h3>
+<p>The timeline slider in the sidebar lets you scrub through previously computed generations. Dragging the slider instantly displays that generation’s grid state, and the population graph updates in sync.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="drawing-tools">
+<h2>Drawing Tools<a class="headerlink" href="#drawing-tools" title="Link to this heading"></a></h2>
+<p>Select a tool from the toolbar:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Tool</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Pencil</strong></p></td>
+<td><p>Click or drag to place live cells</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Eraser</strong></p></td>
+<td><p>Click or drag to remove cells</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Stamp</strong></p></td>
+<td><p>Click to place a predefined pattern</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Selection</strong></p></td>
+<td><p>Click and drag to select a rectangular region</p></td>
+</tr>
+</tbody>
+</table>
+<section id="brush-settings">
+<h3>Brush Settings<a class="headerlink" href="#brush-settings" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Size</strong> — 1 to 10 cells</p></li>
+<li><p><strong>Shape</strong> — square, circle, or diamond</p></li>
+</ul>
+</section>
+<section id="stamps">
+<h3>Stamps<a class="headerlink" href="#stamps" title="Link to this heading"></a></h3>
+<p>Stamps are small reusable patterns (glider, blinker, etc.). Select a stamp from the stamp palette, then click the canvas to place it.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="modes">
+<h2>Modes<a class="headerlink" href="#modes" title="Link to this heading"></a></h2>
+<p>Change the automaton mode from the <strong>Mode</strong> menu or sidebar dropdown. Available modes:</p>
+<ul class="simple">
+<li><p><strong>Conway’s Game of Life</strong> (B3/S23)</p></li>
+<li><p><strong>HighLife</strong> (B36/S23)</p></li>
+<li><p><strong>Immigration</strong> — two-color Conway variant</p></li>
+<li><p><strong>Rainbow</strong> — multi-color Conway variant</p></li>
+<li><p><strong>Langton’s Ant</strong> — a Turing-complete ant</p></li>
+<li><p><strong>Wireworld</strong> — electronic circuit simulation</p></li>
+<li><p><strong>Brian’s Brain</strong> — firing / refractory / ready</p></li>
+<li><p><strong>Generations</strong> — multi-state fading</p></li>
+<li><p><strong>Hexagonal Life</strong> — hexagonal grid</p></li>
+<li><p><strong>Custom Rules</strong> — enter any B/S rule string (e.g., <code class="docutils literal notranslate"><span class="pre">B36/S23</span></code>)</p></li>
+</ul>
+<p>Each mode has its own built-in pattern library.</p>
+</section>
+<hr class="docutils" />
+<section id="patterns">
+<h2>Patterns<a class="headerlink" href="#patterns" title="Link to this heading"></a></h2>
+<section id="loading-patterns">
+<h3>Loading Patterns<a class="headerlink" href="#loading-patterns" title="Link to this heading"></a></h3>
+<p>Open the <strong>Pattern Browser</strong> from the menu to browse built-in patterns for the current mode. Select a pattern and click the canvas to place it.</p>
+</section>
+<section id="importing-rle">
+<h3>Importing RLE<a class="headerlink" href="#importing-rle" title="Link to this heading"></a></h3>
+<p>Use <strong>File → Import RLE</strong> to load a <code class="docutils literal notranslate"><span class="pre">.rle</span></code> file. The pattern is centered on the grid.</p>
+</section>
+<section id="exporting-rle">
+<h3>Exporting RLE<a class="headerlink" href="#exporting-rle" title="Link to this heading"></a></h3>
+<p>Use <strong>File → Export RLE</strong> to save the current grid in Run-Length Encoded format.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="themes">
+<h2>Themes<a class="headerlink" href="#themes" title="Link to this heading"></a></h2>
+<p>LifeGrid ships with <strong>light</strong> and <strong>dark</strong> themes. Toggle between them from the <strong>View</strong> menu.</p>
+<section id="theme-editor">
+<h3>Theme Editor<a class="headerlink" href="#theme-editor" title="Link to this heading"></a></h3>
+<p>Open the theme editor (<code class="docutils literal notranslate"><span class="pre">View</span> <span class="pre">→</span> <span class="pre">Theme</span> <span class="pre">Editor</span></code>) to customize colors:</p>
+<ul class="simple">
+<li><p>Background, grid lines, live/dead cells, UI accent</p></li>
+<li><p>Three built-in presets: Default, Ocean, Sunset</p></li>
+<li><p>Changes apply in real time</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="breakpoints">
+<h2>Breakpoints<a class="headerlink" href="#breakpoints" title="Link to this heading"></a></h2>
+<p>Breakpoints pause the simulation when a condition is met.</p>
+<ol class="arabic simple">
+<li><p>Press <code class="docutils literal notranslate"><span class="pre">B</span></code> or use the menu to open the <strong>Breakpoint Manager</strong>.</p></li>
+<li><p>Add a condition:</p>
+<ul class="simple">
+<li><p><strong>Population</strong> — equal to, greater than, or less than a value</p></li>
+<li><p><strong>Generation</strong> — reaches a specific number</p></li>
+<li><p><strong>Density</strong> — above or below a threshold</p></li>
+</ul>
+</li>
+<li><p>The simulation pauses automatically when the condition triggers.</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="rule-explorer">
+<h2>Rule Explorer<a class="headerlink" href="#rule-explorer" title="Link to this heading"></a></h2>
+<p>Press <code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+R</span></code> or use the menu to open the <strong>Rule Explorer</strong>. It lists 10 named Life-like rulesets:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Rule</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Seeds</p></td>
+<td><p>B2/S</p></td>
+</tr>
+<tr class="row-odd"><td><p>Day &amp; Night</p></td>
+<td><p>B3678/S34678</p></td>
+</tr>
+<tr class="row-even"><td><p>Diamoeba</p></td>
+<td><p>B35678/S5678</p></td>
+</tr>
+<tr class="row-odd"><td><p>Morley</p></td>
+<td><p>B368/S245</p></td>
+</tr>
+<tr class="row-even"><td><p>Anneal</p></td>
+<td><p>B4678/S35678</p></td>
+</tr>
+<tr class="row-odd"><td><p>2x2</p></td>
+<td><p>B36/S125</p></td>
+</tr>
+<tr class="row-even"><td><p>HighLife</p></td>
+<td><p>B36/S23</p></td>
+</tr>
+<tr class="row-odd"><td><p>Maze</p></td>
+<td><p>B3/S12345</p></td>
+</tr>
+<tr class="row-even"><td><p>Move</p></td>
+<td><p>B368/S245</p></td>
+</tr>
+<tr class="row-odd"><td><p>Replicator</p></td>
+<td><p>B1357/S1357</p></td>
+</tr>
+</tbody>
+</table>
+<p>Click a rule to apply it immediately.</p>
+</section>
+<hr class="docutils" />
+<section id="command-palette">
+<h2>Command Palette<a class="headerlink" href="#command-palette" title="Link to this heading"></a></h2>
+<p>Press <code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+P</span></code> to open the command palette. Type to filter available actions, then press Enter or click to execute.</p>
+</section>
+<hr class="docutils" />
+<section id="population-graph">
+<h2>Population Graph<a class="headerlink" href="#population-graph" title="Link to this heading"></a></h2>
+<p>The sidebar displays a real-time chart of population over the last 500 generations. It updates automatically during simulation.</p>
+</section>
+<hr class="docutils" />
+<section id="pattern-shape-search">
+<h2>Pattern Shape Search<a class="headerlink" href="#pattern-shape-search" title="Link to this heading"></a></h2>
+<p>Open the pattern shape search panel to:</p>
+<ol class="arabic simple">
+<li><p>Draw a small pattern on the mini-canvas.</p></li>
+<li><p>Click <strong>Search</strong> to find patterns in the library that match by shape similarity.</p></li>
+<li><p>Click a result to load it onto the main grid.</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="grid-display">
+<h2>Grid Display<a class="headerlink" href="#grid-display" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Setting</p></th>
+<th class="head"><p>Key</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Toggle grid lines</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">G</span></code></p></td>
+<td><p>Show or hide the cell grid</p></td>
+</tr>
+<tr class="row-odd"><td><p>Zoom in</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">+</span></code> or scroll up</p></td>
+<td><p>Increase cell size</p></td>
+</tr>
+<tr class="row-even"><td><p>Zoom out</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">-</span></code> or scroll down</p></td>
+<td><p>Decrease cell size</p></td>
+</tr>
+</tbody>
+</table>
+<section id="scroll-wheel-zoom">
+<h3>Scroll-Wheel Zoom<a class="headerlink" href="#scroll-wheel-zoom" title="Link to this heading"></a></h3>
+<p>Hold the mouse over the canvas and scroll up/down to zoom in/out. The cell size adjusts in steps between 2 and 64 pixels.</p>
+</section>
+<section id="boundary-mode">
+<h3>Boundary Mode<a class="headerlink" href="#boundary-mode" title="Link to this heading"></a></h3>
+<p>Change how cells at the grid edges behave via <strong>View → Boundary</strong>:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Mode</p></th>
+<th class="head"><p>Behaviour</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><strong>Wrap</strong> (default)</p></td>
+<td><p>Edges connect to the opposite side (toroidal)</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Fixed</strong></p></td>
+<td><p>Cells outside the grid are always dead</p></td>
+</tr>
+<tr class="row-even"><td><p><strong>Reflect</strong></p></td>
+<td><p>The grid is mirrored at its edges</p></td>
+</tr>
+</tbody>
+</table>
+<p>The active boundary mode is shown in the window title bar, e.g. <code class="docutils literal notranslate"><span class="pre">LifeGrid</span> <span class="pre">—</span> <span class="pre">Conway's</span> <span class="pre">Game</span> <span class="pre">of</span> <span class="pre">Life</span> <span class="pre">[reflect]</span></code>.</p>
+</section>
+<section id="overlays">
+<h3>Overlays<a class="headerlink" href="#overlays" title="Link to this heading"></a></h3>
+<p>From the View menu:</p>
+<ul class="simple">
+<li><p><strong>Cell age heatmap</strong> — colors cells from blue (new) to red (old)</p></li>
+<li><p><strong>Activity heatmap</strong> — highlights areas with frequent state changes</p></li>
+<li><p><strong>Symmetry guides</strong> — draws symmetry axes on the grid</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="exporting">
+<h2>Exporting<a class="headerlink" href="#exporting" title="Link to this heading"></a></h2>
+<section id="from-the-gui">
+<h3>From the GUI<a class="headerlink" href="#from-the-gui" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Format</p></th>
+<th class="head"><p>How</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>PNG snapshot</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Ctrl+S</span></code> or File → Export PNG</p></td>
+</tr>
+<tr class="row-odd"><td><p>Animated GIF</p></td>
+<td><p>File → Export GIF…</p></td>
+</tr>
+<tr class="row-even"><td><p>RLE pattern</p></td>
+<td><p>File → Export RLE…</p></td>
+</tr>
+<tr class="row-odd"><td><p>MP4 video</p></td>
+<td><p>File → Export MP4</p></td>
+</tr>
+<tr class="row-even"><td><p>WebM video</p></td>
+<td><p>File → Export WebM</p></td>
+</tr>
+<tr class="row-odd"><td><p>JSON state</p></td>
+<td><p>File → Export JSON</p></td>
+</tr>
+<tr class="row-even"><td><p>CSV statistics</p></td>
+<td><p>File → Export CSV</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="from-the-cli">
+<h3>From the CLI<a class="headerlink" href="#from-the-cli" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>src/cli.py<span class="w"> </span>--mode<span class="w"> </span>conway<span class="w"> </span>--steps<span class="w"> </span><span class="m">500</span><span class="w"> </span>--export<span class="w"> </span>output/sim.gif<span class="w"> </span>--fps<span class="w"> </span><span class="m">15</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="cli_reference.html"><span class="std std-doc">CLI Reference</span></a> for all options.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="autosave">
+<h2>AutoSave<a class="headerlink" href="#autosave" title="Link to this heading"></a></h2>
+<p>LifeGrid automatically saves the current simulation state every <strong>5 minutes</strong> (300 seconds, configurable) to a timestamped JSON file in the <code class="docutils literal notranslate"><span class="pre">autosave/</span></code> folder inside the project directory.</p>
+<p>Autosave files are named <code class="docutils literal notranslate"><span class="pre">autosave_YYYYMMDD_HHMMSS.json</span></code> and include the generation number, mode, and grid state. Up to 5 autosave files are retained; older ones are deleted automatically.</p>
+</section>
+<section id="settings-persistence">
+<h2>Settings Persistence<a class="headerlink" href="#settings-persistence" title="Link to this heading"></a></h2>
+<p>LifeGrid saves your preferences (window size, grid dimensions, theme, speed, etc.) to <code class="docutils literal notranslate"><span class="pre">settings.json</span></code> in the project root. Settings are loaded automatically on startup.</p>
+</section>
+<hr class="docutils" />
+<section id="keyboard-shortcut-reference">
+<h2>Keyboard Shortcut Reference<a class="headerlink" href="#keyboard-shortcut-reference" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Action</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Space</span></code></p></td>
+<td><p>Start / Stop</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">S</span></code></p></td>
+<td><p>Step one generation</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">N</span></code></p></td>
+<td><p>Run N Steps (shows dialog)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">R</span></code></p></td>
+<td><p>Reset</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">F5</span></code></p></td>
+<td><p>Randomize grid</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">C</span></code></p></td>
+<td><p>Clear</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">G</span></code></p></td>
+<td><p>Toggle grid lines</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">+</span></code> / scroll up</p></td>
+<td><p>Zoom in</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">-</span></code> / scroll down</p></td>
+<td><p>Zoom out</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">B</span></code></p></td>
+<td><p>Open Breakpoint Manager</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Ctrl+Z</span></code></p></td>
+<td><p>Undo</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Ctrl+Y</span></code></p></td>
+<td><p>Redo</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Ctrl+S</span></code></p></td>
+<td><p>Export PNG snapshot</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+P</span></code></p></td>
+<td><p>Command Palette</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Ctrl+Shift+R</span></code></p></td>
+<td><p>Rule Explorer</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="cli_reference.html" class="btn btn-neutral float-right" title="CLI Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Honey Badger Universe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

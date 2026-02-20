@@ -1,0 +1,531 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Reference &mdash; LifeGrid 3.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4f6ddb47"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Plugin Development" href="plugin_development.html" />
+    <link rel="prev" title="CLI Reference" href="cli_reference.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            LifeGrid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#starting-the-server">Starting the Server</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#rest-endpoints">REST Endpoints</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#health-check">Health Check</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#create-session">Create Session</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#step-session">Step Session</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#get-state">Get State</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#load-pattern">Load Pattern</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#errors">Errors</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#websocket-endpoints">WebSocket Endpoints</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#simulation-stream">Simulation Stream</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#collaborative-session">Collaborative Session</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#core-python-api">Core Python API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#simulator">Simulator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#export-manager">Export Manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rle-parser">RLE Parser</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#statistics">Statistics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pattern-manager">Pattern Manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cell-age-tracker">Cell Age Tracker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#autosave-manager">AutoSave Manager</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-system">Plugin System</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="plugin_development.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LifeGrid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api_reference.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<p>LifeGrid provides a REST and WebSocket API built with FastAPI for programmatic access, streaming, and collaborative editing.</p>
+<section id="starting-the-server">
+<h2>Starting the Server<a class="headerlink" href="#starting-the-server" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uvicorn<span class="w"> </span>src.api.app:app<span class="w"> </span>--host<span class="w"> </span><span class="m">0</span>.0.0.0<span class="w"> </span>--port<span class="w"> </span><span class="m">8000</span><span class="w"> </span>--reload
+</pre></div>
+</div>
+<p>The API runs at <code class="docutils literal notranslate"><span class="pre">http://localhost:8000</span></code>. Interactive docs are available at <code class="docutils literal notranslate"><span class="pre">/docs</span></code> (Swagger UI) and <code class="docutils literal notranslate"><span class="pre">/redoc</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="rest-endpoints">
+<h2>REST Endpoints<a class="headerlink" href="#rest-endpoints" title="Link to this heading"></a></h2>
+<section id="health-check">
+<h3>Health Check<a class="headerlink" href="#health-check" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">GET</span> <span class="o">/</span><span class="n">health</span>
+</pre></div>
+</div>
+<p><strong>Response:</strong> <code class="docutils literal notranslate"><span class="pre">{&quot;status&quot;:</span> <span class="pre">&quot;ok&quot;}</span></code></p>
+</section>
+<hr class="docutils" />
+<section id="create-session">
+<h3>Create Session<a class="headerlink" href="#create-session" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">POST</span> <span class="o">/</span><span class="n">session</span>
+</pre></div>
+</div>
+<p>Creates a new simulation session.</p>
+<p><strong>Request body:</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">width</span></code></p></td>
+<td><p>int (4–2048)</p></td>
+<td><p>64</p></td>
+<td><p>Grid width</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">height</span></code></p></td>
+<td><p>int (4–2048)</p></td>
+<td><p>64</p></td>
+<td><p>Grid height</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mode</span></code></p></td>
+<td><p>string</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Conway's</span> <span class="pre">Game</span> <span class="pre">of</span> <span class="pre">Life&quot;</span></code></p></td>
+<td><p>Automaton mode</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">birth_rule</span></code></p></td>
+<td><p>string</p></td>
+<td><p>null</p></td>
+<td><p>Digit string of birth neighbour counts, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;36&quot;</span></code> for B36</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">survival_rule</span></code></p></td>
+<td><p>string</p></td>
+<td><p>null</p></td>
+<td><p>Digit string of survival neighbour counts, e.g. <code class="docutils literal notranslate"><span class="pre">&quot;23&quot;</span></code> for S23</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pattern</span></code></p></td>
+<td><p>string</p></td>
+<td><p>null</p></td>
+<td><p>Pattern name to load</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code class="docutils literal notranslate"><span class="pre">{&quot;session_id&quot;:</span> <span class="pre">&quot;&lt;uuid&gt;&quot;}</span></code></p>
+<p><strong>Example:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:8000/session<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;width&quot;: 128, &quot;height&quot;: 128, &quot;mode&quot;: &quot;HighLife&quot;}&#39;</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="step-session">
+<h3>Step Session<a class="headerlink" href="#step-session" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">POST</span> <span class="o">/</span><span class="n">session</span><span class="o">/</span><span class="p">{</span><span class="n">session_id</span><span class="p">}</span><span class="o">/</span><span class="n">step</span>
+</pre></div>
+</div>
+<p>Advance the simulation by one or more generations.</p>
+<p><strong>Request body:</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">steps</span></code></p></td>
+<td><p>int (1–1000)</p></td>
+<td><p>1</p></td>
+<td><p>Number of generations to advance</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Response:</strong> <code class="docutils literal notranslate"><span class="pre">{&quot;generation&quot;:</span> <span class="pre">&lt;int&gt;}</span></code></p>
+</section>
+<hr class="docutils" />
+<section id="get-state">
+<h3>Get State<a class="headerlink" href="#get-state" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">GET</span> <span class="o">/</span><span class="n">session</span><span class="o">/</span><span class="p">{</span><span class="n">session_id</span><span class="p">}</span><span class="o">/</span><span class="n">state</span>
+</pre></div>
+</div>
+<p>Returns the current grid state.</p>
+<p><strong>Response:</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;generation&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">42</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;width&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">128</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;height&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">128</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;grid&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="p">],</span><span class="w"> </span><span class="err">...</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="load-pattern">
+<h3>Load Pattern<a class="headerlink" href="#load-pattern" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">POST</span> <span class="o">/</span><span class="n">session</span><span class="o">/</span><span class="p">{</span><span class="n">session_id</span><span class="p">}</span><span class="o">/</span><span class="n">pattern</span>
+</pre></div>
+</div>
+<p>Load a pattern into the session grid.</p>
+<p><strong>Request body:</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Field</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rle</span></code></p></td>
+<td><p>string</p></td>
+<td><p>RLE-encoded pattern string</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pattern_name</span></code></p></td>
+<td><p>string</p></td>
+<td><p>Named pattern to load</p></td>
+</tr>
+</tbody>
+</table>
+<p>Provide either <code class="docutils literal notranslate"><span class="pre">rle</span></code> or <code class="docutils literal notranslate"><span class="pre">pattern_name</span></code>.</p>
+<p><strong>Response:</strong> <code class="docutils literal notranslate"><span class="pre">{&quot;status&quot;:</span> <span class="pre">&quot;ok&quot;}</span></code></p>
+</section>
+<hr class="docutils" />
+<section id="errors">
+<h3>Errors<a class="headerlink" href="#errors" title="Link to this heading"></a></h3>
+<p>All endpoints return <code class="docutils literal notranslate"><span class="pre">404</span></code> if the session ID is unknown.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="websocket-endpoints">
+<h2>WebSocket Endpoints<a class="headerlink" href="#websocket-endpoints" title="Link to this heading"></a></h2>
+<section id="simulation-stream">
+<h3>Simulation Stream<a class="headerlink" href="#simulation-stream" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">WS</span> <span class="o">/</span><span class="n">session</span><span class="o">/</span><span class="p">{</span><span class="n">session_id</span><span class="p">}</span><span class="o">/</span><span class="n">stream</span>
+</pre></div>
+</div>
+<p>Connects to a simulation session and receives grid state frames automatically at approximately 20 Hz. Each frame is a JSON message with the same schema as the <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/session/{id}/state</span></code> response.</p>
+<p><strong>Example (Python):</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">websockets</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">stream</span><span class="p">():</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">websockets</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s2">&quot;ws://localhost:8000/session/&lt;id&gt;/stream&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">ws</span><span class="p">:</span>
+        <span class="k">async</span> <span class="k">for</span> <span class="n">message</span> <span class="ow">in</span> <span class="n">ws</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generation </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;generation&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, grid </span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">x</span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">stream</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="collaborative-session">
+<h3>Collaborative Session<a class="headerlink" href="#collaborative-session" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>WS /collab/{session_id}?width=&lt;int&gt;&amp;height=&lt;int&gt;
+</pre></div>
+</div>
+<p>Multi-user collaborative editing. Multiple WebSocket clients share the same grid. The grid is created on demand with the specified dimensions (default 64x64).</p>
+<p><strong>Actions (client → server):</strong></p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Action</p></th>
+<th class="head"><p>Payload</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">draw</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;x&quot;:</span> <span class="pre">int,</span> <span class="pre">&quot;y&quot;:</span> <span class="pre">int,</span> <span class="pre">&quot;value&quot;:</span> <span class="pre">int}</span></code></p></td>
+<td><p>Set a cell</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">clear</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Clear the grid and reset generation</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">step</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Advance one Conway generation</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">start</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Begin auto-stepping</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">stop</span></code></p></td>
+<td><p>—</p></td>
+<td><p>Stop auto-stepping</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">set_speed</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">{&quot;delay&quot;:</span> <span class="pre">float}</span></code></p></td>
+<td><p>Set seconds between auto-steps (min 0.02)</p></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Message format (client → server):</strong></p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="nt">&quot;action&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;draw&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;x&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">10</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;y&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">15</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;value&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Broadcasts (server → all clients):</strong></p>
+<p>After every mutation the server broadcasts the full grid state to all connected clients:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;state&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;generation&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">5</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">&quot;grid&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span><span class="w"> </span><span class="err">...</span><span class="p">],</span><span class="w"> </span><span class="err">...</span><span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><strong>Example (Python):</strong></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">websockets</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+
+<span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">collab</span><span class="p">():</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="s2">&quot;ws://localhost:8000/collab/my-room?width=32&amp;height=32&quot;</span>
+    <span class="k">async</span> <span class="k">with</span> <span class="n">websockets</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span> <span class="k">as</span> <span class="n">ws</span><span class="p">:</span>
+        <span class="c1"># Draw a cell</span>
+        <span class="k">await</span> <span class="n">ws</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;action&quot;</span><span class="p">:</span> <span class="s2">&quot;draw&quot;</span><span class="p">,</span> <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}))</span>
+        <span class="c1"># Receive broadcast</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="k">await</span> <span class="n">ws</span><span class="o">.</span><span class="n">recv</span><span class="p">())</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generation: </span><span class="si">{</span><span class="n">state</span><span class="p">[</span><span class="s1">&#39;generation&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">collab</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="core-python-api">
+<h2>Core Python API<a class="headerlink" href="#core-python-api" title="Link to this heading"></a></h2>
+<section id="simulator">
+<h3>Simulator<a class="headerlink" href="#simulator" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.core.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">SimulatorConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">src.core.simulator</span><span class="w"> </span><span class="kn">import</span> <span class="n">Simulator</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">SimulatorConfig</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">automaton_mode</span><span class="o">=</span><span class="s2">&quot;Conway&#39;s Game of Life&quot;</span><span class="p">)</span>
+<span class="n">sim</span> <span class="o">=</span> <span class="n">Simulator</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+<span class="n">sim</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
+<span class="n">metrics</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">num_steps</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>       <span class="c1"># Returns list of {generation, population, density}</span>
+<span class="n">grid</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">get_grid</span><span class="p">()</span>                   <span class="c1"># numpy.ndarray</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">set_cell</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">undo</span><span class="p">()</span>
+<span class="n">sim</span><span class="o">.</span><span class="n">redo</span><span class="p">()</span>
+<span class="n">summary</span> <span class="o">=</span> <span class="n">sim</span><span class="o">.</span><span class="n">get_metrics_summary</span><span class="p">()</span>     <span class="c1"># {generations, current_population, max_population, ...}</span>
+</pre></div>
+</div>
+</section>
+<section id="export-manager">
+<h3>Export Manager<a class="headerlink" href="#export-manager" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.export_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">ExportManager</span>
+
+<span class="n">em</span> <span class="o">=</span> <span class="n">ExportManager</span><span class="p">(</span><span class="n">theme</span><span class="o">=</span><span class="s2">&quot;dark&quot;</span><span class="p">)</span>  <span class="c1"># themes: &quot;light&quot;, &quot;dark&quot;, &quot;blue&quot;, &quot;warm&quot;</span>
+
+<span class="c1"># Single image — grid is the first positional argument</span>
+<span class="n">em</span><span class="o">.</span><span class="n">export_png</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="s2">&quot;snapshot.png&quot;</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+
+<span class="c1"># Animated GIF — add frames first, then export</span>
+<span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">frames</span><span class="p">:</span>
+    <span class="n">em</span><span class="o">.</span><span class="n">add_frame</span><span class="p">(</span><span class="n">frame</span><span class="p">)</span>
+<span class="n">em</span><span class="o">.</span><span class="n">export_gif</span><span class="p">(</span><span class="s2">&quot;animation.gif&quot;</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># Video</span>
+<span class="n">em</span><span class="o">.</span><span class="n">export_video</span><span class="p">(</span><span class="s2">&quot;video.mp4&quot;</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">codec</span><span class="o">=</span><span class="s2">&quot;mp4&quot;</span><span class="p">)</span>
+
+<span class="c1"># JSON — filepath first, grid second</span>
+<span class="n">em</span><span class="o">.</span><span class="n">export_json</span><span class="p">(</span><span class="s2">&quot;state.json&quot;</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;generation&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="rle-parser">
+<h3>RLE Parser<a class="headerlink" href="#rle-parser" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.advanced.rle_format</span><span class="w"> </span><span class="kn">import</span> <span class="n">RLEParser</span><span class="p">,</span> <span class="n">RLEEncoder</span>
+
+<span class="c1"># Parse RLE string — returns (grid: np.ndarray, metadata: dict)</span>
+<span class="n">grid</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">RLEParser</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="s2">&quot;bo$2bo$3o!&quot;</span><span class="p">)</span>
+
+<span class="c1"># Parse from file</span>
+<span class="n">grid</span><span class="p">,</span> <span class="n">metadata</span> <span class="o">=</span> <span class="n">RLEParser</span><span class="o">.</span><span class="n">parse_file</span><span class="p">(</span><span class="s2">&quot;pattern.rle&quot;</span><span class="p">)</span>
+
+<span class="c1"># Encode grid to RLE string</span>
+<span class="n">rle_string</span> <span class="o">=</span> <span class="n">RLEEncoder</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
+
+<span class="c1"># Encode directly to file</span>
+<span class="n">RLEEncoder</span><span class="o">.</span><span class="n">encode_to_file</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="s2">&quot;output.rle&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="statistics">
+<h3>Statistics<a class="headerlink" href="#statistics" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.advanced.statistics</span><span class="w"> </span><span class="kn">import</span> <span class="n">StatisticsCollector</span>
+
+<span class="n">coll</span> <span class="o">=</span> <span class="n">StatisticsCollector</span><span class="p">(</span><span class="n">track_changes</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">calculate_entropy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">stats</span> <span class="o">=</span> <span class="n">coll</span><span class="o">.</span><span class="n">collect</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">grid</span><span class="o">=</span><span class="n">grid</span><span class="p">)</span>   <span class="c1"># returns SimulationStatistics dataclass</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">alive_cells</span><span class="p">,</span> <span class="n">stats</span><span class="o">.</span><span class="n">density</span><span class="p">,</span> <span class="n">stats</span><span class="o">.</span><span class="n">births</span><span class="p">,</span> <span class="n">stats</span><span class="o">.</span><span class="n">deaths</span><span class="p">)</span>
+
+<span class="n">summary</span> <span class="o">=</span> <span class="n">coll</span><span class="o">.</span><span class="n">get_summary</span><span class="p">()</span>
+<span class="c1"># {&quot;total_steps&quot;: 1, &quot;avg_density&quot;: 0.25, &quot;avg_births&quot;: ..., ...}</span>
+</pre></div>
+</div>
+<p>For deeper per-grid metrics use <code class="docutils literal notranslate"><span class="pre">EnhancedStatistics</span></code> (all static methods):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.advanced.enhanced_statistics</span><span class="w"> </span><span class="kn">import</span> <span class="n">EnhancedStatistics</span>
+
+<span class="n">entropy</span>    <span class="o">=</span> <span class="n">EnhancedStatistics</span><span class="o">.</span><span class="n">calculate_entropy</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
+<span class="n">complexity</span> <span class="o">=</span> <span class="n">EnhancedStatistics</span><span class="o">.</span><span class="n">calculate_complexity</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">previous_grid</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="pattern-manager">
+<h3>Pattern Manager<a class="headerlink" href="#pattern-manager" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.advanced.pattern_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">PatternManager</span><span class="p">,</span> <span class="n">PatternEntry</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="n">pm</span> <span class="o">=</span> <span class="n">PatternManager</span><span class="p">(</span><span class="n">data_dir</span><span class="o">=</span><span class="s2">&quot;user_data&quot;</span><span class="p">)</span>
+
+<span class="c1"># Add a favourite</span>
+<span class="n">entry</span> <span class="o">=</span> <span class="n">PatternEntry</span><span class="o">.</span><span class="n">from_grid</span><span class="p">(</span><span class="s2">&quot;my_glider&quot;</span><span class="p">,</span> <span class="s2">&quot;conway&quot;</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="s2">&quot;A glider&quot;</span><span class="p">)</span>
+<span class="n">pm</span><span class="o">.</span><span class="n">add_favorite</span><span class="p">(</span><span class="n">entry</span><span class="p">)</span>
+
+<span class="c1"># Retrieve all favourites</span>
+<span class="n">favs</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">get_favorites</span><span class="p">()</span>
+
+<span class="c1"># Search by tag</span>
+<span class="n">conway_patterns</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">search_by_tag</span><span class="p">(</span><span class="s2">&quot;conway&quot;</span><span class="p">)</span>
+
+<span class="c1"># Search by name substring</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">search_by_name</span><span class="p">(</span><span class="s2">&quot;glider&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="cell-age-tracker">
+<h3>Cell Age Tracker<a class="headerlink" href="#cell-age-tracker" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.advanced.cell_tracker</span><span class="w"> </span><span class="kn">import</span> <span class="n">CellAgeTracker</span>
+
+<span class="n">tracker</span> <span class="o">=</span> <span class="n">CellAgeTracker</span><span class="p">(</span><span class="n">width</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">tracker</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>        <span class="c1"># call once per generation</span>
+<span class="n">ages</span> <span class="o">=</span> <span class="n">tracker</span><span class="o">.</span><span class="n">get_age_grid</span><span class="p">()</span>  <span class="c1"># numpy array: 0 = dead, n = alive for n generations</span>
+</pre></div>
+</div>
+</section>
+<section id="autosave-manager">
+<h3>AutoSave Manager<a class="headerlink" href="#autosave-manager" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.autosave_manager</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoSaveManager</span>
+
+<span class="n">am</span> <span class="o">=</span> <span class="n">AutoSaveManager</span><span class="p">(</span><span class="n">save_dir</span><span class="o">=</span><span class="s2">&quot;autosave&quot;</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">max_backups</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">am</span><span class="o">.</span><span class="n">set_save_callback</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;generation&quot;</span><span class="p">:</span> <span class="n">sim</span><span class="o">.</span><span class="n">generation</span><span class="p">,</span> <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="n">sim</span><span class="o">.</span><span class="n">get_grid</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()})</span>
+<span class="n">am</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="c1"># ... simulation runs ...</span>
+<span class="n">am</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="plugin-system">
+<h3>Plugin System<a class="headerlink" href="#plugin-system" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">PluginManager</span>
+
+<span class="n">pm</span> <span class="o">=</span> <span class="n">PluginManager</span><span class="p">()</span>
+<span class="n">count</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">load_plugins_from_directory</span><span class="p">(</span><span class="s2">&quot;plugins&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pm</span><span class="o">.</span><span class="n">list_plugins</span><span class="p">())</span>  <span class="c1"># [&quot;Day &amp; Night&quot;]</span>
+
+<span class="n">automaton</span> <span class="o">=</span> <span class="n">pm</span><span class="o">.</span><span class="n">create_automaton</span><span class="p">(</span><span class="s2">&quot;Day &amp; Night&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="cli_reference.html" class="btn btn-neutral float-left" title="CLI Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="plugin_development.html" class="btn btn-neutral float-right" title="Plugin Development" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Honey Badger Universe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

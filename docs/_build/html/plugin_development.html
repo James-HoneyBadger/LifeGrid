@@ -1,0 +1,331 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plugin Development &mdash; LifeGrid 3.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4f6ddb47"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Architecture" href="architecture.html" />
+    <link rel="prev" title="API Reference" href="api_reference.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            LifeGrid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Plugin Development</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#creating-a-plugin">Creating a Plugin</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#subclass-automatonplugin">1. Subclass <code class="docutils literal notranslate"><span class="pre">AutomatonPlugin</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#save-the-file">2. Save the file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#restart-lifegrid">3. Restart LifeGrid</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plugin-api">Plugin API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#automatonplugin-abstract-base-class"><code class="docutils literal notranslate"><span class="pre">AutomatonPlugin</span></code> (abstract base class)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cellularautomaton-abstract-base-class"><code class="docutils literal notranslate"><span class="pre">CellularAutomaton</span></code> (abstract base class)</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#example-day-night-plugin">Example: Day &amp; Night Plugin</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tips">Tips</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LifeGrid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Plugin Development</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/plugin_development.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="plugin-development">
+<h1>Plugin Development<a class="headerlink" href="#plugin-development" title="Link to this heading"></a></h1>
+<p>LifeGrid’s plugin system lets you add new automaton modes without modifying the core codebase. Drop a <code class="docutils literal notranslate"><span class="pre">.py</span></code> file in the <code class="docutils literal notranslate"><span class="pre">plugins/</span></code> directory and it will be discovered automatically at startup.</p>
+<hr class="docutils" />
+<section id="creating-a-plugin">
+<h2>Creating a Plugin<a class="headerlink" href="#creating-a-plugin" title="Link to this heading"></a></h2>
+<section id="subclass-automatonplugin">
+<h3>1. Subclass <code class="docutils literal notranslate"><span class="pre">AutomatonPlugin</span></code><a class="headerlink" href="#subclass-automatonplugin" title="Link to this heading"></a></h3>
+<p>Every plugin must implement three properties and one factory method:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutomatonPlugin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">automata.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">CellularAutomaton</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">core.boundary</span><span class="w"> </span><span class="kn">import</span> <span class="n">BoundaryMode</span><span class="p">,</span> <span class="n">convolve_with_boundary</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyAutomaton</span><span class="p">(</span><span class="n">CellularAutomaton</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Your automaton implementation.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="n">height</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">height</span><span class="p">,</span> <span class="n">width</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                           <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+                           <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+        <span class="c1"># Use convolve_with_boundary so the active boundary mode is respected</span>
+        <span class="n">mode</span> <span class="o">=</span> <span class="n">BoundaryMode</span><span class="o">.</span><span class="n">from_string</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boundary</span><span class="p">)</span>
+        <span class="n">neighbors</span> <span class="o">=</span> <span class="n">convolve_with_boundary</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>
+        <span class="c1"># Apply your rules here</span>
+        <span class="n">new_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">)</span>
+        <span class="n">birth</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">neighbors</span><span class="p">,</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">])</span>
+        <span class="n">survive</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">neighbors</span><span class="p">,</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">])</span>
+        <span class="n">new_grid</span><span class="p">[</span><span class="n">birth</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">new_grid</span><span class="p">[</span><span class="n">survive</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="n">survive</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">new_grid</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">grid</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_cell</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">y</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">grid</span><span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">MyPlugin</span><span class="p">(</span><span class="n">AutomatonPlugin</span><span class="p">):</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;My Custom Rule&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;B368/S3468 — an example custom automaton&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;1.0&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_automaton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CellularAutomaton</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">MyAutomaton</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="save-the-file">
+<h3>2. Save the file<a class="headerlink" href="#save-the-file" title="Link to this heading"></a></h3>
+<p>Save your plugin as <code class="docutils literal notranslate"><span class="pre">plugins/my_custom_rule.py</span></code>. The filename doesn’t matter — LifeGrid scans all <code class="docutils literal notranslate"><span class="pre">.py</span></code> files in the directory.</p>
+</section>
+<section id="restart-lifegrid">
+<h3>3. Restart LifeGrid<a class="headerlink" href="#restart-lifegrid" title="Link to this heading"></a></h3>
+<p>The new mode appears in the mode selector automatically.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="plugin-api">
+<h2>Plugin API<a class="headerlink" href="#plugin-api" title="Link to this heading"></a></h2>
+<section id="automatonplugin-abstract-base-class">
+<h3><code class="docutils literal notranslate"><span class="pre">AutomatonPlugin</span></code> (abstract base class)<a class="headerlink" href="#automatonplugin-abstract-base-class" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Member</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>property → str</p></td>
+<td><p>Display name shown in the mode selector</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">description</span></code></p></td>
+<td><p>property → str</p></td>
+<td><p>Short description of the rule</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">version</span></code></p></td>
+<td><p>property → str</p></td>
+<td><p>Plugin version string</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">create_automaton(width,</span> <span class="pre">height)</span></code></p></td>
+<td><p>method → CellularAutomaton</p></td>
+<td><p>Factory that returns a configured automaton instance</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="cellularautomaton-abstract-base-class">
+<h3><code class="docutils literal notranslate"><span class="pre">CellularAutomaton</span></code> (abstract base class)<a class="headerlink" href="#cellularautomaton-abstract-base-class" title="Link to this heading"></a></h3>
+<p>Your automaton must implement:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Member</p></th>
+<th class="head"><p>Signature</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">step</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">()</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></p></td>
+<td><p>Advance one generation</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">get_grid</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">()</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code></p></td>
+<td><p>Return the current grid as a 2D numpy array</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">set_cell</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">value)</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></p></td>
+<td><p>Set a single cell’s state</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">reset</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">()</span> <span class="pre">-&gt;</span> <span class="pre">None</span></code></p></td>
+<td><p>Clear the grid to all zeros</p></td>
+</tr>
+</tbody>
+</table>
+<p>The base class also provides:</p>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Member</p></th>
+<th class="head"><p>Type</p></th>
+<th class="head"><p>Description</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">boundary</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">str</span></code></p></td>
+<td><p>Active boundary mode: <code class="docutils literal notranslate"><span class="pre">&quot;wrap&quot;</span></code> (default), <code class="docutils literal notranslate"><span class="pre">&quot;fixed&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;reflect&quot;</span></code></p></td>
+</tr>
+</tbody>
+</table>
+<p>the grid should be a 2D integer array of shape <code class="docutils literal notranslate"><span class="pre">(height,</span> <span class="pre">width)</span></code> where <code class="docutils literal notranslate"><span class="pre">0</span></code> means dead and positive integers represent live/coloured states.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="example-day-night-plugin">
+<h2>Example: Day &amp; Night Plugin<a class="headerlink" href="#example-day-night-plugin" title="Link to this heading"></a></h2>
+<p>The included <code class="docutils literal notranslate"><span class="pre">plugins/day_and_night.py</span></code> implements B3678/S34678:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">plugin_system</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutomatonPlugin</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">automata.lifelike</span><span class="w"> </span><span class="kn">import</span> <span class="n">LifeLikeAutomaton</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">automata.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">CellularAutomaton</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">DayAndNightPlugin</span><span class="p">(</span><span class="n">AutomatonPlugin</span><span class="p">):</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Day &amp; Night&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;B3678/S34678 — symmetric behavior for ON and OFF cells&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;1.0&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_automaton</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">height</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">CellularAutomaton</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">LifeLikeAutomaton</span><span class="p">(</span><span class="n">width</span><span class="p">,</span> <span class="n">height</span><span class="p">,</span> <span class="n">birth</span><span class="o">=</span><span class="p">{</span><span class="mi">3</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">},</span> <span class="n">survival</span><span class="o">=</span><span class="p">{</span><span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">})</span>
+</pre></div>
+</div>
+<p>This plugin reuses <code class="docutils literal notranslate"><span class="pre">LifeLikeAutomaton</span></code> for the step logic, so only the plugin metadata and B/S parameters need to be defined.</p>
+</section>
+<hr class="docutils" />
+<section id="tips">
+<h2>Tips<a class="headerlink" href="#tips" title="Link to this heading"></a></h2>
+<ul>
+<li><p><strong>Reuse <code class="docutils literal notranslate"><span class="pre">LifeLikeAutomaton</span></code></strong> for any totalistic Life-like rule — just supply birth and survival sets. This automatically benefits from the cached kernel and boundary routing.</p></li>
+<li><p><strong>Always call <code class="docutils literal notranslate"><span class="pre">super().__init__(width,</span> <span class="pre">height)</span></code></strong> after setting <code class="docutils literal notranslate"><span class="pre">self.grid</span></code> so the base class initialises <code class="docutils literal notranslate"><span class="pre">self.boundary</span></code> and the population helpers correctly.</p></li>
+<li><p><strong>Respect <code class="docutils literal notranslate"><span class="pre">self.boundary</span></code></strong>: use <code class="docutils literal notranslate"><span class="pre">BoundaryMode.from_string(self.boundary)</span></code> and <code class="docutils literal notranslate"><span class="pre">convolve_with_boundary()</span></code> so users can switch between wrap/fixed/reflect from the GUI without restarting.</p></li>
+<li><p><strong>Multi-state automata</strong> can use integers &gt; 1 in the grid. The GUI renders states 0–3 with distinct colours.</p></li>
+<li><p><strong>Test your plugin</strong> by instantiating it directly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">plugin</span> <span class="o">=</span> <span class="n">MyPlugin</span><span class="p">()</span>
+<span class="n">auto</span> <span class="o">=</span> <span class="n">plugin</span><span class="o">.</span><span class="n">create_automaton</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">)</span>
+<span class="n">auto</span><span class="o">.</span><span class="n">set_cell</span><span class="p">(</span><span class="mi">25</span><span class="p">,</span> <span class="mi">25</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">auto</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">auto</span><span class="o">.</span><span class="n">get_grid</span><span class="p">()</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+</pre></div>
+</div>
+</li>
+<li><p>Plugins are loaded via <code class="docutils literal notranslate"><span class="pre">PluginManager.load_plugins_from_directory()</span></code>. If a plugin fails to load (import error, missing methods), it is skipped with a warning — it won’t crash the application.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api_reference.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="architecture.html" class="btn btn-neutral float-right" title="Architecture" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Honey Badger Universe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

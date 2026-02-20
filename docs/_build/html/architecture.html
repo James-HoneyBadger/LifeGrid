@@ -1,0 +1,485 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architecture &mdash; LifeGrid 3.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4f6ddb47"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Plugin Development" href="plugin_development.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            LifeGrid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin_development.html">Plugin Development</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Architecture</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#high-level-overview">High-Level Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-breakdown">Module Breakdown</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#entry-points">Entry Points</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#core-src-core">Core (<code class="docutils literal notranslate"><span class="pre">src/core/</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#automata-src-automata">Automata (<code class="docutils literal notranslate"><span class="pre">src/automata/</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#gui-src-gui">GUI (<code class="docutils literal notranslate"><span class="pre">src/gui/</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#api-src-api">API (<code class="docutils literal notranslate"><span class="pre">src/api/</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#advanced-analytics-src-advanced">Advanced Analytics (<code class="docutils literal notranslate"><span class="pre">src/advanced/</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#performance-src-performance">Performance (<code class="docutils literal notranslate"><span class="pre">src/performance/</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#plugin-system-src-plugin-system-py">Plugin System (<code class="docutils literal notranslate"><span class="pre">src/plugin_system.py</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#export-persistence-src-export-manager-py-src-autosave-manager-py">Export &amp; Persistence (<code class="docutils literal notranslate"><span class="pre">src/export_manager.py</span></code>, <code class="docutils literal notranslate"><span class="pre">src/autosave_manager.py</span></code>)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuration">Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#data-flow">Data Flow</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#gui-simulation-loop">GUI Simulation Loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cli-pipeline">CLI Pipeline</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#api-request-flow">API Request Flow</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LifeGrid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Architecture</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/architecture.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="architecture">
+<h1>Architecture<a class="headerlink" href="#architecture" title="Link to this heading"></a></h1>
+<p>This document describes LifeGrid’s internal architecture and module relationships.</p>
+<hr class="docutils" />
+<section id="high-level-overview">
+<h2>High-Level Overview<a class="headerlink" href="#high-level-overview" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>┌──────────────────────────────────────────────────┐
+│                  Entry Points                    │
+│  main.py (GUI)   cli.py (CLI)   api/app.py (API) │
+└──────┬──────────────┬──────────────┬─────────────┘
+       │              │              │
+       ▼              ▼              ▼
+┌──────────────────────────────────────────────────┐
+│               Core Engine Layer                  │
+│  Simulator  ←→  SimulatorConfig                  │
+│      │                                           │
+│      ├── UndoManager      (state history)        │
+│      ├── BoundaryMode     (wrap/fixed/reflect)   │
+│      └── CellularAutomaton (abstract base)       │
+└──────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────┐
+│             Automata Implementations             │
+│  ConwayGameOfLife  │  HighLife  │  Wireworld     │
+│  BriansBrain       │  LangtonsAnt │ Generations  │
+│  ImmigrationGame   │  RainbowGame │ HexagonalGoL │
+│  LifeLikeAutomaton (custom B/S rules)            │
+└──────────────────────────────────────────────────┘
+       │
+       ▼
+┌──────────────────────────────────────────────────┐
+│              Support Modules                     │
+│  ExportManager    │  PatternManager              │
+│  PluginManager    │  ConfigManager (AppConfig)   │
+│  ThemeManager     │  StatisticsCollector          │
+│  EnhancedStatistics │ PatternAnalyzer            │
+│  RLEParser/Encoder  │ CellAgeTracker             │
+│  HeatmapGenerator   │ SymmetryAnalyzer           │
+│  RuleDiscovery      │ GPUSimulator               │
+└──────────────────────────────────────────────────┘
+</pre></div>
+</div>
+</section>
+<hr class="docutils" />
+<section id="module-breakdown">
+<h2>Module Breakdown<a class="headerlink" href="#module-breakdown" title="Link to this heading"></a></h2>
+<section id="entry-points">
+<h3>Entry Points<a class="headerlink" href="#entry-points" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">src/main.py</span></code></p></td>
+<td><p>Launches the Tkinter GUI via <code class="docutils literal notranslate"><span class="pre">AutomatonApp</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">src/cli.py</span></code></p></td>
+<td><p>Headless CLI with argparse. Creates a <code class="docutils literal notranslate"><span class="pre">Simulator</span></code>, runs N steps, exports results.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">src/api/app.py</span></code></p></td>
+<td><p>FastAPI server with REST endpoints and WebSocket streams</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="core-src-core">
+<h3>Core (<code class="docutils literal notranslate"><span class="pre">src/core/</span></code>)<a class="headerlink" href="#core-src-core" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module</p></th>
+<th class="head"><p>Key Classes</p></th>
+<th class="head"><p>Responsibility</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">simulator.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">Simulator</span></code></p></td>
+<td><p>Orchestrates automaton stepping, undo/redo, metrics, callbacks</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">config.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SimulatorConfig</span></code></p></td>
+<td><p>Dataclass holding grid size, speed, mode, rule sets, feature flags</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">undo_manager.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">UndoManager</span></code></p></td>
+<td><p>Bounded stack of grid snapshots (default 100)</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">boundary.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">BoundaryMode</span></code>, <code class="docutils literal notranslate"><span class="pre">convolve_with_boundary()</span></code>, <code class="docutils literal notranslate"><span class="pre">roll_with_boundary()</span></code></p></td>
+<td><p>Edge-handling strategies</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">utils.py</span></code></p></td>
+<td><p>Utility functions</p></td>
+<td><p>Shared helpers</p></td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal notranslate"><span class="pre">Simulator</span></code> owns a <code class="docutils literal notranslate"><span class="pre">CellularAutomaton</span></code> instance and an <code class="docutils literal notranslate"><span class="pre">UndoManager</span></code>. On each <code class="docutils literal notranslate"><span class="pre">step()</span></code> call it:</p>
+<ol class="arabic simple">
+<li><p>Pushes the current grid to the undo stack.</p></li>
+<li><p>Calls <code class="docutils literal notranslate"><span class="pre">automaton.step()</span></code>.</p></li>
+<li><p>Records metrics (generation, population, density).</p></li>
+<li><p>Fires the on-step callback.</p></li>
+</ol>
+</section>
+<section id="automata-src-automata">
+<h3>Automata (<code class="docutils literal notranslate"><span class="pre">src/automata/</span></code>)<a class="headerlink" href="#automata-src-automata" title="Link to this heading"></a></h3>
+<p>All automata inherit from <code class="docutils literal notranslate"><span class="pre">CellularAutomaton</span></code> (defined in <code class="docutils literal notranslate"><span class="pre">base.py</span></code>) which provides:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">step()</span></code> — advance one generation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_grid()</span> <span class="pre">-&gt;</span> <span class="pre">np.ndarray</span></code> — return the current grid</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">set_cell(x,</span> <span class="pre">y,</span> <span class="pre">value)</span></code> — set a cell value</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reset()</span></code> — clear the grid</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">boundary:</span> <span class="pre">str</span></code> — edge mode (<code class="docutils literal notranslate"><span class="pre">&quot;wrap&quot;</span></code> | <code class="docutils literal notranslate"><span class="pre">&quot;fixed&quot;</span></code> | <code class="docutils literal notranslate"><span class="pre">&quot;reflect&quot;</span></code>), default <code class="docutils literal notranslate"><span class="pre">&quot;wrap&quot;</span></code></p></li>
+</ul>
+<p>All convolution-based automata use <code class="docutils literal notranslate"><span class="pre">core.boundary.convolve_with_boundary()</span></code> (wrapping scipy) instead of calling <code class="docutils literal notranslate"><span class="pre">scipy.signal.convolve2d</span></code> directly. This routes every neighbour count through the correct boundary handler.</p>
+<p><code class="docutils literal notranslate"><span class="pre">LifeLikeAutomaton</span></code> additionally caches the Moore-neighbourhood kernel as a class-level constant (<code class="docutils literal notranslate"><span class="pre">_KERNEL</span></code>) to avoid re-allocation on every step.</p>
+<p><code class="docutils literal notranslate"><span class="pre">LangtonsAnt</span></code> exposes <code class="docutils literal notranslate"><span class="pre">get_population_grid()</span></code> which returns the raw cell grid without the ant-marker overlay (used for population statistics).</p>
+<p><code class="docutils literal notranslate"><span class="pre">LifeLikeAutomaton</span></code> accepts arbitrary B/S rules via <code class="docutils literal notranslate"><span class="pre">parse_bs()</span></code>, making it the backbone of custom-rule support and the Rule Explorer.</p>
+</section>
+<section id="gui-src-gui">
+<h3>GUI (<code class="docutils literal notranslate"><span class="pre">src/gui/</span></code>)<a class="headerlink" href="#gui-src-gui" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">app.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">AutomatonApp</span></code> — main window, menus, toolbar, event loop. Owns <code class="docutils literal notranslate"><span class="pre">AutoSaveManager</span></code> (started on init, stopped on close).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rendering.py</span></code></p></td>
+<td><p>Canvas drawing: cells, grid lines, overlays. Uses a PIL/Pillow fast-path (<code class="docutils literal notranslate"><span class="pre">_draw_pil_fast</span></code>) when Pillow is installed and grid lines are hidden — a single <code class="docutils literal notranslate"><span class="pre">PhotoImage</span></code> replace instead of per-cell <code class="docutils literal notranslate"><span class="pre">create_rectangle</span></code> calls.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ui.py</span></code></p></td>
+<td><p>UI builder: creates widgets, binds callbacks</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">config.py</span></code></p></td>
+<td><p>GUI constants: <code class="docutils literal notranslate"><span class="pre">MODE_FACTORIES</span></code>, <code class="docutils literal notranslate"><span class="pre">MODE_PATTERNS</span></code>, colors</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">state.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SimulationState</span></code> — mutable runtime state (grid, speed, history deques). <code class="docutils literal notranslate"><span class="pre">export_metrics_csv()</span></code> dynamically discovers all metric keys; <code class="docutils literal notranslate"><span class="pre">_calculate_complexity()</span></code> is vectorised with <code class="docutils literal notranslate"><span class="pre">numpy.lib.stride_tricks.sliding_window_view</span></code>; <code class="docutils literal notranslate"><span class="pre">seen_hashes</span></code> is capped at 2 000 entries with LRU-style eviction.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">tools.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ToolManager</span></code> — pencil/eraser/stamp/selection, brush settings. Drag gestures push exactly one undo checkpoint regardless of stroke length.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">new_features.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GenerationTimeline</span></code>, <code class="docutils literal notranslate"><span class="pre">PopulationGraph</span></code>, <code class="docutils literal notranslate"><span class="pre">BreakpointManager</span></code>, <code class="docutils literal notranslate"><span class="pre">RuleExplorer</span></code>, <code class="docutils literal notranslate"><span class="pre">CommandPalette</span></code>, <code class="docutils literal notranslate"><span class="pre">ThemeEditorDialog</span></code>, <code class="docutils literal notranslate"><span class="pre">PatternShapeSearch</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">enhanced_features.py</span></code></p></td>
+<td><p>Additional feature widgets</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">enhanced_rendering.py</span></code></p></td>
+<td><p>Enhanced rendering utilities</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">icon_factory.py</span></code></p></td>
+<td><p>Procedural icon generation</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">layouts.py</span></code></p></td>
+<td><p>Layout management helpers</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">modern_ui.py</span></code></p></td>
+<td><p>Modern UI components (styled buttons, frames)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">ui_polish.py</span></code></p></td>
+<td><p>Visual refinements</p></td>
+</tr>
+</tbody>
+</table>
+<p>The GUI uses Tkinter’s <code class="docutils literal notranslate"><span class="pre">grid</span></code> geometry manager throughout. The main layout is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>root
+└── content_frame (grid)
+    ├── toolbar (row 0, sticky EW)
+    ├── sidebar (row 1, column 0)
+    ├── canvas  (row 1, column 1)
+    ├── timeline (row 2, columnspan 2)
+    ├── graph   (row 3, columnspan 2)
+    └── statusbar (row 4, columnspan 2)
+</pre></div>
+</div>
+</section>
+<section id="api-src-api">
+<h3>API (<code class="docutils literal notranslate"><span class="pre">src/api/</span></code>)<a class="headerlink" href="#api-src-api" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">app.py</span></code></p></td>
+<td><p>FastAPI application with session CRUD, stepping, state retrieval, pattern loading, WebSocket streaming</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">collab.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">CollaborativeSession</span></code> — multi-client shared grid with asyncio lock</p></td>
+</tr>
+</tbody>
+</table>
+<p>Sessions are stored in a module-level dict keyed by UUID. The collaborative endpoint creates sessions on demand.</p>
+</section>
+<section id="advanced-analytics-src-advanced">
+<h3>Advanced Analytics (<code class="docutils literal notranslate"><span class="pre">src/advanced/</span></code>)<a class="headerlink" href="#advanced-analytics-src-advanced" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module</p></th>
+<th class="head"><p>Key Classes</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">statistics.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">StatisticsCollector</span></code>, <code class="docutils literal notranslate"><span class="pre">StatisticsExporter</span></code></p></td>
+<td><p>Per-generation metrics collection via <code class="docutils literal notranslate"><span class="pre">.collect(step,</span> <span class="pre">grid)</span></code>, CSV/plot export</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">enhanced_statistics.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">EnhancedStatistics</span></code></p></td>
+<td><p>Entropy, complexity, fractal dimension, connected components, cluster stats, symmetry, centre of mass, radial distribution (static-method API)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pattern_analysis.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PatternAnalyzer</span></code></p></td>
+<td><p>Bounding box, period detection, displacement detection</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pattern_manager.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">PatternManager</span></code>, <code class="docutils literal notranslate"><span class="pre">PatternEntry</span></code></p></td>
+<td><p>Favourites/history backed by JSON, tag-based search, similarity matching. Add patterns with <code class="docutils literal notranslate"><span class="pre">add_favorite(PatternEntry.from_grid(...))</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">rle_format.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">RLEParser</span></code>, <code class="docutils literal notranslate"><span class="pre">RLEEncoder</span></code></p></td>
+<td><p>Run-Length Encoded I/O. <code class="docutils literal notranslate"><span class="pre">RLEParser.parse(rle_string)</span></code> returns <code class="docutils literal notranslate"><span class="pre">(grid:</span> <span class="pre">np.ndarray,</span> <span class="pre">metadata:</span> <span class="pre">dict)</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rule_discovery.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">RuleDiscovery</span></code></p></td>
+<td><p>Vectorised <code class="docutils literal notranslate"><span class="pre">observe_transition(before,</span> <span class="pre">after)</span></code> using <code class="docutils literal notranslate"><span class="pre">np.roll</span></code> stacking — no Python nested loop over cells. Infers B/S rules from transitions.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">cell_tracker.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">CellAgeTracker(width,</span> <span class="pre">height)</span></code>, <code class="docutils literal notranslate"><span class="pre">CellHistoryTracker</span></code></p></td>
+<td><p>Track cell age, birth/death history</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">visualization.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">HeatmapGenerator</span></code>, <code class="docutils literal notranslate"><span class="pre">SymmetryAnalyzer</span></code></p></td>
+<td><p>Activity/age heatmaps, symmetry detection and scoring</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="performance-src-performance">
+<h3>Performance (<code class="docutils literal notranslate"><span class="pre">src/performance/</span></code>)<a class="headerlink" href="#performance-src-performance" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module</p></th>
+<th class="head"><p>Key Classes</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gpu.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">GPUSimulator</span></code>, <code class="docutils literal notranslate"><span class="pre">xp</span></code> backend</p></td>
+<td><p>CuPy-accelerated Life-like simulation with NumPy fallback</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">benchmarking.py</span></code></p></td>
+<td><p>Benchmarking utilities</p></td>
+<td><p>Performance measurement and reporting</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="plugin-system-src-plugin-system-py">
+<h3>Plugin System (<code class="docutils literal notranslate"><span class="pre">src/plugin_system.py</span></code>)<a class="headerlink" href="#plugin-system-src-plugin-system-py" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">PluginManager</span></code> scans a directory for <code class="docutils literal notranslate"><span class="pre">.py</span></code> files, imports them, finds <code class="docutils literal notranslate"><span class="pre">AutomatonPlugin</span></code> subclasses, and registers them. Plugins are discovered at GUI startup from the <code class="docutils literal notranslate"><span class="pre">plugins/</span></code> directory.</p>
+</section>
+<section id="export-persistence-src-export-manager-py-src-autosave-manager-py">
+<h3>Export &amp; Persistence (<code class="docutils literal notranslate"><span class="pre">src/export_manager.py</span></code>, <code class="docutils literal notranslate"><span class="pre">src/autosave_manager.py</span></code>)<a class="headerlink" href="#export-persistence-src-export-manager-py-src-autosave-manager-py" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">ExportManager</span></code> handles all output formats (PNG, GIF, MP4, WebM, JSON). It accumulates frames for animation export and supports 4 colour themes (light, dark, blue, warm).</p>
+<p>Key method signatures:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">em</span><span class="o">.</span><span class="n">export_png</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">filepath</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>      <span class="c1"># grid is first arg</span>
+<span class="n">em</span><span class="o">.</span><span class="n">export_gif</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">em</span><span class="o">.</span><span class="n">export_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">grid</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">em</span><span class="o">.</span><span class="n">export_video</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">cell_size</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">fps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">codec</span><span class="o">=</span><span class="s2">&quot;mp4&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">AutoSaveManager</span></code> runs a background thread that calls a user-supplied callback and writes the return value as JSON to a configurable directory. It is started with <code class="docutils literal notranslate"><span class="pre">am.start()</span></code> and stopped cleanly with <code class="docutils literal notranslate"><span class="pre">am.stop()</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Default: saves to ./autosave/ every 300 seconds, keeps 5 backups</span>
+<span class="n">am</span> <span class="o">=</span> <span class="n">AutoSaveManager</span><span class="p">(</span><span class="n">save_dir</span><span class="o">=</span><span class="s2">&quot;autosave&quot;</span><span class="p">,</span> <span class="n">interval</span><span class="o">=</span><span class="mi">300</span><span class="p">,</span> <span class="n">max_backups</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">am</span><span class="o">.</span><span class="n">set_save_callback</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;generation&quot;</span><span class="p">:</span> <span class="n">sim</span><span class="o">.</span><span class="n">generation</span><span class="p">,</span> <span class="s2">&quot;grid&quot;</span><span class="p">:</span> <span class="n">sim</span><span class="o">.</span><span class="n">get_grid</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()})</span>
+<span class="n">am</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="configuration">
+<h3>Configuration<a class="headerlink" href="#configuration" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Module</p></th>
+<th class="head"><p>Class</p></th>
+<th class="head"><p>Storage</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">src/core/config.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">SimulatorConfig</span></code></p></td>
+<td><p>In-memory dataclass</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">src/config_manager.py</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">AppConfig</span></code></p></td>
+<td><p>Persisted to <code class="docutils literal notranslate"><span class="pre">settings.json</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<hr class="docutils" />
+<section id="data-flow">
+<h2>Data Flow<a class="headerlink" href="#data-flow" title="Link to this heading"></a></h2>
+<section id="gui-simulation-loop">
+<h3>GUI Simulation Loop<a class="headerlink" href="#gui-simulation-loop" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>User clicks Start
+    → AutomatonApp sets running = True
+    → Tkinter after() callback fires every (101 - speed) ms
+        → Simulator.step()
+            → UndoManager.push_state(grid)
+            → CellularAutomaton.step()  ← uses convolve_with_boundary()
+            → Metrics recorded
+            → on_step callback fires
+        → Canvas re-rendered (PIL fast-path if Pillow available + grid lines off)
+        → Timeline updated
+        → PopulationGraph updated
+        → Breakpoints checked
+        → AutoSaveManager fires on its own background thread (every 60s)
+</pre></div>
+</div>
+</section>
+<section id="cli-pipeline">
+<h3>CLI Pipeline<a class="headerlink" href="#cli-pipeline" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>argparse → build SimulatorConfig → Simulator.initialize()
+    → loop N steps, collecting frames
+    → ExportManager.export_*(frames, output_path)
+</pre></div>
+</div>
+</section>
+<section id="api-request-flow">
+<h3>API Request Flow<a class="headerlink" href="#api-request-flow" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>HTTP POST /session → create Simulator → store in sessions dict → return UUID
+HTTP POST /session/{id}/step → lookup Simulator → step() → return generation
+WS /session/{id}/stream → lookup Simulator → loop: step + send JSON state
+WS /collab/{id} → lookup or create CollaborativeSession → broadcast mutations
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="plugin_development.html" class="btn btn-neutral float-left" title="Plugin Development" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Honey Badger Universe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

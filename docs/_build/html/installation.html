@@ -1,0 +1,233 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; LifeGrid 3.2.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=4f6ddb47"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="User Guide" href="user_guide.html" />
+    <link rel="prev" title="LifeGrid Documentation" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            LifeGrid
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#system-requirements">System Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quick-install">Quick Install</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#core-dependencies">Core Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#development-install">Development Install</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#optional-gpu-acceleration">Optional: GPU Acceleration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#building-a-standalone-executable">Building a Standalone Executable</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#verifying-the-install">Verifying the Install</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="user_guide.html">User Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli_reference.html">CLI Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="plugin_development.html">Plugin Development</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">LifeGrid</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/installation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<section id="system-requirements">
+<h2>System Requirements<a class="headerlink" href="#system-requirements" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Python</strong> 3.11 or later (tested up to 3.14)</p></li>
+<li><p><strong>Tcl/Tk</strong> — ships with most Python distributions; required for the GUI</p></li>
+<li><p><strong>Operating system</strong> — Linux, macOS, or Windows</p></li>
+</ul>
+</section>
+<section id="quick-install">
+<h2>Quick Install<a class="headerlink" href="#quick-install" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/James-HoneyBadger/LifeGrid.git
+<span class="nb">cd</span><span class="w"> </span>LifeGrid
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<section id="core-dependencies">
+<h3>Core Dependencies<a class="headerlink" href="#core-dependencies" title="Link to this heading"></a></h3>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Package</p></th>
+<th class="head"><p>Minimum Version</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>numpy</p></td>
+<td><p>1.24.0</p></td>
+<td><p>Grid computation</p></td>
+</tr>
+<tr class="row-odd"><td><p>scipy</p></td>
+<td><p>1.11.0</p></td>
+<td><p>Convolution for neighbor counting</p></td>
+</tr>
+<tr class="row-even"><td><p>Pillow</p></td>
+<td><p>10.0.0</p></td>
+<td><p>Image export (PNG, GIF)</p></td>
+</tr>
+<tr class="row-odd"><td><p>imageio</p></td>
+<td><p>2.31.0</p></td>
+<td><p>Video export (MP4, WebM)</p></td>
+</tr>
+<tr class="row-even"><td><p>imageio-ffmpeg</p></td>
+<td><p>0.4.9</p></td>
+<td><p>FFmpeg backend for video</p></td>
+</tr>
+<tr class="row-odd"><td><p>fastapi</p></td>
+<td><p>—</p></td>
+<td><p>REST &amp; WebSocket API</p></td>
+</tr>
+<tr class="row-even"><td><p>uvicorn</p></td>
+<td><p>—</p></td>
+<td><p>ASGI server</p></td>
+</tr>
+<tr class="row-odd"><td><p>httpx</p></td>
+<td><p>—</p></td>
+<td><p>HTTP client (used by tests)</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+<section id="development-install">
+<h2>Development Install<a class="headerlink" href="#development-install" title="Link to this heading"></a></h2>
+<p>For contributors who need linting, formatting, type checking, and doc building:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>install-dev
+</pre></div>
+</div>
+<p>This runs <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">&quot;.[dev,docs,export]&quot;</span></code> which installs:</p>
+<ul class="simple">
+<li><p><strong>dev</strong>: pytest, pytest-cov, flake8, pylint, mypy, black, isort</p></li>
+<li><p><strong>docs</strong>: sphinx, sphinx-rtd-theme</p></li>
+<li><p><strong>export</strong>: all image/video dependencies</p></li>
+</ul>
+</section>
+<section id="optional-gpu-acceleration">
+<h2>Optional: GPU Acceleration<a class="headerlink" href="#optional-gpu-acceleration" title="Link to this heading"></a></h2>
+<p>LifeGrid supports CuPy for CUDA-accelerated simulations. This is entirely optional — the simulator falls back to NumPy when CuPy is unavailable.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Match the package to your CUDA toolkit version</span>
+pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda12x<span class="w">    </span><span class="c1"># CUDA 12.x</span>
+pip<span class="w"> </span>install<span class="w"> </span>cupy-cuda11x<span class="w">    </span><span class="c1"># CUDA 11.x</span>
+</pre></div>
+</div>
+<p>Verify GPU availability:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">src.performance.gpu</span><span class="w"> </span><span class="kn">import</span> <span class="n">is_gpu_available</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">is_gpu_available</span><span class="p">())</span>  <span class="c1"># True if CuPy + CUDA are working</span>
+</pre></div>
+</div>
+</section>
+<section id="building-a-standalone-executable">
+<h2>Building a Standalone Executable<a class="headerlink" href="#building-a-standalone-executable" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>make<span class="w"> </span>executable
+</pre></div>
+</div>
+<p>This uses PyInstaller with the included <code class="docutils literal notranslate"><span class="pre">lifegrid.spec</span></code> to produce a single distributable binary.</p>
+</section>
+<section id="verifying-the-install">
+<h2>Verifying the Install<a class="headerlink" href="#verifying-the-install" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Launch the GUI</span>
+python<span class="w"> </span>src/main.py
+
+<span class="c1"># Run the test suite</span>
+make<span class="w"> </span><span class="nb">test</span>
+
+<span class="c1"># Run a quick CLI simulation</span>
+python<span class="w"> </span>src/cli.py<span class="w"> </span>--mode<span class="w"> </span>conway<span class="w"> </span>--steps<span class="w"> </span><span class="m">100</span><span class="w"> </span>--quiet
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="LifeGrid Documentation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="user_guide.html" class="btn btn-neutral float-right" title="User Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, Honey Badger Universe.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

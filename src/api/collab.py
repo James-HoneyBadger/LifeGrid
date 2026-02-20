@@ -25,8 +25,25 @@ class CollaborativeSession:
     running: bool = False
     speed: float = 0.1  # seconds between auto-steps
     clients: List[WebSocket] = field(default_factory=list)
-    _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
-    _task: Optional[asyncio.Task] = None  # type: ignore[type-arg]
+    _lock: Optional[asyncio.Lock] = field(
+        default=None, init=False, repr=False, compare=False,
+    )
+    _task: Optional[asyncio.Task] = field(  # type: ignore[type-arg]
+        default=None, init=False, repr=False, compare=False,
+    )
+
+    def _get_lock(self) -> asyncio.Lock:
+        """Return the session lock, creating it lazily inside the event loop.
+
+        Creating ``asyncio.Lock()`` outside a running event loop emits a
+        ``DeprecationWarning`` on Python 3.10/3.11 and may raise in future
+        versions.  Deferring construction to the first async call ensures
+        the lock is always created within a running loop.
+        """
+        if self._lock is None:
+            self._lock = asyncio.Lock()
+        return self._lock
+
 
     async def add_client(self, ws: WebSocket) -> None:
         await ws.accept()
@@ -71,7 +88,7 @@ class CollaborativeSession:
         """Process an incoming client message."""
         action = data.get("action")
 
-        async with self._lock:
+        async with self._get_lock():
             if action == "draw":
                 x = data.get("x", 0)
                 y = data.get("y", 0)
@@ -120,7 +137,7 @@ class CollaborativeSession:
     async def _auto_step_loop(self) -> None:
         """Run steps continuously until stopped."""
         while self.running:
-            async with self._lock:
+            async with self._get_lock():
                 self._step_conway()
             await self.broadcast()
             await asyncio.sleep(self.speed)

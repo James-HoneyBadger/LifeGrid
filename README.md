@@ -4,7 +4,7 @@ A feature-rich cellular automata simulator with a modern Tkinter GUI, headless C
 
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License MIT](https://img.shields.io/badge/license-MIT-green)
-![Version 3.1.0](https://img.shields.io/badge/version-3.1.0-orange)
+![Version 3.2.0](https://img.shields.io/badge/version-3.2.0-orange)
 
 ---
 
@@ -158,8 +158,8 @@ python src/cli.py --mode highlife -W 200 -H 200 --steps 500 --export video.mp4 -
 # Custom B/S rule, export CSV statistics
 python src/cli.py --rule B36/S23 --steps 2000 --export stats.csv
 
-# Take a PNG snapshot every 100 generations
-python src/cli.py --mode wireworld --steps 1000 --snapshot-every 100 --export frames/snap.png
+# Run WireWorld for 1000 steps, capturing every 100th frame as an animated GIF
+python src/cli.py --mode wireworld --steps 1000 --snapshot-every 100 --export sim.gif
 ```
 
 ### API
