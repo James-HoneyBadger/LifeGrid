@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [3.2.0] — 2026-02-19
+
+### Added
+
+- **Run N Steps** — new `Simulation → Run N Steps…` menu item and `N` keyboard shortcut; shows a dialog to enter a step count and runs the simulation forward in a single call.
+- **F5 Randomize** — `F5` key and `Simulation → Randomize` command fill the grid with a random soup (`load_pattern("Random Soup")`).
+- **Scroll-wheel zoom** — mouse scroll on the canvas adjusts cell size between 2 and 64 px without requiring the keyboard.
+- **GIF export menu item** — `File → Export GIF…` invokes `ExportManager.export_gif` on the current frame buffer.
+- **RLE export menu item** — `File → Export RLE…` invokes `RLEEncoder.encode_to_file` on the current grid.
+- **Boundary indicator in title bar** — the window title now includes the active boundary mode, e.g. `LifeGrid — Conway's Game of Life [reflect]`.
+- **AutoSave wired into GUI** — `AutoSaveManager` is started on app init and stopped cleanly on window close; autosave JSON files include generation, mode, and grid state.
+- **Command palette entries** — Run N Steps, Randomize, Export GIF, and Export RLE are all searchable via `Ctrl+Shift+P`.
+
+### Fixed
+
+- **Boundary mode propagation** — all 10 automata (`ConwayGameOfLife`, `HighLife`, `LifeLikeAutomaton`, `Wireworld`, `BriansBrain`, `GenerationsAutomaton`, `ImmigrationGame`, `RainbowGame`, `LangtonsAnt`, `HexagonalGameOfLife`) now route neighbour convolutions through `convolve_with_boundary()`, honouring the active `wrap` / `fixed` / `reflect` setting.
+- **`CellularAutomaton` base** — removed a double `reset()` call from `__init__`; added `self.boundary = "wrap"` as a guaranteed instance attribute.
+- **`LifeLikeAutomaton` kernel** — moved the Moore-neighbourhood kernel to a class-level constant (`_KERNEL`) to avoid re-allocation on every step.
+- **`LangtonsAnt.get_population_grid()`** — new method returns the raw cell grid without the ant-position marker, fixing over-counted population statistics.
+- **`copy_selection()`** — now captures all `!= 0` states instead of only `== 1`, fixing multi-state automata copy/paste.
+- **`apply_custom_rules()` silent mode** — added `silent: bool = False` parameter; preset application passes `silent=True` so switching presets no longer shows error dialogs on valid rules.
+- **`step_back()` timeline sync** — after stepping back, the generation timeline slider and population graph are now updated in sync.
+- **`_set_boundary()`** — propagates the selected mode to `automaton.boundary` and reflects the change in the window title.
+- **Drag undo checkpoint** — `on_canvas_drag()` uses a `_drag_undo_pushed` sentinel so only one undo entry is created per drag gesture, not one per cell.
+- **`SimulationState.export_metrics_csv()`** — now dynamically discovers all keys from log entries (`live`, `delta`, `density`, `entropy`, `complexity`, `cycle_period`) instead of a hard-coded set that was missing several columns.
+- **`_calculate_complexity()` performance** — vectorised using `numpy.lib.stride_tricks.sliding_window_view`; eliminates the O(H×W) Python nested loop.
+- **`seen_hashes` memory cap** — `SimulationState.seen_hashes` evicts the oldest 1 000 entries when the dict reaches 2 000 entries, preventing unbounded memory growth in long simulations.
+- **`SimulationState` duplicate field** — removed the duplicated `is_running` dataclass field.
+- **`SimulatorConfig.to_dict()`** — converts `birth_rule` and `survival_rule` sets to sorted lists so the result is JSON-serialisable.
+- **Circular import** — removed `Simulator` from `core/__init__.py` to break the `core → automata → core` import cycle; callers use `from core.simulator import Simulator` directly.
+
+### Performance
+
+- **PIL fast-path renderer** — `rendering.py` now uses a Pillow-backed `_draw_pil_fast()` that constructs a numpy RGB pixel array and issues a single `canvas.create_image()` call when Pillow is installed and grid lines are hidden, replacing thousands of per-cell `create_rectangle()` calls.
+- **`RuleDiscovery.observe_transition()`** — vectorised using `np.roll` stacking to build an `(8, H, W)` neighbourhood tensor and flatten to `(H*W, 8)` — eliminates the O(H×W) Python nested loop.
+
+---
+
 ## [3.1.0] — 2025-06-17
 
 ### Added

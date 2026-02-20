@@ -13,8 +13,8 @@ Every plugin must implement three properties and one factory method:
 ```python
 from src.plugin_system import AutomatonPlugin
 from src.automata.base import CellularAutomaton
+from src.core.boundary import BoundaryMode, convolve_with_boundary
 import numpy as np
-from scipy.signal import convolve2d
 
 
 class MyAutomaton(CellularAutomaton):
@@ -24,15 +24,15 @@ class MyAutomaton(CellularAutomaton):
         self.width = width
         self.height = height
         self.grid = np.zeros((height, width), dtype=int)
+        super().__init__(width, height)
 
     def step(self) -> None:
         kernel = np.array([[1, 1, 1],
                            [1, 0, 1],
                            [1, 1, 1]])
-        neighbors = convolve2d(
-            (self.grid > 0).astype(int), kernel,
-            mode='same', boundary='wrap'
-        )
+        # Use convolve_with_boundary so the active boundary mode is respected
+        mode = BoundaryMode.from_string(self.boundary)
+        neighbors = convolve_with_boundary((self.grid > 0).astype(int), kernel, mode)
         # Apply your rules here
         new_grid = np.zeros_like(self.grid)
         birth = (self.grid == 0) & np.isin(neighbors, [3, 6, 7, 8])
@@ -94,14 +94,20 @@ The new mode appears in the mode selector automatically.
 
 Your automaton must implement:
 
-| Method | Signature | Description |
+| Member | Signature | Description |
 |--------|-----------|-------------|
 | `step` | `() -> None` | Advance one generation |
 | `get_grid` | `() -> np.ndarray` | Return the current grid as a 2D numpy array |
 | `set_cell` | `(x, y, value) -> None` | Set a single cell's state |
 | `reset` | `() -> None` | Clear the grid to all zeros |
 
-The grid should be a 2D integer array of shape `(height, width)` where `0` means dead and positive integers represent live/colored states.
+The base class also provides:
+
+| Member | Type | Description |
+|--------|------|-------------|
+| `boundary` | `str` | Active boundary mode: `"wrap"` (default), `"fixed"`, or `"reflect"` |
+
+the grid should be a 2D integer array of shape `(height, width)` where `0` means dead and positive integers represent live/coloured states.
 
 ---
 
@@ -138,8 +144,10 @@ This plugin reuses `LifeLikeAutomaton` for the step logic, so only the plugin me
 
 ## Tips
 
-- **Reuse `LifeLikeAutomaton`** for any totalistic Life-like rule — just supply birth and survival sets.
-- **Multi-state automata** can use integers > 1 in the grid. The GUI renders states 0–3 with distinct colors.
+- **Reuse `LifeLikeAutomaton`** for any totalistic Life-like rule — just supply birth and survival sets. This automatically benefits from the cached kernel and boundary routing.
+- **Always call `super().__init__(width, height)`** after setting `self.grid` so the base class initialises `self.boundary` and the population helpers correctly.
+- **Respect `self.boundary`**: use `BoundaryMode.from_string(self.boundary)` and `convolve_with_boundary()` so users can switch between wrap/fixed/reflect from the GUI without restarting.
+- **Multi-state automata** can use integers > 1 in the grid. The GUI renders states 0–3 with distinct colours.
 - **Test your plugin** by instantiating it directly:
   ```python
   plugin = MyPlugin()

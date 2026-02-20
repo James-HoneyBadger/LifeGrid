@@ -2,7 +2,7 @@
 
 ## System Requirements
 
-- **Python** 3.11 or later
+- **Python** 3.11 or later (tested up to 3.14)
 - **Tcl/Tk** — ships with most Python distributions; required for the GUI
 - **Operating system** — Linux, macOS, or Windows
 

@@ -75,14 +75,19 @@ The `Simulator` owns a `CellularAutomaton` instance and an `UndoManager`. On eac
 
 ### Automata (`src/automata/`)
 
-All automata inherit from `CellularAutomaton` (defined in `base.py`) which requires:
+All automata inherit from `CellularAutomaton` (defined in `base.py`) which provides:
 
 - `step()` — advance one generation
 - `get_grid() -> np.ndarray` — return the current grid
 - `set_cell(x, y, value)` — set a cell value
 - `reset()` — clear the grid
+- `boundary: str` — edge mode (`"wrap"` | `"fixed"` | `"reflect"`), default `"wrap"`
 
-Each implementation uses `scipy.signal.convolve2d` (or manual convolution for hexagonal/ant) to compute the next generation.
+All convolution-based automata use `core.boundary.convolve_with_boundary()` (wrapping scipy) instead of calling `scipy.signal.convolve2d` directly. This routes every neighbour count through the correct boundary handler.
+
+`LifeLikeAutomaton` additionally caches the Moore-neighbourhood kernel as a class-level constant (`_KERNEL`) to avoid re-allocation on every step.
+
+`LangtonsAnt` exposes `get_population_grid()` which returns the raw cell grid without the ant-marker overlay (used for population statistics).
 
 `LifeLikeAutomaton` accepts arbitrary B/S rules via `parse_bs()`, making it the backbone of custom-rule support and the Rule Explorer.
 
@@ -90,12 +95,12 @@ Each implementation uses `scipy.signal.convolve2d` (or manual convolution for he
 
 | Module | Purpose |
 |--------|---------|
-| `app.py` | `AutomatonApp` — main window, menus, toolbar, event loop |
-| `rendering.py` | Canvas drawing: cells, grid lines, overlays |
+| `app.py` | `AutomatonApp` — main window, menus, toolbar, event loop. Owns `AutoSaveManager` (started on init, stopped on close). |
+| `rendering.py` | Canvas drawing: cells, grid lines, overlays. Uses a PIL/Pillow fast-path (`_draw_pil_fast`) when Pillow is installed and grid lines are hidden — a single `PhotoImage` replace instead of per-cell `create_rectangle` calls. |
 | `ui.py` | UI builder: creates widgets, binds callbacks |
 | `config.py` | GUI constants: `MODE_FACTORIES`, `MODE_PATTERNS`, colors |
-| `state.py` | `SimulationState` — mutable runtime state (grid, speed, history deques) |
-| `tools.py` | `ToolManager` — pencil/eraser/stamp/selection, brush settings |
+| `state.py` | `SimulationState` — mutable runtime state (grid, speed, history deques). `export_metrics_csv()` dynamically discovers all metric keys; `_calculate_complexity()` is vectorised with `numpy.lib.stride_tricks.sliding_window_view`; `seen_hashes` is capped at 2 000 entries with LRU-style eviction. |
+| `tools.py` | `ToolManager` — pencil/eraser/stamp/selection, brush settings. Drag gestures push exactly one undo checkpoint regardless of stroke length. |
 | `new_features.py` | `GenerationTimeline`, `PopulationGraph`, `BreakpointManager`, `RuleExplorer`, `CommandPalette`, `ThemeEditorDialog`, `PatternShapeSearch` |
 | `enhanced_features.py` | Additional feature widgets |
 | `enhanced_rendering.py` | Enhanced rendering utilities |
@@ -130,13 +135,13 @@ Sessions are stored in a module-level dict keyed by UUID. The collaborative endp
 
 | Module | Key Classes | Purpose |
 |--------|-------------|---------|
-| `statistics.py` | `StatisticsCollector`, `StatisticsExporter` | Per-generation metrics collection, CSV/plot export |
-| `enhanced_statistics.py` | `EnhancedStatistics` | Entropy, complexity, fractal dimension, connected components, cluster stats, symmetry, center of mass, radial distribution |
+| `statistics.py` | `StatisticsCollector`, `StatisticsExporter` | Per-generation metrics collection via `.collect(step, grid)`, CSV/plot export |
+| `enhanced_statistics.py` | `EnhancedStatistics` | Entropy, complexity, fractal dimension, connected components, cluster stats, symmetry, centre of mass, radial distribution (static-method API) |
 | `pattern_analysis.py` | `PatternAnalyzer` | Bounding box, period detection, displacement detection |
-| `pattern_manager.py` | `PatternManager` | Favorites/history backed by JSON, tag-based search, similarity matching |
-| `rle_format.py` | `RLEParser`, `RLEEncoder` | Run-Length Encoded pattern format I/O |
-| `rule_discovery.py` | `RuleDiscovery` | Observe cell transitions, infer B/S rules, export |
-| `cell_tracker.py` | `CellAgeTracker`, `CellHistoryTracker` | Track cell age, birth/death history |
+| `pattern_manager.py` | `PatternManager`, `PatternEntry` | Favourites/history backed by JSON, tag-based search, similarity matching. Add patterns with `add_favorite(PatternEntry.from_grid(...))`. |
+| `rle_format.py` | `RLEParser`, `RLEEncoder` | Run-Length Encoded I/O. `RLEParser.parse(rle_string)` returns `(grid: np.ndarray, metadata: dict)`. |
+| `rule_discovery.py` | `RuleDiscovery` | Vectorised `observe_transition(before, after)` using `np.roll` stacking — no Python nested loop over cells. Infers B/S rules from transitions. |
+| `cell_tracker.py` | `CellAgeTracker(width, height)`, `CellHistoryTracker` | Track cell age, birth/death history |
 | `visualization.py` | `HeatmapGenerator`, `SymmetryAnalyzer` | Activity/age heatmaps, symmetry detection and scoring |
 
 ### Performance (`src/performance/`)
@@ -150,9 +155,26 @@ Sessions are stored in a module-level dict keyed by UUID. The collaborative endp
 
 `PluginManager` scans a directory for `.py` files, imports them, finds `AutomatonPlugin` subclasses, and registers them. Plugins are discovered at GUI startup from the `plugins/` directory.
 
-### Export (`src/export_manager.py`)
+### Export & Persistence (`src/export_manager.py`, `src/autosave_manager.py`)
 
-`ExportManager` handles all output formats (PNG, GIF, MP4, WebM, JSON). It accumulates frames for animation export and supports 4 color themes (light, dark, blue, warm).
+`ExportManager` handles all output formats (PNG, GIF, MP4, WebM, JSON). It accumulates frames for animation export and supports 4 colour themes (light, dark, blue, warm).
+
+Key method signatures:
+
+```python
+em.export_png(grid, filepath, cell_size=8)      # grid is first arg
+em.export_gif(filepath, cell_size=8, duration=100)
+em.export_json(filepath, grid, metadata=None)
+em.export_video(filepath, cell_size=8, fps=10, codec="mp4")
+```
+
+`AutoSaveManager` runs a background thread that calls a user-supplied callback and writes the return value as JSON to a configurable directory. It is started with `am.start()` and stopped cleanly with `am.stop()`.
+
+```python
+am = AutoSaveManager(save_dir="~/.lifegrid/autosaves", interval=60)
+am.set_save_callback(lambda: {"generation": sim.generation, "grid": sim.get_grid().tolist()})
+am.start()
+```
 
 ### Configuration
 
@@ -173,13 +195,14 @@ User clicks Start
     → Tkinter after() callback fires every (101 - speed) ms
         → Simulator.step()
             → UndoManager.push_state(grid)
-            → CellularAutomaton.step()
+            → CellularAutomaton.step()  ← uses convolve_with_boundary()
             → Metrics recorded
             → on_step callback fires
-        → Canvas re-rendered
+        → Canvas re-rendered (PIL fast-path if Pillow available + grid lines off)
         → Timeline updated
         → PopulationGraph updated
         → Breakpoints checked
+        → AutoSaveManager fires on its own background thread (every 60s)
 ```
 
 ### CLI Pipeline

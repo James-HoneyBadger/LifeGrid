@@ -38,9 +38,9 @@ Creates a new simulation session.
 |-------|------|---------|-------------|
 | `width` | int (4–2048) | 64 | Grid width |
 | `height` | int (4–2048) | 64 | Grid height |
-| `mode` | string | `"conway"` | Automaton mode |
-| `birth_rule` | list[int] | null | Custom birth rule (e.g., `[3, 6]`) |
-| `survival_rule` | list[int] | null | Custom survival rule (e.g., `[2, 3]`) |
+| `mode` | string | `"Conway's Game of Life"` | Automaton mode |
+| `birth_rule` | string | null | Digit string of birth neighbour counts, e.g. `"36"` for B36 |
+| `survival_rule` | string | null | Digit string of survival neighbour counts, e.g. `"23"` for S23 |
 | `pattern` | string | null | Pattern name to load |
 
 **Response:** `{"session_id": "<uuid>"}`
@@ -50,7 +50,7 @@ Creates a new simulation session.
 ```bash
 curl -X POST http://localhost:8000/session \
   -H "Content-Type: application/json" \
-  -d '{"width": 128, "height": 128, "mode": "highlife"}'
+  -d '{"width": 128, "height": 128, "mode": "HighLife"}'
 ```
 
 ---
@@ -232,20 +232,20 @@ summary = sim.get_metrics_summary()     # {generations, current_population, max_
 ```python
 from src.export_manager import ExportManager
 
-em = ExportManager()
+em = ExportManager(theme="dark")  # themes: "light", "dark", "blue", "warm"
 
-# Single image
+# Single image — grid is the first positional argument
 em.export_png(grid, "snapshot.png", cell_size=8)
 
-# Animated GIF
+# Animated GIF — add frames first, then export
 for frame in frames:
     em.add_frame(frame)
 em.export_gif("animation.gif", cell_size=8, duration=100)
 
 # Video
-em.export_video("video.mp4", cell_size=8, fps=10)
+em.export_video("video.mp4", cell_size=8, fps=10, codec="mp4")
 
-# JSON
+# JSON — filepath first, grid second
 em.export_json("state.json", grid, metadata={"generation": 100})
 ```
 
@@ -254,13 +254,77 @@ em.export_json("state.json", grid, metadata={"generation": 100})
 ```python
 from src.advanced.rle_format import RLEParser, RLEEncoder
 
-# Parse
-width, height, grid = RLEParser.parse("bo$2bo$3o!")
-grid = RLEParser.parse_file("pattern.rle")
+# Parse RLE string — returns (grid: np.ndarray, metadata: dict)
+grid, metadata = RLEParser.parse("bo$2bo$3o!")
 
-# Encode
+# Parse from file
+grid, metadata = RLEParser.parse_file("pattern.rle")
+
+# Encode grid to RLE string
 rle_string = RLEEncoder.encode(grid)
+
+# Encode directly to file
 RLEEncoder.encode_to_file(grid, "output.rle")
+```
+
+### Statistics
+
+```python
+from src.advanced.statistics import StatisticsCollector
+
+coll = StatisticsCollector(track_changes=True, calculate_entropy=False)
+stats = coll.collect(step=1, grid=grid)   # returns SimulationStatistics dataclass
+print(stats.alive_cells, stats.density, stats.births, stats.deaths)
+
+summary = coll.get_summary()
+# {"total_steps": 1, "avg_density": 0.25, "avg_births": ..., ...}
+```
+
+For deeper per-grid metrics use `EnhancedStatistics` (all static methods):
+
+```python
+from src.advanced.enhanced_statistics import EnhancedStatistics
+
+entropy    = EnhancedStatistics.calculate_entropy(grid)
+complexity = EnhancedStatistics.calculate_complexity(grid, previous_grid)
+```
+
+### Pattern Manager
+
+```python
+from src.advanced.pattern_manager import PatternManager, PatternEntry
+import numpy as np
+
+pm = PatternManager(data_dir="user_data")
+
+# Add a favourite
+entry = PatternEntry.from_grid("my_glider", "conway", grid, description="A glider")
+pm.add_favorite(entry)
+
+# Retrieve favourites (with optional tag filter)
+favs = pm.get_favorites(tag="conway")
+```
+
+### Cell Age Tracker
+
+```python
+from src.advanced.cell_tracker import CellAgeTracker
+
+tracker = CellAgeTracker(width=100, height=100)
+tracker.update(grid)        # call once per generation
+ages = tracker.get_age_grid()  # numpy array: 0 = dead, n = alive for n generations
+```
+
+### AutoSave Manager
+
+```python
+from src.autosave_manager import AutoSaveManager
+
+am = AutoSaveManager(save_dir="~/.lifegrid/autosaves", interval=60)
+am.set_save_callback(lambda: {"generation": sim.generation, "grid": sim.get_grid().tolist()})
+am.start()
+# ... simulation runs ...
+am.stop()
 ```
 
 ### Plugin System

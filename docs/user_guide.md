@@ -22,7 +22,9 @@ The main window opens with a grid canvas, toolbar, sidebar, and status bar.
 |---------|----------|-------------|
 | **Start / Stop** | Toolbar or `Space` | Toggle continuous simulation |
 | **Step** | Toolbar or `S` | Advance one generation |
+| **Run N Steps** | `Simulation → Run N Steps…` or `N` | Show a dialog and run any number of steps at once |
 | **Reset** | Toolbar or `R` | Restore the grid to its initial state |
+| **Randomize** | `F5` | Fill the grid with a random soup |
 | **Clear** | Menu or `C` | Set all cells to dead |
 | **Speed** | Sidebar slider | Adjust simulation speed (1–100) |
 
@@ -30,9 +32,11 @@ The main window opens with a grid canvas, toolbar, sidebar, and status bar.
 
 Every step is recorded. Use `Ctrl+Z` to undo and `Ctrl+Y` to redo (up to 100 states).
 
+> **Drag drawing**: LifeGrid places a single undo checkpoint at the start of each drag gesture so that one undo reverses the entire stroke, not just the last cell.
+
 ### Generation Timeline
 
-The timeline slider in the sidebar lets you scrub through previously computed generations. Dragging the slider instantly displays that generation's grid state.
+The timeline slider in the sidebar lets you scrub through previously computed generations. Dragging the slider instantly displays that generation's grid state, and the population graph updates in sync.
 
 ---
 
@@ -168,8 +172,24 @@ Open the pattern shape search panel to:
 | Setting | Key | Description |
 |---------|-----|-------------|
 | Toggle grid lines | `G` | Show or hide the cell grid |
-| Zoom in | `+` | Decrease cell size |
-| Zoom out | `-` | Increase cell size |
+| Zoom in | `+` or scroll up | Increase cell size |
+| Zoom out | `-` or scroll down | Decrease cell size |
+
+### Scroll-Wheel Zoom
+
+Hold the mouse over the canvas and scroll up/down to zoom in/out. The cell size adjusts in steps between 2 and 64 pixels.
+
+### Boundary Mode
+
+Change how cells at the grid edges behave via **View → Boundary**:
+
+| Mode | Behaviour |
+|------|-----------|
+| **Wrap** (default) | Edges connect to the opposite side (toroidal) |
+| **Fixed** | Cells outside the grid are always dead |
+| **Reflect** | The grid is mirrored at its edges |
+
+The active boundary mode is shown in the window title bar, e.g. `LifeGrid — Conway's Game of Life [reflect]`.
 
 ### Overlays
 
@@ -188,7 +208,8 @@ From the View menu:
 | Format | How |
 |--------|-----|
 | PNG snapshot | `Ctrl+S` or File → Export PNG |
-| Animated GIF | File → Export GIF |
+| Animated GIF | File → Export GIF… |
+| RLE pattern | File → Export RLE… |
 | MP4 video | File → Export MP4 |
 | WebM video | File → Export WebM |
 | JSON state | File → Export JSON |
@@ -204,6 +225,34 @@ See [CLI Reference](cli_reference.md) for all options.
 
 ---
 
+## AutoSave
+
+LifeGrid automatically saves the current simulation state every **60 seconds** (configurable) to a timestamped JSON file in `~/.lifegrid/autosaves/`. On launch, if an autosave is detected that is newer than the last manual save, LifeGrid offers to restore it.
+
+Autosave files are named `autosave_YYYYMMDD_HHMMSS.json` and include the current generation number, mode, and compressed grid state.
+
 ## Settings Persistence
 
 LifeGrid saves your preferences (window size, grid dimensions, theme, speed, etc.) to `settings.json` in the project root. Settings are loaded automatically on startup.
+
+---
+
+## Keyboard Shortcut Reference
+
+| Key | Action |
+|-----|--------|
+| `Space` | Start / Stop |
+| `S` | Step one generation |
+| `N` | Run N Steps (shows dialog) |
+| `R` | Reset |
+| `F5` | Randomize grid |
+| `C` | Clear |
+| `G` | Toggle grid lines |
+| `+` / scroll up | Zoom in |
+| `-` / scroll down | Zoom out |
+| `B` | Open Breakpoint Manager |
+| `Ctrl+Z` | Undo |
+| `Ctrl+Y` | Redo |
+| `Ctrl+S` | Export PNG snapshot |
+| `Ctrl+Shift+P` | Command Palette |
+| `Ctrl+Shift+R` | Rule Explorer |

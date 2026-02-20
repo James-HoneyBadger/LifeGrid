@@ -76,6 +76,9 @@ python src/cli.py --rule B36/S23 --steps 2000 -W 128 -H 128 --export output/cust
 python src/cli.py --mode briansbrain --steps 500 --export output/stats.csv --quiet
 ```
 
+The CSV file contains one row per generation with columns:
+`generation`, `live`, `delta`, `density`, `entropy`, `complexity`
+
 ### Periodic snapshots
 
 ```bash
