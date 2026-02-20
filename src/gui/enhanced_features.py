@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
-from typing import TYPE_CHECKING, Optional
+from typing import Literal, TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from gui.app import AutomatonApp
@@ -56,7 +56,9 @@ class EnhancedFeaturesUI:
             to=10,
             orient=tk.HORIZONTAL,
             variable=brush_size_var,
-            command=lambda _: self._on_brush_size_changed(brush_size_var.get()),
+            command=lambda _: self._on_brush_size_changed(
+                brush_size_var.get()
+            ),
         )
         size_scale.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=5)
 
@@ -142,7 +144,9 @@ class EnhancedFeaturesUI:
             return
 
         # Capture frames
-        self._capture_and_export_video(filename, cell_size, fps, num_frames, "mp4")
+        self._capture_and_export_video(
+            filename, cell_size, fps, num_frames, "mp4",
+        )
 
     def _export_webm(self) -> None:
         """Export simulation as WebM video."""
@@ -171,10 +175,14 @@ class EnhancedFeaturesUI:
         if not filename:
             return
 
-        self._capture_and_export_video(filename, cell_size, fps, num_frames, "webm")
+        self._capture_and_export_video(
+            filename, cell_size, fps, num_frames, "webm",
+        )
 
     def _capture_and_export_video(
-        self, filename: str, cell_size: int, fps: int, num_frames: int, codec: str
+        self, filename: str, cell_size: int,
+        fps: int, num_frames: int,
+        codec: Literal["mp4", "webm"],
     ) -> None:
         """Capture frames and export video."""
         from export_manager import ExportManager
@@ -273,11 +281,12 @@ class EnhancedFeaturesUI:
 
     def add_heatmap_view(self) -> None:
         """Toggle cell age heatmap view."""
-        # This would require more extensive integration with the rendering system
+        # Requires integration with the rendering system
         messagebox.showinfo(
             "Heat Map",
-            "Heat map visualization requires cell age tracking to be enabled.\n"
-            "This feature is available through the View menu.",
+            "Heat map visualization requires cell age"
+            " tracking to be enabled.\n"
+            "Available through the View menu.",
         )
 
 
@@ -315,7 +324,10 @@ class VideoExportDialog:
             row=1, column=0, padx=10, pady=5, sticky=tk.W
         )
         fps_var = tk.IntVar(value=10)
-        ttk.Spinbox(dialog, from_=1, to=60, textvariable=fps_var, width=10).grid(
+        ttk.Spinbox(
+            dialog, from_=1, to=60,
+            textvariable=fps_var, width=10,
+        ).grid(
             row=1, column=1, padx=10, pady=5
         )
 

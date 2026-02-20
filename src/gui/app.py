@@ -13,7 +13,9 @@ from tkinter import filedialog, messagebox, ttk
 
 import numpy as np
 
-from advanced.rle_format import RLEParser
+from advanced.rle_format import RLEParser, RLEEncoder
+from export_manager import ExportManager
+from autosave_manager import AutoSaveManager
 from core.utils import place_pattern_centered
 from automata import LifeLikeAutomaton, HexagonalGameOfLife
 from config_manager import AppConfig
@@ -138,6 +140,10 @@ class AutomatonApp:
 
         # -- New feature initialization --
         self.boundary_mode = BoundaryMode.WRAP
+        # Auto-save manager (saves every 5 min when simulation is running)
+        self._autosave = AutoSaveManager(save_dir="autosave", interval=300)
+        self._autosave.set_save_callback(self._build_autosave_payload)
+        self._autosave.start()
         self.breakpoint_manager = BreakpointManager()
 
         # Command palette
@@ -277,6 +283,7 @@ class AutomatonApp:
 
     def _on_close(self) -> None:
         """Save settings and close the application."""
+        self._autosave.stop()
         self._save_settings()
         self.root.destroy()
 
@@ -298,6 +305,8 @@ class AutomatonApp:
                 "Space       — Start/Stop\n"
                 "S           — Step Forward\n"
                 "Left Arrow  — Step Back\n"
+                "N           — Run N Steps…\n"
+                "F5          — Randomize Grid\n"
                 "C           — Clear Grid\n"
                 "G           — Toggle Grid Lines\n"
                 "D           — Toggle Dark/Light Theme\n"
@@ -309,6 +318,7 @@ class AutomatonApp:
                 "Ctrl+X      — Cut Selection\n"
                 "Ctrl+V      — Paste Selection\n"
                 "Ctrl+Shift+P — Command Palette\n"
+                "Scroll Wheel — Zoom In/Out\n"
             )
             messagebox.showinfo("Shortcuts", message)
 
@@ -331,8 +341,17 @@ class AutomatonApp:
         )
         if PIL_AVAILABLE:
             file_menu.add_command(label="Export PNG…", command=self.export_png)
+            file_menu.add_command(
+                label="Export GIF…",
+                command=self.export_gif,
+            )
         else:
             file_menu.add_command(label="Export PNG…", state="disabled")
+            file_menu.add_command(label="Export GIF…", state="disabled")
+        file_menu.add_command(
+            label="Export RLE…",
+            command=self.export_rle,
+        )
         file_menu.add_separator()
         file_menu.add_command(label="Exit", command=self._on_close)
         menubar.add_cascade(label="File", menu=file_menu)
@@ -360,6 +379,11 @@ class AutomatonApp:
         # Keep vital play/step controls in the sidebar to avoid redundancy.
         sim_menu.add_command(label="Reset", command=self.reset_simulation)
         sim_menu.add_command(label="Clear", command=self.clear_grid)
+        sim_menu.add_command(
+            label="Run N Steps…",
+            accelerator="N",
+            command=self.run_n_steps,
+        )
         sim_menu.add_separator()
         sim_menu.add_command(
             label="Rule Explorer…",
@@ -471,6 +495,7 @@ class AutomatonApp:
         self.apply_custom_rules(
             birth_text=self.custom_birth_text,
             survival_text=self.custom_survival_text,
+            silent=True,
         )
 
     def open_custom_rules_dialog(self) -> None:
@@ -800,6 +825,26 @@ class AutomatonApp:
             "<Key-r>",
             lambda _e: self.open_rule_explorer(),
         )
+        self.root.bind(
+            "<Key-n>",
+            lambda _e: self.run_n_steps(),
+        )
+        self.root.bind(
+            "<Key-N>",
+            lambda _e: self.run_n_steps(),
+        )
+        # F5 — randomize grid
+        self.root.bind("<F5>", lambda _e: self.randomize_grid())
+        # Scroll-wheel zoom on the canvas
+        self.widgets.canvas.bind(
+            "<MouseWheel>", self._on_canvas_scroll
+        )  # Windows / macOS
+        self.widgets.canvas.bind(
+            "<Button-4>", lambda _e: self._zoom_in()
+        )  # Linux scroll up
+        self.widgets.canvas.bind(
+            "<Button-5>", lambda _e: self._zoom_out()
+        )  # Linux scroll down
 
     def _update_widgets_enabled_state(self) -> None:
         # Custom-rules controls are now in the Settings menu.
@@ -927,6 +972,44 @@ class AutomatonApp:
 
         self._check_breakpoints()
 
+    def run_n_steps(self, n: int | None = None) -> None:
+        """Advance the simulation by N steps in one call.
+
+        Opens a simple dialog to ask for N when called without an argument.
+        """
+        if n is None:
+            dialog = tk.Toplevel(self.root)
+            dialog.title("Run N Steps")
+            dialog.transient(self.root)
+            dialog.grab_set()
+            frm = ttk.Frame(dialog, padding=12)
+            frm.grid(row=0, column=0)
+            ttk.Label(frm, text="Number of steps:").grid(row=0, column=0, sticky="w")
+            n_var = tk.IntVar(value=100)
+            entry = ttk.Entry(frm, textvariable=n_var, width=10)
+            entry.grid(row=1, column=0, pady=(4, 10), sticky="w")
+
+            def _run() -> None:
+                try:
+                    steps = int(n_var.get())
+                except ValueError:
+                    steps = 1
+                dialog.destroy()
+                self.run_n_steps(steps)
+
+            btn_row = ttk.Frame(frm)
+            btn_row.grid(row=2, column=0, sticky="e")
+            ttk.Button(btn_row, text="Run", command=_run).grid(row=0, column=0, padx=(0, 8))
+            ttk.Button(btn_row, text="Cancel", command=dialog.destroy).grid(row=0, column=1)
+            dialog.bind("<Return>", lambda _e: _run())
+            dialog.bind("<Escape>", lambda _e: dialog.destroy())
+            entry.focus_set()
+            return
+
+        self.stop_simulation()
+        for _ in range(max(1, n)):
+            self.step_once()
+
     def step_back(self) -> None:
         """Revert to the previous generation if history exists."""
 
@@ -941,6 +1024,21 @@ class AutomatonApp:
         self.state.rebuild_stats_from_history()
         self._update_generation_label()
         self._update_display()
+        # Keep timeline and population graph in sync with stepped-back state
+        history_len = len(self.state.grid_history)
+        self._timeline.update_range(
+            max(0, history_len - 1), self.state.generation,
+        )
+        grid = automaton.get_grid()
+        stats_grid = (
+            automaton.get_population_grid()
+            if hasattr(automaton, "get_population_grid")
+            else grid
+        )
+        pop = int(np.count_nonzero(stats_grid))
+        ent = self.state.entropy_history[-1] if self.state.entropy_history else 0.0
+        cplx = self.state.complexity_history[-1] if self.state.complexity_history else 0
+        self._pop_graph.push(pop, ent, cplx)
 
     def _push_undo(self, action_name: str = "Edit") -> None:
         """Push the current state to the undo stack."""
@@ -1015,7 +1113,7 @@ class AutomatonApp:
         rows, cols = region.shape
         for r in range(rows):
             for c in range(cols):
-                if region[r, c] == 1:
+                if region[r, c] != 0:  # Capture all live states (multi-state automata)
                     points.append((c, r))
 
         stamp = Stamp("Clipboard", points)
@@ -1090,15 +1188,24 @@ class AutomatonApp:
         *,
         birth_text: str | None = None,
         survival_text: str | None = None,
+        silent: bool = False,
     ) -> None:
-        """Apply custom birth/survival rule strings to the automaton."""
+        """Apply custom birth/survival rule strings to the automaton.
+
+        Args:
+            birth_text: Birth neighbor counts as a string of digits.
+            survival_text: Survival neighbor counts as a string of digits.
+            silent: When True suppress the confirmation messagebox (for
+                    programmatic calls such as preset application).
+        """
 
         automaton = self.state.current_automaton
         if not isinstance(automaton, LifeLikeAutomaton):
-            messagebox.showinfo(
-                "Not Custom Mode",
-                "Switch to Custom Rules to apply B/S settings.",
-            )
+            if not silent:
+                messagebox.showinfo(
+                    "Not Custom Mode",
+                    "Switch to Custom Rules to apply B/S settings.",
+                )
             return
 
         birth_text = (
@@ -1112,10 +1219,11 @@ class AutomatonApp:
 
         # Validate input
         if not birth_text and not survival_text:
-            messagebox.showerror(
-                "Invalid Input",
-                "At least one of birth or survival rules must be specified.",
-            )
+            if not silent:
+                messagebox.showerror(
+                    "Invalid Input",
+                    "At least one of birth or survival rules must be specified.",
+                )
             return
 
         try:
@@ -1127,17 +1235,19 @@ class AutomatonApp:
             invalid_survival = survival_set - set(range(9))
             if invalid_birth or invalid_survival:
                 invalid = sorted(invalid_birth | invalid_survival)
-                messagebox.showerror(
-                    "Invalid Input",
-                    f"Neighbor counts must be between 0-8. Invalid: {invalid}",
-                )
+                if not silent:
+                    messagebox.showerror(
+                        "Invalid Input",
+                        f"Neighbor counts must be between 0-8. Invalid: {invalid}",
+                    )
                 return
 
         except ValueError as exc:
-            messagebox.showerror(
-                "Invalid Input",
-                f"Failed to parse rules: {exc}",
-            )
+            if not silent:
+                messagebox.showerror(
+                    "Invalid Input",
+                    f"Failed to parse rules: {exc}",
+                )
             return
 
         self.custom_birth = birth_set
@@ -1162,12 +1272,13 @@ class AutomatonApp:
         )
         rule_notation = f"B{birth_str}/S{survival_str}"
 
-        messagebox.showinfo(
-            "Rules Applied",
-            f"Custom rule: {rule_notation}\n\n"
-            f"Birth: {sorted(birth_set) if birth_set else 'Never'}\n"
-            f"Survival: {sorted(survival_set) if survival_set else 'Never'}",
-        )
+        if not silent:
+            messagebox.showinfo(
+                "Rules Applied",
+                f"Custom rule: {rule_notation}\n\n"
+                f"Birth: {sorted(birth_set) if birth_set else 'Never'}\n"
+                f"Survival: {sorted(survival_set) if survival_set else 'Never'}",
+            )
 
     # ------------------------------------------------------------------
     # Grid size helpers
@@ -1424,6 +1535,103 @@ class AutomatonApp:
         except OSError as exc:
             messagebox.showerror("Export Failed", f"Could not save PNG: {exc}")
 
+    def export_gif(self) -> None:
+        """Export the grid history as an animated GIF using ExportManager."""
+        if not PIL_AVAILABLE:
+            messagebox.showerror(
+                "Unavailable", "Pillow is required for GIF export."
+            )
+            return
+        if not self.state.grid_history:
+            messagebox.showwarning("Nothing to Export", "No history recorded yet.")
+            return
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".gif",
+            filetypes=[("GIF files", "*.gif"), ("All files", "*.*")],
+        )
+        if not filename:
+            return
+        em = ExportManager(theme=self.theme_manager.get_theme())
+        for grid in self.state.grid_history:
+            em.add_frame(grid)
+        ok = em.export_gif(filename, cell_size=max(1, self.state.cell_size), duration=100)
+        if ok:
+            messagebox.showinfo("Exported", f"Animated GIF saved to {filename}")
+        else:
+            messagebox.showerror("Export Failed", "Could not export GIF.")
+
+    def export_rle(self) -> None:
+        """Export the current grid as an RLE file."""
+        automaton = self.state.current_automaton
+        if not automaton:
+            return
+        filename = filedialog.asksaveasfilename(
+            defaultextension=".rle",
+            filetypes=[("RLE files", "*.rle"), ("All files", "*.*")],
+        )
+        if not filename:
+            return
+        grid = automaton.get_grid()
+        try:
+            RLEEncoder.encode_to_file(grid, filename)
+            messagebox.showinfo("Exported", f"RLE saved to {filename}")
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            messagebox.showerror("Export Failed", f"Could not save RLE: {exc}")
+
+    def randomize_grid(self) -> None:
+        """Fill the grid with a random soup pattern (F5 shortcut)."""
+        automaton = self.state.current_automaton
+        if not automaton:
+            return
+        self.stop_simulation()
+        self._push_undo("Randomize")
+        if hasattr(automaton, "load_pattern"):
+            automaton.load_pattern("Random Soup")  # type: ignore[attr-defined]
+        else:
+            automaton.reset()
+            # Naive random fallback
+            import numpy as _np
+            automaton.grid = _np.random.randint(0, 2, automaton.grid.shape, dtype=int)  # type: ignore[attr-defined]
+        self.state.reset_generation()
+        self._reset_history_with_current_grid()
+        self._update_generation_label()
+        self._update_display()
+
+    def _zoom_in(self) -> None:
+        """Increase cell size by 1 (scroll-wheel zoom in)."""
+        from .config import MAX_CELL_SIZE
+        size = min(self.state.cell_size + 1, MAX_CELL_SIZE)
+        self.tk_vars.cell_size.set(size)
+        self.state.cell_size = size
+        self._update_display()
+
+    def _zoom_out(self) -> None:
+        """Decrease cell size by 1 (scroll-wheel zoom out)."""
+        from .config import MIN_CELL_SIZE
+        size = max(self.state.cell_size - 1, MIN_CELL_SIZE)
+        self.tk_vars.cell_size.set(size)
+        self.state.cell_size = size
+        self._update_display()
+
+    def _on_canvas_scroll(self, event: tk.Event) -> None:  # type: ignore[type-arg]
+        """Handle mouse-wheel scroll for zoom on Windows/macOS."""
+        if event.delta > 0:
+            self._zoom_in()
+        else:
+            self._zoom_out()
+
+    def _build_autosave_payload(self) -> dict:
+        """Return a minimal state snapshot for the autosave manager."""
+        automaton = self.state.current_automaton
+        grid_list: list = []
+        if automaton and hasattr(automaton, "grid"):
+            grid_list = automaton.grid.tolist()  # type: ignore[attr-defined]
+        return {
+            "generation": self.state.generation,
+            "mode": self.tk_vars.mode.get(),
+            "grid": grid_list,
+        }
+
     # ------------------------------------------------------------------
     # Rendering and interactions
     # ------------------------------------------------------------------
@@ -1434,6 +1642,14 @@ class AutomatonApp:
         if not (automaton and self.widgets.canvas):
             return
         grid = automaton.get_grid()
+        # For population statistics, use raw grid if available (avoids
+        # inflated counts from automata like Langton's Ant that mark the
+        # actor position as a non-zero display state).
+        stats_grid = (
+            automaton.get_population_grid()
+            if hasattr(automaton, "get_population_grid")
+            else grid
+        )
 
         # Build color map for rendering
         theme = self.theme_manager.get_colors()
@@ -1475,7 +1691,7 @@ class AutomatonApp:
                 tags="selection_overlay",
             )  # type: ignore[call-overload]
 
-        stats = self.state.update_population_stats(grid)
+        stats = self.state.update_population_stats(stats_grid)
         self.widgets.population_label.config(  # type: ignore[attr-defined]
             text=stats
         )
@@ -1529,6 +1745,8 @@ class AutomatonApp:
             self._update_display()
             return
 
+        # Reset the drag-undo sentinel on each new click
+        self._drag_undo_pushed = False
         self._push_undo("Draw")
         self._apply_draw_action(x, y)
         self._update_display()
@@ -1546,6 +1764,11 @@ class AutomatonApp:
                 self.tool_manager.selection_end = (x, y)
                 self._update_display()
             return
+
+        # Push a drag-start undo checkpoint only once per drag gesture
+        if not getattr(self, "_drag_undo_pushed", False):
+            self._push_undo("Draw (drag)")
+            self._drag_undo_pushed = True
 
         self._apply_draw_action(x, y)
         self._update_display()
@@ -1681,14 +1904,25 @@ class AutomatonApp:
         p.register("Boundary: Wrap", lambda: self._set_boundary("wrap"))
         p.register("Boundary: Fixed", lambda: self._set_boundary("fixed"))
         p.register("Boundary: Reflect", lambda: self._set_boundary("reflect"))
+        p.register("Run N Steps...", self.run_n_steps)
+        p.register("Randomize Grid (F5)", self.randomize_grid)
+        if PIL_AVAILABLE:
+            p.register("Export GIF...", self.export_gif)
+        p.register("Export RLE...", self.export_rle)
         p.register(
             "Toggle Dark/Light",
             self._toggle_dark_light,
         )
 
     def _set_boundary(self, mode_name: str) -> None:
-        """Change the boundary mode."""
+        """Change the boundary mode and propagate it to the active automaton."""
         self.boundary_mode = BoundaryMode.from_string(mode_name)
+        # Propagate to the current automaton so the next step uses the new mode
+        automaton = self.state.current_automaton
+        if automaton is not None:
+            automaton.boundary = mode_name
+        # Visual feedback in window title bar
+        self.root.title(f"LifeGrid  [{mode_name.capitalize()} boundary]")
 
     def _toggle_dark_light(self) -> None:
         """Quick toggle between dark and light themes."""

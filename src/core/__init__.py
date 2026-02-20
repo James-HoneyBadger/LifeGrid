@@ -6,11 +6,13 @@ other tools.
 """
 
 from .config import SimulatorConfig
-from .simulator import Simulator
 from .undo_manager import UndoManager
 
+# NOTE: Simulator is intentionally NOT imported here to avoid a circular
+# dependency: core.simulator → automata → core.boundary → core.__init__
+# Import Simulator directly:  from core.simulator import Simulator
+
 __all__ = [
-    "Simulator",
     "SimulatorConfig",
     "UndoManager",
 ]

@@ -33,7 +33,7 @@ class EnhancedStatistics:
             Entropy value (0 to log2(num_states))
         """
         # Count state frequencies
-        unique, counts = np.unique(grid, return_counts=True)
+        _, counts = np.unique(grid, return_counts=True)
         total = grid.size
 
         # Calculate probabilities
@@ -93,13 +93,16 @@ class EnhancedStatistics:
 
         # Combine components
         complexity = (
-            0.3 * density + 0.3 * edge_ratio + 0.2 * spatial_var + 0.2 * change_ratio
+            0.3 * density + 0.3 * edge_ratio
+            + 0.2 * spatial_var + 0.2 * change_ratio
         )
 
         return float(np.clip(complexity, 0, 1))
 
     @staticmethod
-    def box_counting_dimension(grid: np.ndarray, max_box_size: int = 32) -> float:
+    def box_counting_dimension(
+        grid: np.ndarray, max_box_size: int = 32,
+    ) -> float:
         """Estimate fractal dimension using box-counting method.
 
         Args:
@@ -274,7 +277,10 @@ class EnhancedStatistics:
 
         # Create distance grid from center
         y_coords, x_coords = np.ogrid[:height, :width]
-        distances = np.sqrt((x_coords - center_x) ** 2 + (y_coords - center_y) ** 2)
+        distances = np.sqrt(
+            (x_coords - center_x) ** 2
+            + (y_coords - center_y) ** 2
+        )
 
         max_dist = np.sqrt(width**2 + height**2) / 2
         bin_edges = np.linspace(0, max_dist, num_bins + 1)
@@ -311,7 +317,8 @@ class EnhancedStatistics:
             "complexity": EnhancedStatistics.calculate_complexity(
                 grid, previous_grid
             ),
-            "fractal_dimension": EnhancedStatistics.box_counting_dimension(grid),
+            "fractal_dimension":
+                EnhancedStatistics.box_counting_dimension(grid),
             "center_of_mass": EnhancedStatistics.center_of_mass(grid),
         }
 

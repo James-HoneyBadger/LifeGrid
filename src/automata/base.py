@@ -11,9 +11,13 @@ class CellularAutomaton(ABC):
     def __init__(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
-        # Derived classes should initialize this
-        self.grid: np.ndarray = np.zeros((height, width), dtype=int)
-        self.reset()
+        # Derived classes should initialize this before calling super().__init__().
+        # We intentionally do NOT call self.reset() here because subclasses already
+        # initialise self.grid in their own __init__ before delegating here.
+        if not hasattr(self, "grid"):
+            self.grid: np.ndarray = np.zeros((height, width), dtype=int)
+        # Boundary mode: 'wrap' | 'fixed' | 'reflect'
+        self.boundary: str = "wrap"
 
     @abstractmethod
     def reset(self) -> None:

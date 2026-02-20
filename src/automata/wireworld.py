@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import numpy as np
-from scipy import signal
+
+from core.boundary import BoundaryMode, convolve_with_boundary
 
 from .base import CellularAutomaton
 
@@ -41,11 +42,9 @@ class Wireworld(CellularAutomaton):
 
         kernel = np.ones((3, 3), dtype=int)
         kernel[1, 1] = 0
-        head_neighbors = signal.convolve2d(
-            (self.grid == self.HEAD).astype(int),
-            kernel,
-            mode="same",
-            boundary="wrap",
+        bnd = BoundaryMode.from_string(self.boundary)
+        head_neighbors = convolve_with_boundary(
+            (self.grid == self.HEAD).astype(int), kernel, bnd
         )
 
         new_grid = np.copy(self.grid)

@@ -47,8 +47,15 @@ class SimulatorConfig:
             "cell_size": self.cell_size,
             "show_grid": self.show_grid,
             "automaton_mode": self.automaton_mode,
-            "birth_rule": self.birth_rule,
-            "survival_rule": self.survival_rule,
+            # Convert sets to sorted lists for JSON serialisability
+            "birth_rule": (
+                sorted(self.birth_rule) if self.birth_rule is not None else None
+            ),
+            "survival_rule": (
+                sorted(self.survival_rule)
+                if self.survival_rule is not None
+                else None
+            ),
             "enable_metrics": self.enable_metrics,
             "enable_cycle_detection": self.enable_cycle_detection,
             "enable_complexity_tracking": self.enable_complexity_tracking,

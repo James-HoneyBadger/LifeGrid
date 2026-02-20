@@ -29,7 +29,6 @@ class SimulationState:
     running: bool = False
     generation: int = 0
     show_grid: bool = True
-    is_running: bool = False
     current_automaton: Optional[CellularAutomaton] = None
     population_history: Deque[int] = field(
         default_factory=lambda: deque(maxlen=MAX_HISTORY_LENGTH)
@@ -107,13 +106,18 @@ class SimulationState:
         complexity = self._calculate_complexity(grid)
         self.complexity_history.append(complexity)
 
-        # Cycle detection via hashed grid snapshots
+        # Cycle detection via hashed grid snapshots (max 2000 entries)
         grid_hash = hash((grid.shape, grid.tobytes()))
         if grid_hash in self.seen_hashes:
             first_seen = self.seen_hashes[grid_hash]
             self.cycle_first_seen = first_seen
             self.cycle_period = self.generation - first_seen
         else:
+            if len(self.seen_hashes) >= 2000:
+                # Evict the oldest half to keep memory bounded
+                keys = list(self.seen_hashes)
+                for k in keys[:1000]:
+                    del self.seen_hashes[k]
             self.seen_hashes[grid_hash] = self.generation
 
         self.metrics_log.append(
@@ -152,16 +156,22 @@ class SimulationState:
 
     def _calculate_complexity(self, grid: np.ndarray) -> int:
         """Calculate the number of unique 3x3 patterns in the grid."""
-        if grid.size < 9:
+        if grid.shape[0] < 3 or grid.shape[1] < 3:
             return 0
-
-        patterns = set()
-        h, w = grid.shape
-        for i in range(h - 2):
-            for j in range(w - 2):
-                pattern = tuple(grid[i : i + 3, j : j + 3].flatten())
-                patterns.add(pattern)
-        return len(patterns)
+        # Vectorised via sliding_window_view (much faster than Python loops)
+        try:
+            windows = np.lib.stride_tricks.sliding_window_view(grid, (3, 3))
+            # windows shape: (H-2, W-2, 3, 3) → reshape to (N, 9)
+            flat = windows.reshape(-1, 9)
+            return int(np.unique(flat, axis=0).shape[0])
+        except AttributeError:
+            # numpy < 1.20 fallback
+            patterns: set = set()
+            h, w = grid.shape
+            for i in range(h - 2):
+                for j in range(w - 2):
+                    patterns.add(tuple(grid[i : i + 3, j : j + 3].flatten()))
+            return len(patterns)
 
     def add_metric(
         self, generation: int, population: int, peak: int, density: float
@@ -181,21 +191,24 @@ class SimulationState:
         if not self.metrics_log:
             return ""
 
+        # Gather all keys present in the log (union across all entries)
+        all_keys = list(
+            dict.fromkeys(
+                k for entry in self.metrics_log for k in entry
+            )
+        )
+        # Always put 'generation' first if present
+        if "generation" in all_keys:
+            all_keys.remove("generation")
+            all_keys = ["generation"] + all_keys
+
         output = StringIO()
         writer = csv.DictWriter(
-            output, fieldnames=["generation", "population", "peak", "density"]
+            output, fieldnames=all_keys, extrasaction="ignore"
         )
         writer.writeheader()
-
         for metric in self.metrics_log:
-            writer.writerow(
-                {
-                    "generation": metric.get("generation", ""),
-                    "population": metric.get("population", ""),
-                    "peak": metric.get("peak", ""),
-                    "density": metric.get("density", ""),
-                }
-            )
+            writer.writerow({k: metric.get(k, "") for k in all_keys})
 
         return output.getvalue()
 

@@ -65,7 +65,9 @@ class EnhancedRenderer:
 
                 if effects.get("pulse", False) and cell_value > 0:
                     # Apply pulsing effect
-                    fill_color = self._apply_pulse(fill_color, self.animation_frame)
+                    fill_color = self._apply_pulse(
+                        fill_color, self.animation_frame,
+                    )
 
                 commands.append((x1, y1, x2, y2, fill_color, outline_color))
 
@@ -87,7 +89,9 @@ class EnhancedRenderer:
         # Check for age-based coloring
         if effects.get("age_based", False) and isinstance(cell_value, int):
             if cell_value == 0:
-                return color_map.get("cell_dead", "#ffffff")
+                return str(
+                    color_map.get("cell_dead", "#ffffff")
+                )
 
             # Map age to color (blue to red)
             max_age = effects.get("max_age", 100)
@@ -100,13 +104,17 @@ class EnhancedRenderer:
             return f"#{r:02x}{g:02x}{b:02x}"
 
         if cell_value == 0:
-            return color_map.get("cell_dead", "#ffffff")
+            return str(color_map.get("cell_dead", "#ffffff"))
         elif cell_value == 1:
-            return color_map.get("cell_alive", "#000000")
+            return str(color_map.get("cell_alive", "#000000"))
         else:
-            return color_map.get(f"cell_{cell_value}", "#999999")
+            return str(
+                color_map.get(f"cell_{cell_value}", "#999999")
+            )
 
-    def _get_outline_color(self, cell_value: int, effects: dict) -> str:
+    def _get_outline_color(
+        self, _cell_value: int, effects: dict,
+    ) -> str:
         """Get outline color for cell.
 
         Args:
@@ -117,7 +125,9 @@ class EnhancedRenderer:
             Hex color string
         """
         if effects.get("show_grid", True):
-            return self.theme_colors.get("grid_line", "#cccccc")
+            return str(
+                self.theme_colors.get("grid_line", "#cccccc")
+            )
         return ""
 
     def _apply_glow(self, color: str) -> str:
@@ -182,9 +192,12 @@ class EnhancedRenderer:
             Boolean array indicating changed cells
         """
         if previous_grid is None or previous_grid.shape != grid.shape:
-            return np.ones(grid.shape, dtype=bool)
+            result: np.ndarray = np.ones(
+                grid.shape, dtype=bool,
+            )
+            return result
 
-        return grid != previous_grid
+        return np.asarray(grid != previous_grid)
 
     def get_change_intensity(
         self,
@@ -239,7 +252,9 @@ class GridOptimizer:
         cell_x2 = min(grid.shape[1], (x2 // cell_size) + 1)
         cell_y2 = min(grid.shape[0], (y2 // cell_size) + 1)
 
-        return np.s_[cell_y1:cell_y2, cell_x1:cell_x2]
+        return np.s_[  # type: ignore[return-value]
+            cell_y1:cell_y2, cell_x1:cell_x2
+        ]
 
     @staticmethod
     def compress_empty_regions(
@@ -267,7 +282,9 @@ class GridOptimizer:
 
                 # Find extent of empty region along current row
                 dx = 1
-                while x + dx < width and grid[y, x + dx] == 0 and not visited[y, x + dx]:
+                while (x + dx < width
+                       and grid[y, x + dx] == 0
+                       and not visited[y, x + dx]):
                     dx += 1
 
                 # Extend downward only while the full row-span is empty

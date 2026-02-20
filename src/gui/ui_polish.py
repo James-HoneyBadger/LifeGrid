@@ -19,9 +19,12 @@ class AnimatedLabel(tk.Label):
         """Initialize animated label."""
         super().__init__(parent, **kwargs)
         self.target_value: Optional[int] = None
-        self.current_value: int = 0
+        self.current_value: float = 0
         self.animation_speed: float = 0.1
         self.after_id: Optional[str] = None
+        self.prefix: str = ""
+        self.suffix: str = ""
+        self.step_size: float = 0.0
 
     def animate_to(
         self,
@@ -122,7 +125,8 @@ class ModernDialog(tk.Toplevel):
         self.resizable(resizable, resizable)
 
         # Center on parent
-        self.transient(parent)
+        if isinstance(parent, tk.Wm):
+            self.transient(parent)
         self.grab_set()
 
         # Create main layout
@@ -144,7 +148,9 @@ class ModernDialog(tk.Toplevel):
 
         # Content area
         self.content_frame = tk.Frame(self)
-        self.content_frame.grid(row=1, column=0, sticky="nsew", padx=15, pady=15)
+        self.content_frame.grid(
+            row=1, column=0, sticky="nsew", padx=15, pady=15,
+        )
         self.content_frame.grid_rowconfigure(0, weight=1)
         self.content_frame.grid_columnconfigure(0, weight=1)
 
@@ -229,7 +235,10 @@ class SplitView(tk.Frame):
             self.left_panel = tk.Frame(self)
             self.left_panel.grid(row=0, column=0, sticky="nsew")
 
-            divider = tk.Frame(self, bg="#cccccc", width=2, cursor="sb_h_double_arrow")
+            divider = tk.Frame(
+                self, bg="#cccccc", width=2,
+                cursor="sb_h_double_arrow",
+            )
             divider.grid(row=0, column=1, sticky="nsew")
 
             self.right_panel = tk.Frame(self)
@@ -241,7 +250,10 @@ class SplitView(tk.Frame):
             self.top_panel = tk.Frame(self)
             self.top_panel.grid(row=0, column=0, sticky="nsew")
 
-            divider = tk.Frame(self, bg="#cccccc", height=2, cursor="sb_v_double_arrow")
+            divider = tk.Frame(
+                self, bg="#cccccc", height=2,
+                cursor="sb_v_double_arrow",
+            )
             divider.grid(row=1, column=0, sticky="nsew")
 
             self.bottom_panel = tk.Frame(self)
@@ -351,7 +363,7 @@ class LoadingAnimation(tk.Canvas):
             **kwargs,
         )
 
-        self.size = size
+        self._spinner_size = size
         self.color = color
         self.rotation = 0
         self.running = False
@@ -377,8 +389,8 @@ class LoadingAnimation(tk.Canvas):
 
         self.delete("all")
 
-        center = self.size // 2
-        radius = self.size // 3
+        center = self._spinner_size // 2
+        radius = self._spinner_size // 3
 
         # Draw rotating lines
         for i in range(12):
@@ -487,6 +499,9 @@ class MenuBar(tk.Menu):
             parent: Parent widget
         """
         super().__init__(parent, **kwargs)
+        assert isinstance(parent, tk.Tk) or isinstance(
+            parent, tk.Toplevel
+        )
         parent.config(menu=self)
 
     def add_menu(
@@ -511,10 +526,13 @@ class MenuBar(tk.Menu):
             if item.get("separator"):
                 menu.add_separator()
             else:
+                cmd = item.get("command")
                 menu.add_command(
                     label=item["label"],
-                    command=item.get("command"),
-                    accelerator=item.get("accelerator", ""),
+                    command=cmd if cmd is not None else "",
+                    accelerator=item.get(
+                        "accelerator", ""
+                    ),
                 )
 
         self.add_cascade(label=name, menu=menu)

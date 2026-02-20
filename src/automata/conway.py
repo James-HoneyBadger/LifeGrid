@@ -5,8 +5,8 @@
 from __future__ import annotations
 
 import numpy as np
-from scipy import signal
 
+from core.boundary import BoundaryMode, convolve_with_boundary
 from patterns import PATTERN_DATA
 
 from .base import CellularAutomaton
@@ -25,30 +25,28 @@ class ConwayGameOfLife(CellularAutomaton):
 
     def load_pattern(self, pattern_name: str) -> None:
         """Load a predefined pattern onto the grid."""
-        self.grid = np.zeros((self.height, self.width), dtype=int)
-
-        # Handle procedural patterns first
+        # Handle procedural patterns first (before clearing)
         if pattern_name == "Random Soup":
+            self.grid = np.zeros((self.height, self.width), dtype=int)
             self._add_random_soup()
             return
 
         # Load from JSON-backed pattern data
-        try:
-            pattern_data_dict = PATTERN_DATA.get("Conway's Game of Life", {})
-
-            if pattern_name in pattern_data_dict:
-                points, _ = pattern_data_dict[pattern_name]
-                if points:
-                    center_x = self.width // 2
-                    center_y = self.height // 2
-
-                    for dx, dy in points:
-                        x, y = center_x + dx, center_y + dy
-                        if 0 <= x < self.width and 0 <= y < self.height:
-                            self.grid[y, x] = 1
-                return
-        except ImportError:
-            pass  # Fallback or silent fail if patterns module not found
+        pattern_data_dict = PATTERN_DATA.get("Conway's Game of Life", {})
+        if pattern_name in pattern_data_dict:
+            points, _ = pattern_data_dict[pattern_name]
+            self.grid = np.zeros((self.height, self.width), dtype=int)
+            if points:
+                center_x = self.width // 2
+                center_y = self.height // 2
+                for dx, dy in points:
+                    x, y = center_x + dx, center_y + dy
+                    if 0 <= x < self.width and 0 <= y < self.height:
+                        self.grid[y, x] = 1
+            return
+        # Unknown pattern name: leave grid unchanged and warn
+        import warnings
+        warnings.warn(f"Unknown pattern '{pattern_name}' for Conway's Game of Life. Grid unchanged.")
 
     def _add_random_soup(self) -> None:
         random_mask = np.random.random(self.grid.shape) < 0.15
@@ -56,12 +54,8 @@ class ConwayGameOfLife(CellularAutomaton):
 
     def step(self) -> None:
         """Advance the automaton by one generation."""
-        neighbors = signal.convolve2d(
-            self.grid,
-            self._kernel,
-            mode="same",
-            boundary="wrap",
-        )
+        bnd = BoundaryMode.from_string(self.boundary)
+        neighbors = convolve_with_boundary(self.grid, self._kernel, bnd)
         self.grid = (
             ((self.grid == 1) & ((neighbors == 2) | (neighbors == 3)))
             | ((self.grid == 0) & (neighbors == 3))

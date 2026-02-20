@@ -5,7 +5,8 @@
 from __future__ import annotations
 
 import numpy as np
-from scipy import signal
+
+from core.boundary import BoundaryMode, convolve_with_boundary
 
 from .base import CellularAutomaton
 
@@ -36,11 +37,9 @@ class BriansBrain(CellularAutomaton):
 
         kernel = np.ones((3, 3), dtype=int)
         kernel[1, 1] = 0
-        firing_neighbors = signal.convolve2d(
-            (self.grid == self.FIRING).astype(int),
-            kernel,
-            mode="same",
-            boundary="wrap",
+        bnd = BoundaryMode.from_string(self.boundary)
+        firing_neighbors = convolve_with_boundary(
+            (self.grid == self.FIRING).astype(int), kernel, bnd
         )
 
         births = (self.grid == self.OFF) & (firing_neighbors == 2)

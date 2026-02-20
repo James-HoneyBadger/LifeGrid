@@ -7,7 +7,8 @@ from __future__ import annotations
 from typing import Iterable, Set, Tuple
 
 import numpy as np
-from scipy import signal
+
+from core.boundary import BoundaryMode, convolve_with_boundary
 
 from .base import CellularAutomaton
 
@@ -41,6 +42,8 @@ def parse_bs(rule_str: str) -> Tuple[Set[int], Set[int]]:
 class LifeLikeAutomaton(CellularAutomaton):
     """Generic life-like cellular automaton."""
 
+    _KERNEL = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+
     def __init__(
         self,
         width: int,
@@ -50,8 +53,8 @@ class LifeLikeAutomaton(CellularAutomaton):
     ):
         self.birth = set(birth or {3})
         self.survival = set(survival or {2, 3})
+        self.grid = np.zeros((height, width), dtype=int)
         super().__init__(width, height)
-        self.grid = np.zeros((self.height, self.width), dtype=int)
 
     def set_rules(self, birth: Iterable[int], survival: Iterable[int]) -> None:
         """Update the birth and survival rule sets."""
@@ -71,13 +74,8 @@ class LifeLikeAutomaton(CellularAutomaton):
 
     def step(self) -> None:
         """Advance the automaton by one generation."""
-        kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
-        neighbors = signal.convolve2d(
-            self.grid,
-            kernel,
-            mode="same",
-            boundary="wrap",
-        )
+        bnd = BoundaryMode.from_string(self.boundary)
+        neighbors = convolve_with_boundary(self.grid, self._KERNEL, bnd)
         birth_any = (
             np.logical_or.reduce([(neighbors == n) for n in self.birth])
             if self.birth

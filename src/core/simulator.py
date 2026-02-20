@@ -87,7 +87,11 @@ class Simulator:
 
         self.reset_metrics()
 
-        if pattern and hasattr(self.automaton, "load_pattern"):
+        if (
+            pattern
+            and self.automaton is not None
+            and hasattr(self.automaton, "load_pattern")
+        ):
             self.automaton.load_pattern(pattern)
 
     def reset(self) -> None:

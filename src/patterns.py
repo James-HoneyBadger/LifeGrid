@@ -82,7 +82,9 @@ BASE_PATTERNS: AllPatterns = {
 JSON_PATTERNS = load_pattern_data()
 PATTERN_DATA: AllPatterns = {**BASE_PATTERNS}
 if "Conway's Game of Life" in JSON_PATTERNS:
-    PATTERN_DATA["Conway's Game of Life"] = JSON_PATTERNS["Conway's Game of Life"]
+    PATTERN_DATA["Conway's Game of Life"] = (
+        JSON_PATTERNS["Conway's Game of Life"]
+    )
 else:
     # Fallback if load failed
     PATTERN_DATA["Conway's Game of Life"] = {}

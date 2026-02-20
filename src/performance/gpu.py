@@ -15,7 +15,7 @@ from typing import Any
 import numpy as np
 
 try:
-    import cupy as cp  # type: ignore[import-untyped]
+    import cupy as cp  # type: ignore[import-untyped,import-not-found]
 
     _GPU_AVAILABLE = True
 except ImportError:

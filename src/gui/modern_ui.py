@@ -191,7 +191,11 @@ class ModernButton(ttk.Button):
             theme: Modern theme instance
             width: Button width
         """
-        super().__init__(parent, text=text, command=command, width=width, **kwargs)
+        super().__init__(
+            parent, text=text,
+            command=command,  # type: ignore[arg-type]
+            width=width, **kwargs,
+        )
 
         self.theme = theme or ModernTheme()
         self.base_color = self.theme.get_color("button_bg")
@@ -203,12 +207,9 @@ class ModernButton(ttk.Button):
 
     def _on_hover(self, _event: tk.Event) -> None:
         """Handle hover effect."""
-        # Note: ttk styling is limited, this is a placeholder
-        pass
 
     def _on_leave(self, _event: tk.Event) -> None:
         """Handle leaving hover."""
-        pass
 
 
 class ModernLabel(tk.Label):
@@ -352,7 +353,7 @@ class ProgressIndicator(tk.Canvas):
             theme: Modern theme instance
         """
         self.theme = theme or ModernTheme()
-        self.size = size
+        self._indicator_size = size
         self.rotation = 0
         self.running = False
 
@@ -364,7 +365,10 @@ class ProgressIndicator(tk.Canvas):
             highlightthickness=0,
         )
 
-        self.tag_configure("spinner", fill=self.theme.get_color("accent"))
+        self.itemconfigure(
+            "spinner",
+            fill=self.theme.get_color("accent"),
+        )
 
     def start(self) -> None:
         """Start the progress indicator animation."""
@@ -385,9 +389,9 @@ class ProgressIndicator(tk.Canvas):
         self.delete("all")
 
         # Draw spinner
-        size = self.size
-        center = size / 2
-        radius = size / 3
+        sz = self._indicator_size
+        center = sz / 2
+        radius = sz / 3
 
         segments = 12
         for i in range(segments):
@@ -564,7 +568,10 @@ class TooltipEnhanced(tk.Toplevel):
         label.pack(padx=10, pady=5)
 
         # Position near cursor
-        self.geometry(f"+{widget.winfo_pointerx()}+{widget.winfo_pointery() - 30}")
+        self.geometry(
+            f"+{widget.winfo_pointerx()}"
+            f"+{widget.winfo_pointery() - 30}"
+        )
 
     def show(self) -> None:
         """Display the tooltip."""
@@ -587,7 +594,11 @@ def apply_modern_theme(
     Returns:
         ModernTheme instance
     """
-    theme = theme_name if isinstance(theme_name, ModernTheme) else ModernTheme(theme_name)
+    theme = (
+        theme_name
+        if isinstance(theme_name, ModernTheme)
+        else ModernTheme(theme_name)
+    )
 
     # Configure ttk styles
     style = ttk.Style()
@@ -620,7 +631,6 @@ def apply_modern_theme(
     # Configure background
     root.config(
         bg=colors["bg"],
-        fg=colors["fg"],
     )
 
     return theme

@@ -7,7 +7,8 @@ from __future__ import annotations
 from typing import Iterable, Set
 
 import numpy as np
-from scipy import signal
+
+from core.boundary import BoundaryMode, convolve_with_boundary
 
 from .base import CellularAutomaton
 
@@ -61,12 +62,8 @@ class GenerationsAutomaton(CellularAutomaton):
 
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
         live_layer = (self.grid == 1).astype(int)
-        neighbors = signal.convolve2d(
-            live_layer,
-            kernel,
-            mode="same",
-            boundary="wrap",
-        )
+        bnd = BoundaryMode.from_string(self.boundary)
+        neighbors = convolve_with_boundary(live_layer, kernel, bnd)
 
         new_grid = np.copy(self.grid)
 

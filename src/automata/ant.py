@@ -42,9 +42,14 @@ class LangtonsAnt(CellularAutomaton):
             self.ant_x = (self.ant_x - 1) % self.width
 
     def get_grid(self) -> np.ndarray:
+        """Return the display grid with ant position marked as state 2."""
         display_grid = self.grid.copy()
         display_grid[self.ant_y, self.ant_x] = 2
         return display_grid  # type: ignore[no-any-return]
+
+    def get_population_grid(self) -> np.ndarray:
+        """Return the raw grid without the ant marker (for population stats)."""
+        return self.grid  # type: ignore[no-any-return]
 
     def handle_click(self, x: int, y: int) -> None:
         self.ant_x = x

@@ -117,7 +117,10 @@ class AutoSaveManager:
         if isinstance(obj, np.ndarray):
             return obj.tolist()
         elif isinstance(obj, dict):
-            return {key: self._make_serializable(value) for key, value in obj.items()}
+            return {
+                key: self._make_serializable(value)
+                for key, value in obj.items()
+            }
         elif isinstance(obj, (list, tuple)):
             return [self._make_serializable(item) for item in obj]
         elif isinstance(obj, (np.integer, np.floating)):
@@ -167,7 +170,8 @@ class AutoSaveManager:
 
         try:
             with open(latest, "r", encoding="utf-8") as f:
-                return json.load(f)
+                data: dict = json.load(f)  # type: ignore[assignment]
+                return data
         except (json.JSONDecodeError, OSError):
             return None
 

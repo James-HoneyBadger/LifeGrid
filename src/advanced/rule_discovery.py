@@ -63,6 +63,9 @@ class RuleDiscovery:
     def observe_transition(self, before: np.ndarray, after: np.ndarray) -> int:
         """Observe a grid transition and record patterns.
 
+        Uses vectorised numpy operations to extract all neighbourhoods at once
+        instead of iterating cell by cell.
+
         Args:
             before: Grid state before transition
             after: Grid state after transition
@@ -74,24 +77,31 @@ class RuleDiscovery:
             raise ValueError("Grid shapes must match")
 
         height, width = before.shape
+
+        if self.neighborhood_type == "moore":
+            offsets = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
+        else:
+            offsets = [(0, -1), (-1, 0), (1, 0), (0, 1)]
+
+        # Stack neighbour arrays: shape (N_offsets, H, W)
+        neighbour_layers = np.stack(
+            [np.roll(np.roll(before, -dy, axis=0), -dx, axis=1) for dx, dy in offsets],
+            axis=0,
+        )  # shape: (K, H, W)
+
+        # Flatten to (H*W, K)
+        neighbors_flat = neighbour_layers.reshape(len(offsets), -1).T  # (H*W, K)
+        current_flat = before.ravel()
+        next_flat = after.ravel()
+
         patterns_found = 0
-
-        # Iterate through each cell
-        for y in range(height):
-            for x in range(width):
-                # Get neighborhood
-                neighbors = self._get_neighborhood(before, x, y)
-                current_state = int(before[y, x])
-                next_state = int(after[y, x])
-
-                # Create pattern key
-                pattern_key = (tuple(neighbors), current_state)
-
-                # Record observation
-                if pattern_key not in self.observations:
-                    self.observations[pattern_key] = []
-                self.observations[pattern_key].append(next_state)
-                patterns_found += 1
+        for i in range(height * width):
+            pattern_key = (tuple(int(v) for v in neighbors_flat[i]), int(current_flat[i]))
+            next_state = int(next_flat[i])
+            if pattern_key not in self.observations:
+                self.observations[pattern_key] = []
+            self.observations[pattern_key].append(next_state)
+            patterns_found += 1
 
         return patterns_found
 

@@ -5,7 +5,8 @@
 from __future__ import annotations
 
 import numpy as np
-from scipy import signal
+
+from core.boundary import BoundaryMode, convolve_with_boundary
 
 from .base import CellularAutomaton
 
@@ -48,12 +49,8 @@ class HighLife(CellularAutomaton):
     def step(self) -> None:
         """Advance the automaton by one generation."""
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
-        neighbors = signal.convolve2d(
-            self.grid,
-            kernel,
-            mode="same",
-            boundary="wrap",
-        )
+        bnd = BoundaryMode.from_string(self.boundary)
+        neighbors = convolve_with_boundary(self.grid, kernel, bnd)
         birth = (self.grid == 0) & ((neighbors == 3) | (neighbors == 6))
         survival = (self.grid == 1) & ((neighbors == 2) | (neighbors == 3))
         self.grid = (birth | survival).astype(int)

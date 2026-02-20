@@ -5,189 +5,10 @@ Provides SVG-to-Tkinter conversion, icon generation, and visual resources.
 
 from __future__ import annotations
 
+import math
 import tkinter as tk
-from typing import Optional
+from typing import Any, Optional
 import io
-
-
-class IconFactory:
-    """Generate icons programmatically."""
-
-    # Icon definitions as SVG-like dictionaries
-    ICONS = {
-        "play": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_play_icon(c, x, y, s, col),
-        },
-        "pause": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_pause_icon(c, x, y, s, col),
-        },
-        "stop": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_stop_icon(c, x, y, s, col),
-        },
-        "reset": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_reset_icon(c, x, y, s, col),
-        },
-        "save": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_save_icon(c, x, y, s, col),
-        },
-        "load": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_load_icon(c, x, y, s, col),
-        },
-        "delete": {
-            "size": 24,
-            "color": "#d83b01",
-            "draw": lambda c, x, y, s, col: _draw_delete_icon(c, x, y, s, col),
-        },
-        "settings": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_settings_icon(c, x, y, s, col),
-        },
-        "help": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_help_icon(c, x, y, s, col),
-        },
-        "info": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_info_icon(c, x, y, s, col),
-        },
-        "warning": {
-            "size": 24,
-            "color": "#ffc700",
-            "draw": lambda c, x, y, s, col: _draw_warning_icon(c, x, y, s, col),
-        },
-        "error": {
-            "size": 24,
-            "color": "#d83b01",
-            "draw": lambda c, x, y, s, col: _draw_error_icon(c, x, y, s, col),
-        },
-        "add": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_add_icon(c, x, y, s, col),
-        },
-        "export": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_export_icon(c, x, y, s, col),
-        },
-        "import": {
-            "size": 24,
-            "color": "#0078d4",
-            "draw": lambda c, x, y, s, col: _draw_import_icon(c, x, y, s, col),
-        },
-    }
-
-    @staticmethod
-    def create_icon(
-        icon_name: str,
-        size: int = 24,
-        color: Optional[str] = None,
-        parent: Optional[tk.Widget] = None,
-    ) -> tk.Canvas:
-        """Create icon canvas.
-
-        Args:
-            icon_name: Icon name
-            size: Icon size in pixels
-            color: Icon color (uses default if not specified)
-            parent: Parent widget (if None, temporary canvas)
-
-        Returns:
-            Canvas widget with icon
-        """
-        if icon_name not in IconFactory.ICONS:
-            raise ValueError(f"Unknown icon: {icon_name}")
-
-        icon_def = IconFactory.ICONS[icon_name]
-        icon_color = color or icon_def["color"]
-
-        temp_root: Optional[tk.Tk] = None
-        if parent is None:
-            if tk._default_root is not None:
-                parent = tk._default_root
-            else:
-                temp_root = tk.Tk()
-                temp_root.withdraw()
-                parent = temp_root
-
-        canvas = tk.Canvas(
-            parent,
-            width=size,
-            height=size,
-            bg="white",
-            highlightthickness=0,
-        )
-        # Store ref so caller can clean up the temp root if needed
-        canvas._icon_temp_root = temp_root  # type: ignore[attr-defined]
-
-        draw_func = icon_def["draw"]
-        draw_func(canvas, size // 2, size // 2, size // 2 - 2, icon_color)
-
-        return canvas
-
-    @staticmethod
-    def create_icon_image(
-        icon_name: str,
-        size: int = 24,
-        color: Optional[str] = None,
-    ) -> tk.PhotoImage:
-        """Create PhotoImage from icon.
-
-        Args:
-            icon_name: Icon name
-            size: Icon size
-            color: Icon color
-
-        Returns:
-            PhotoImage widget
-        """
-        temp_root: Optional[tk.Tk] = None
-        try:
-            canvas_parent = tk._default_root
-            if canvas_parent is None:
-                temp_root = tk.Tk()
-                temp_root.withdraw()
-                canvas_parent = temp_root
-
-            canvas = IconFactory.create_icon(icon_name, size, color, parent=canvas_parent)
-            canvas.update_idletasks()
-
-            ps = canvas.postscript(
-                colormode="color",
-                x=0,
-                y=0,
-                width=size,
-                height=size,
-            )
-
-            try:
-                from PIL import Image, ImageTk
-            except ImportError as exc:
-                raise RuntimeError(
-                    "create_icon_image requires Pillow (pip install pillow)."
-                ) from exc
-
-            image = Image.open(io.BytesIO(ps.encode("utf-8")))
-            image = image.resize((size, size), Image.LANCZOS)
-            return ImageTk.PhotoImage(image)
-        finally:
-            if temp_root is not None:
-                temp_root.destroy()
 
 
 def _draw_play_icon(
@@ -358,9 +179,19 @@ def _draw_delete_icon(
         width=2,
     )
     # Lines
-    canvas.create_line(x - radius // 2, y, x - radius // 2, y + radius - 2, fill=color, width=2)
-    canvas.create_line(x, y, x, y + radius - 2, fill=color, width=2)
-    canvas.create_line(x + radius // 2, y, x + radius // 2, y + radius - 2, fill=color, width=2)
+    canvas.create_line(
+        x - radius // 2, y,
+        x - radius // 2, y + radius - 2,
+        fill=color, width=2,
+    )
+    canvas.create_line(
+        x, y, x, y + radius - 2, fill=color, width=2,
+    )
+    canvas.create_line(
+        x + radius // 2, y,
+        x + radius // 2, y + radius - 2,
+        fill=color, width=2,
+    )
 
 
 def _draw_settings_icon(
@@ -379,13 +210,14 @@ def _draw_settings_icon(
     )
     # Gear teeth
     for angle in range(0, 360, 45):
-        import math
         rad = math.radians(angle)
         x1 = x + radius * 0.7 * math.cos(rad)
         y1 = y + radius * 0.7 * math.sin(rad)
         x2 = x + radius * 0.9 * math.cos(rad)
         y2 = y + radius * 0.9 * math.sin(rad)
-        canvas.create_line(x1, y1, x2, y2, fill=color, width=3)
+        canvas.create_line(
+            x1, y1, x2, y2, fill=color, width=3,
+        )
 
 
 def _draw_help_icon(
@@ -404,7 +236,12 @@ def _draw_help_icon(
         width=2,
     )
     # Question mark (simplified)
-    canvas.create_text(x, y - radius // 4, text="?", font=("Arial", radius), fill=color)
+    canvas.create_text(
+        x, y - radius // 4,
+        text="?",
+        font=("Arial", int(radius)),
+        fill=color,
+    )
 
 
 def _draw_info_icon(
@@ -423,7 +260,11 @@ def _draw_info_icon(
         width=2,
     )
     # Letter i
-    canvas.create_text(x, y, text="i", font=("Arial", int(radius * 1.5)), fill=color)
+    canvas.create_text(
+        x, y, text="i",
+        font=("Arial", int(radius * 1.5)),
+        fill=color,
+    )
 
 
 def _draw_warning_icon(
@@ -444,7 +285,11 @@ def _draw_warning_icon(
         width=2,
     )
     # Exclamation mark
-    canvas.create_text(x, y, text="!", font=("Arial", int(radius)), fill=color)
+    canvas.create_text(
+        x, y, text="!",
+        font=("Arial", int(radius)),
+        fill=color,
+    )
 
 
 def _draw_error_icon(
@@ -464,8 +309,16 @@ def _draw_error_icon(
     )
     # X
     offset = radius // 2
-    canvas.create_line(x - offset, y - offset, x + offset, y + offset, fill=color, width=3)
-    canvas.create_line(x + offset, y - offset, x - offset, y + offset, fill=color, width=3)
+    canvas.create_line(
+        x - offset, y - offset,
+        x + offset, y + offset,
+        fill=color, width=3,
+    )
+    canvas.create_line(
+        x + offset, y - offset,
+        x - offset, y + offset,
+        fill=color, width=3,
+    )
 
 
 def _draw_add_icon(
@@ -477,9 +330,15 @@ def _draw_add_icon(
 ) -> None:
     """Draw add/plus icon."""
     # Vertical line
-    canvas.create_line(x, y - radius, x, y + radius, fill=color, width=3)
+    canvas.create_line(
+        x, y - radius, x, y + radius,
+        fill=color, width=3,
+    )
     # Horizontal line
-    canvas.create_line(x - radius, y, x + radius, y, fill=color, width=3)
+    canvas.create_line(
+        x - radius, y, x + radius, y,
+        fill=color, width=3,
+    )
 
 
 def _draw_export_icon(
@@ -530,3 +389,202 @@ def _draw_import_icon(
         x + radius // 3, y + radius // 4,
         fill=color,
     )
+
+
+class IconFactory:
+    """Generate icons programmatically."""
+
+    # Icon definitions as SVG-like dictionaries
+    ICONS: dict[str, dict[str, Any]] = {
+        "play": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_play_icon,
+        },
+        "pause": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_pause_icon,
+        },
+        "stop": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_stop_icon,
+        },
+        "reset": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_reset_icon,
+        },
+        "save": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_save_icon,
+        },
+        "load": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_load_icon,
+        },
+        "delete": {
+            "size": 24,
+            "color": "#d83b01",
+            "draw": _draw_delete_icon,
+        },
+        "settings": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_settings_icon,
+        },
+        "help": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_help_icon,
+        },
+        "info": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_info_icon,
+        },
+        "warning": {
+            "size": 24,
+            "color": "#ffc700",
+            "draw": _draw_warning_icon,
+        },
+        "error": {
+            "size": 24,
+            "color": "#d83b01",
+            "draw": _draw_error_icon,
+        },
+        "add": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_add_icon,
+        },
+        "export": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_export_icon,
+        },
+        "import": {
+            "size": 24,
+            "color": "#0078d4",
+            "draw": _draw_import_icon,
+        },
+    }
+
+    @staticmethod
+    def create_icon(
+        icon_name: str,
+        size: int = 24,
+        color: Optional[str] = None,
+        parent: Optional[tk.Widget] = None,
+    ) -> tk.Canvas:
+        """Create icon canvas.
+
+        Args:
+            icon_name: Icon name
+            size: Icon size in pixels
+            color: Icon color (uses default if not specified)
+            parent: Parent widget (if None, temporary canvas)
+
+        Returns:
+            Canvas widget with icon
+        """
+        if icon_name not in IconFactory.ICONS:
+            raise ValueError(f"Unknown icon: {icon_name}")
+
+        icon_def = IconFactory.ICONS[icon_name]
+        icon_color = color or icon_def["color"]
+
+        temp_root: Optional[tk.Tk] = None
+        if parent is None:
+            default_root = getattr(tk, '_default_root', None)
+            if default_root is not None:
+                parent = default_root
+            else:
+                temp_root = tk.Tk()
+                temp_root.withdraw()
+                parent = temp_root  # type: ignore[assignment]
+
+        canvas = tk.Canvas(
+            parent,
+            width=size,
+            height=size,
+            bg="white",
+            highlightthickness=0,
+        )
+        # Store ref so caller can clean up the temp root if needed
+        setattr(canvas, '_icon_temp_root', temp_root)
+
+        draw_func = icon_def["draw"]
+        draw_func(  # type: ignore[operator]
+            canvas, size // 2, size // 2, size // 2 - 2, icon_color,
+        )
+
+        return canvas
+
+    @staticmethod
+    def create_icon_image(
+        icon_name: str,
+        size: int = 24,
+        color: Optional[str] = None,
+    ) -> tk.PhotoImage:
+        """Create PhotoImage from icon.
+
+        Args:
+            icon_name: Icon name
+            size: Icon size
+            color: Icon color
+
+        Returns:
+            PhotoImage widget
+        """
+        temp_root: Optional[tk.Tk] = None
+        try:
+            canvas_parent: tk.Widget | None = getattr(
+                tk, '_default_root', None,
+            )
+            if canvas_parent is None:
+                temp_root = tk.Tk()
+                temp_root.withdraw()
+                canvas_parent = temp_root  # type: ignore[assignment]
+
+            canvas = IconFactory.create_icon(
+                icon_name, size, color, parent=canvas_parent,
+            )
+            canvas.update_idletasks()
+
+            ps = canvas.postscript(
+                colormode="color",
+                x=0,
+                y=0,
+                width=size,
+                height=size,
+            )
+
+            try:
+                from PIL import (  # type: ignore[import-untyped]
+                    Image,
+                )
+                from PIL import (  # type: ignore[import-untyped,attr-defined]
+                    ImageTk,
+                )
+            except ImportError as exc:
+                raise RuntimeError(
+                    "create_icon_image requires Pillow (pip install pillow)."
+                ) from exc
+
+            img: Any = Image.open(
+                io.BytesIO(ps.encode("utf-8")),
+            )
+            img = img.resize(
+                (size, size),
+                getattr(Image, 'LANCZOS', None),
+            )
+            return ImageTk.PhotoImage(  # type: ignore[return-value]
+                img,
+            )
+        finally:
+            if temp_root is not None:
+                temp_root.destroy()
