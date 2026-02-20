@@ -64,9 +64,8 @@ class HeatmapGenerator:
         """
         if grid.shape != self.grid_shape:
             raise ValueError(
-                f"Grid shape {
-                    grid.shape} doesn't match {
-                    self.grid_shape}"
+                f"Grid shape {grid.shape} doesn't match "
+                f"{self.grid_shape}"
             )
 
         if self.mode == "activity":
