@@ -1,4 +1,6 @@
-# Configuration file for the Sphinx documentation builder.
+# pylint: disable=invalid-name,redefined-builtin,missing-module-docstring
+# Sphinx conf.py uses lowercase module-level names that are required by
+# Sphinx itself (project, copyright, author, release, html_theme, …).
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
 import os
@@ -7,13 +9,13 @@ import sys
 # Allow Sphinx to import the package when building API docs
 sys.path.insert(0, os.path.abspath("../src"))
 
-# -- Project information -------------------------------------------------------
+# -- Project information ------------------------------------------------------
 project = "LifeGrid"
-copyright = "2024, Honey Badger Universe"
+copyright = "2024, Honey Badger Universe"  # noqa: A001
 author = "Honey Badger Universe"
 release = "3.2.0"
 
-# -- General configuration -----------------------------------------------------
+# -- General configuration ----------------------------------------------------
 extensions = [
     "myst_parser",           # Markdown support
     "sphinx.ext.autodoc",    # API docs from docstrings
@@ -29,7 +31,7 @@ source_suffix = {
 
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
-# -- Options for HTML output ---------------------------------------------------
+# -- Options for HTML output --------------------------------------------------
 html_theme = "sphinx_rtd_theme"
 
 # MyST heading anchors (auto-generate anchors for every heading level)

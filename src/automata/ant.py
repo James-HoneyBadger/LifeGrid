@@ -48,7 +48,10 @@ class LangtonsAnt(CellularAutomaton):
         return display_grid  # type: ignore[no-any-return]
 
     def get_population_grid(self) -> np.ndarray:
-        """Return the raw grid without the ant marker (for population stats)."""
+        """Return the raw grid without the ant marker.
+
+        Used for population statistics (excludes the ant position marker).
+        """
         return self.grid  # type: ignore[no-any-return]
 
     def handle_click(self, x: int, y: int) -> None:

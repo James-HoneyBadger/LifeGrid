@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import warnings
 import numpy as np
 
 from core.boundary import BoundaryMode, convolve_with_boundary
@@ -45,8 +46,10 @@ class ConwayGameOfLife(CellularAutomaton):
                         self.grid[y, x] = 1
             return
         # Unknown pattern name: leave grid unchanged and warn
-        import warnings
-        warnings.warn(f"Unknown pattern '{pattern_name}' for Conway's Game of Life. Grid unchanged.")
+        warnings.warn(
+            f"Unknown pattern '{pattern_name}' for Conway's Game of Life."
+            " Grid unchanged."
+        )
 
     def _add_random_soup(self) -> None:
         random_mask = np.random.random(self.grid.shape) < 0.15
@@ -74,5 +77,5 @@ class ConwayGameOfLife(CellularAutomaton):
             patterns = list(pattern_data_dict.keys())
             patterns.append("Random Soup")
             return sorted(patterns)
-        except Exception:
+        except (AttributeError, TypeError):
             return ["Random Soup"]

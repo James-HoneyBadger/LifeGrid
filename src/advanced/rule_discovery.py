@@ -79,24 +79,32 @@ class RuleDiscovery:
         height, width = before.shape
 
         if self.neighborhood_type == "moore":
-            offsets = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
+            offsets = [
+                (-1, -1), (0, -1), (1, -1),
+                (-1, 0), (1, 0),
+                (-1, 1), (0, 1), (1, 1),
+            ]
         else:
             offsets = [(0, -1), (-1, 0), (1, 0), (0, 1)]
 
         # Stack neighbour arrays: shape (N_offsets, H, W)
         neighbour_layers = np.stack(
-            [np.roll(np.roll(before, -dy, axis=0), -dx, axis=1) for dx, dy in offsets],
+            [
+                np.roll(np.roll(before, -dy, axis=0), -dx, axis=1)
+                for dx, dy in offsets
+            ],
             axis=0,
         )  # shape: (K, H, W)
 
         # Flatten to (H*W, K)
-        neighbors_flat = neighbour_layers.reshape(len(offsets), -1).T  # (H*W, K)
+        neighbors_flat = neighbour_layers.reshape(len(offsets), -1).T
         current_flat = before.ravel()
         next_flat = after.ravel()
 
         patterns_found = 0
         for i in range(height * width):
-            pattern_key = (tuple(int(v) for v in neighbors_flat[i]), int(current_flat[i]))
+            nbrs = tuple(int(v) for v in neighbors_flat[i])
+            pattern_key = (nbrs, int(current_flat[i]))
             next_state = int(next_flat[i])
             if pattern_key not in self.observations:
                 self.observations[pattern_key] = []

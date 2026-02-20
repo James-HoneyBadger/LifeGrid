@@ -13,6 +13,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional
 
 import numpy as np
+from scipy import signal as _signal
 from fastapi import WebSocket, WebSocketDisconnect
 
 
@@ -44,13 +45,14 @@ class CollaborativeSession:
             self._lock = asyncio.Lock()
         return self._lock
 
-
     async def add_client(self, ws: WebSocket) -> None:
+        """Accept the WebSocket connection and send the current state."""
         await ws.accept()
         self.clients.append(ws)
         await self._send_state(ws)
 
     def remove_client(self, ws: WebSocket) -> None:
+        """Remove a disconnected client from the session."""
         if ws in self.clients:
             self.clients.remove(ws)
 
@@ -123,9 +125,8 @@ class CollaborativeSession:
 
     def _step_conway(self) -> None:
         """Simple inline Conway step for collaborative mode."""
-        from scipy import signal
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
-        neighbors = signal.convolve2d(
+        neighbors = _signal.convolve2d(
             self.grid, kernel, mode="same", boundary="wrap",
         )
         self.grid = (

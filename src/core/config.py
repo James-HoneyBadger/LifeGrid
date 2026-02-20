@@ -49,7 +49,9 @@ class SimulatorConfig:
             "automaton_mode": self.automaton_mode,
             # Convert sets to sorted lists for JSON serialisability
             "birth_rule": (
-                sorted(self.birth_rule) if self.birth_rule is not None else None
+                sorted(self.birth_rule)
+                if self.birth_rule is not None
+                else None
             ),
             "survival_rule": (
                 sorted(self.survival_rule)

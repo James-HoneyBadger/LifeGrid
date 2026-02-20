@@ -151,6 +151,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test, lint, build]
     if: github.event_name == 'release' && github.event.action == 'published'
+    permissions:
+      id-token: write  # required for PyPI Trusted Publisher (OIDC)
 
     steps:
     - name: Download build artifacts
@@ -160,7 +162,8 @@ jobs:
         path: dist/
 
     - name: Publish to PyPI
+      # Uses OIDC Trusted Publisher — no API token required.
+      # Configure at: https://pypi.org/manage/project/lifegrid/settings/publishing/
       uses: pypa/gh-action-pypi-publish@release/v1
       with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
         skip-existing: true

@@ -17,6 +17,7 @@ from advanced.rle_format import RLEParser, RLEEncoder
 from export_manager import ExportManager
 from autosave_manager import AutoSaveManager
 from core.utils import place_pattern_centered
+from core.boundary import BoundaryMode
 from automata import LifeLikeAutomaton, HexagonalGameOfLife
 from config_manager import AppConfig
 from patterns import get_pattern_description, PATTERN_DATA
@@ -50,7 +51,6 @@ from .new_features import (
     ThemeEditorDialog,
     PatternShapeSearch,
 )
-from core.boundary import BoundaryMode
 
 try:
     from PIL import Image as PILImage
@@ -133,6 +133,7 @@ class AutomatonApp:
         self.state.show_grid = self.config.show_grid
 
         self.tool_manager = ToolManager()
+        self._drag_undo_pushed: bool = False
         self._configure_bindings()
         self.switch_mode(self.tk_vars.mode.get())
         self._update_widgets_enabled_state()
@@ -1590,8 +1591,9 @@ class AutomatonApp:
         else:
             automaton.reset()
             # Naive random fallback
-            import numpy as _np
-            automaton.grid = _np.random.randint(0, 2, automaton.grid.shape, dtype=int)  # type: ignore[attr-defined]
+            automaton.grid = np.random.randint(
+                0, 2, automaton.grid.shape, dtype=int
+            )  # type: ignore[attr-defined]
         self.state.reset_generation()
         self._reset_history_with_current_grid()
         self._update_generation_label()
@@ -1599,7 +1601,6 @@ class AutomatonApp:
 
     def _zoom_in(self) -> None:
         """Increase cell size by 1 (scroll-wheel zoom in)."""
-        from .config import MAX_CELL_SIZE
         size = min(self.state.cell_size + 1, MAX_CELL_SIZE)
         self.tk_vars.cell_size.set(size)
         self.state.cell_size = size
@@ -1607,7 +1608,6 @@ class AutomatonApp:
 
     def _zoom_out(self) -> None:
         """Decrease cell size by 1 (scroll-wheel zoom out)."""
-        from .config import MIN_CELL_SIZE
         size = max(self.state.cell_size - 1, MIN_CELL_SIZE)
         self.tk_vars.cell_size.set(size)
         self.state.cell_size = size

@@ -78,7 +78,9 @@ class RainbowGame(CellularAutomaton):
         kernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
         alive_mask = self.grid > 0
         bnd = BoundaryMode.from_string(self.boundary)
-        neighbor_count = convolve_with_boundary(alive_mask.astype(int), kernel, bnd)
+        neighbor_count = convolve_with_boundary(
+            alive_mask.astype(int), kernel, bnd
+        )
         color_sum = convolve_with_boundary(self.grid, kernel, bnd)
 
         neighbors_2_or_3 = (neighbor_count == 2) | (neighbor_count == 3)

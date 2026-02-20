@@ -54,13 +54,14 @@ def _draw_pil_fast(
         if not mask.any():
             continue
         # Expand to pixel space using numpy repeat
-        mask_pixels = np.repeat(np.repeat(mask, cell_size, axis=0), cell_size, axis=1)
+        mask_pixels = np.repeat(
+            np.repeat(mask, cell_size, axis=0), cell_size, axis=1
+        )
         rgb[mask_pixels] = (r, g, b)
 
     image = _PILImage.fromarray(rgb, mode="RGB")
     _photo_cache = _ImageTk.PhotoImage(image)
     canvas.create_image(0, 0, anchor="nw", image=_photo_cache)
-
 
 
 def draw_grid(
