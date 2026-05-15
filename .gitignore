@@ -47,3 +47,6 @@ Thumbs.db
 # Exports
 *.png
 !docs/*.png
+
+# Rust build artifacts
+lifegrid-rs/target/

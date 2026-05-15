@@ -1,6 +1,143 @@
 # LifeGrid
 
-A feature-rich cellular automata simulator with a modern Tkinter GUI, headless CLI, REST/WebSocket API, GPU acceleration, and plugin support.
+A cellular automaton simulator written in Rust with a native egui GUI.
+
+![Rust](https://img.shields.io/badge/rust-2021-orange)
+![License MIT](https://img.shields.io/badge/license-MIT-green)
+![Version 4.0.0](https://img.shields.io/badge/version-4.0.0-blue)
+
+---
+
+## Features
+
+### Automata Modes
+
+| Mode | Description |
+|------|-------------|
+| Conway's Game of Life | B3/S23 — the classic |
+| HighLife | B36/S23 — supports replicators |
+| Immigration | Two-color Conway variant |
+| Rainbow | Six-color Conway variant |
+| Langton's Ant | Turing-complete ant on a grid |
+| Wireworld | 4-state electronic circuit simulation |
+| Brian's Brain | 3-state firing/refractory model |
+| Generations | Multi-state fading automaton |
+| Hexagonal Life | Hexagonal grid with offset-row neighbours |
+| Custom Rules | Arbitrary B/S rule string (e.g. `B36/S23`) |
+
+### GUI
+
+- **Simulation controls** — Play/Pause, single Step, Reset, configurable speed (1–200 steps/s)
+- **Undo / Redo** — up to 100 states with ↩/↪ buttons
+- **Pattern library** — built-in patterns per mode selected from a dropdown
+- **Boundary modes** — Wrap (toroidal), Fixed (dead border), Reflect
+- **Cell size** — 2–32 px per cell with a slider
+- **Grid lines** — toggle on/off
+- **Population graph** — real-time sparkline in the sidebar
+- **Click / drag** to toggle cells on the canvas
+- **PNG export** — save the current grid as a PNG snapshot
+- **Persistent config** — window settings saved to `~/.config/lifegrid/lifegrid_config.json`
+
+### Built-in Patterns (Conway modes)
+
+Glider, Blinker, Toad, Beacon, Block, Beehive, Loaf, Boat, LWSS, MWSS,
+R-Pentomino, Acorn, Pulsar, Glider Gun, Random Soup
+
+---
+
+## Installation
+
+### Requirements
+
+- Rust 1.75 or later (`rustup` recommended)
+- A display server (X11 or Wayland) for the GUI window
+
+### Quick Start
+
+```bash
+git clone https://github.com/James-HoneyBadger/LifeGrid.git
+cd LifeGrid/lifegrid-rs
+cargo run --release
+```
+
+### Build Only
+
+```bash
+cd lifegrid-rs
+cargo build --release
+./target/release/lifegrid
+```
+
+---
+
+## Usage
+
+### Keyboard / Mouse
+
+| Action | Input |
+|--------|-------|
+| Toggle cell | Left-click on canvas |
+| Draw cells | Click and drag |
+| Play / Pause | ▶ Pause button in sidebar |
+| Single step | ⏭ Step button |
+| Reset | ⏹ Reset button |
+| Undo | ↩ Undo button |
+| Redo | ↪ Redo button |
+
+### Custom Rules
+
+Select **Custom Rules** from the Mode dropdown and type a rule string in
+B/S notation into the text field, e.g. `B36/S23` (HighLife) or `B2/S` (Seeds).
+The automaton rebuilds immediately on each keystroke.
+
+### Exporting
+
+Click **Export PNG** in the controls panel and choose a save location.
+The PNG is written at the current cell size, so zoom in for a larger image.
+
+---
+
+## Project Structure
+
+```
+LifeGrid/
+├── lifegrid-rs/          # Rust application
+│   ├── Cargo.toml
+│   └── src/
+│       ├── main.rs       # Entry point
+│       ├── app.rs        # egui application, UI, event loop
+│       ├── patterns.rs   # Hardcoded Conway pattern data
+│       ├── export.rs     # PNG export
+│       ├── automata/     # All 10 automaton implementations
+│       │   ├── mod.rs    # Automaton trait + factory
+│       │   ├── conway.rs
+│       │   ├── highlife.rs
+│       │   ├── lifelike.rs
+│       │   ├── ant.rs
+│       │   ├── briansbrain.rs
+│       │   ├── wireworld.rs
+│       │   ├── generations.rs
+│       │   ├── immigration.rs
+│       │   ├── rainbow.rs
+│       │   └── hexagonal.rs
+│       └── core/         # Grid, boundary, undo, config
+│           ├── mod.rs
+│           ├── grid.rs
+│           ├── boundary.rs
+│           ├── undo.rs
+│           └── config.rs
+├── LICENSE
+├── README.md
+├── CHANGELOG.md
+└── CONTRIBUTING.md
+```
+
+---
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
 
 ![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
 ![License MIT](https://img.shields.io/badge/license-MIT-green)
