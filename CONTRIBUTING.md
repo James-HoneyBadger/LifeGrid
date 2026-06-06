@@ -1,137 +1,168 @@
 # Contributing to LifeGrid
 
-Thanks for your interest in contributing! This guide covers setup, workflow, and standards.
+Thanks for contributing. LifeGrid is now a dual-platform project with:
+
+- `lifegrid-rs` (Rust native desktop)
+- `lifegrid-ts` (TypeScript web)
+
+Please keep changes scoped, tested, and documented.
 
 ---
 
-## Development Setup
+## Prerequisites
 
-### Prerequisites
+### Rust stack (`lifegrid-rs`)
 
-- Rust 1.75 or later — install via [rustup](https://rustup.rs)
-- A C linker (`gcc` or `clang`) — on Debian/Ubuntu: `sudo apt-get install build-essential`
-- A display server (X11 or Wayland) to run the GUI
+- Rust 1.75+ via [rustup](https://rustup.rs)
+- A C toolchain/linker (`clang` or `gcc`)
+- Desktop display server (macOS, X11, Wayland)
 
-### Clone and Build
+### TypeScript stack (`lifegrid-ts`)
+
+- Node.js 18+
+- npm 9+
+
+---
+
+## Local Setup
+
+Clone and prepare both apps:
 
 ```bash
 git clone https://github.com/James-HoneyBadger/LifeGrid.git
-cd LifeGrid/lifegrid-rs
+cd LifeGrid
+
+# Rust app
+cd lifegrid-rs
 cargo build
+
+# TypeScript app
+cd ../lifegrid-ts
+npm install
+npm run build
 ```
 
-Run in development mode:
+Run apps:
 
 ```bash
+# Rust desktop
+cd lifegrid-rs
 cargo run
+
+# TypeScript web
+cd ../lifegrid-ts
+npm run dev
 ```
 
-Build an optimised release binary:
+---
+
+## Pull Request Workflow
+
+1. Fork and clone.
+2. Create a feature branch from `master`.
+3. Make focused commits.
+4. Run relevant checks (see below).
+5. Update docs when behavior changes.
+6. Open PR against `master`.
+
+---
+
+## Required Checks
+
+### Rust changes
 
 ```bash
-cargo build --release
-./target/release/lifegrid
+cd lifegrid-rs
+cargo build
+cargo test
+cargo clippy
+cargo fmt --check
+```
+
+### TypeScript changes
+
+```bash
+cd lifegrid-ts
+npm run test
+npm run build
 ```
 
 ---
 
-## Workflow
+## Coding Standards
 
-1. **Fork and clone** the repository.
-2. **Create a branch** from `master`:
-   ```bash
-   git checkout -b feature/my-feature
-   ```
-3. **Make your changes** — keep commits focused and well-described.
-4. **Run checks** before submitting:
-   ```bash
-   cargo test          # unit tests
-   cargo clippy        # lints
-   cargo fmt --check   # formatting
-   ```
-5. **Open a pull request** against `master`.
+### General
 
----
+- Keep APIs and UX consistent across Rust and TS where practical.
+- Prefer small, reviewable PRs.
+- Avoid unrelated refactors in feature PRs.
 
-## Code Standards
+### Rust
 
-- **Formatting**: `cargo fmt` (rustfmt defaults). No unformatted code is accepted.
-- **Linting**: zero warnings from `cargo clippy`. Use `#[allow(...)]` only with a comment explaining why.
-- **Tests**: new automaton logic should include unit tests in the same file or a `tests/` submodule.
-- **No `unsafe`**: avoid `unsafe` blocks. The codebase does not use any.
+- Format with `cargo fmt`.
+- Keep `cargo clippy` clean.
+- Avoid `unsafe` unless absolutely required and justified.
+
+### TypeScript
+
+- Keep strict type safety (`tsconfig` strict mode).
+- Avoid `any`; prefer explicit interfaces and narrow unions.
+- Keep model behavior isolated in `src/automata/models.ts` unless a new file split is justified.
 
 ---
 
-## Adding an Automaton Mode
+## Adding a New Automaton Model
 
-1. Create `lifegrid-rs/src/automata/<name>.rs` implementing the `Automaton` trait:
+For feature parity, update both stacks when possible.
 
-   ```rust
-   use crate::core::{BoundaryMode, Grid};
-   use super::Automaton;
+### Rust path
 
-   pub struct MyAutomaton {
-       grid: Grid,
-       boundary: BoundaryMode,
-   }
+1. Add `lifegrid-rs/src/automata/<name>.rs` implementing `Automaton`.
+2. Register module and export in `lifegrid-rs/src/automata/mod.rs`.
+3. Add mode label to `ALL_MODES`.
+4. Add factory match arm in `make_automaton`.
+5. Ensure pattern list and click behavior are defined.
 
-   impl MyAutomaton {
-       pub fn new(width: usize, height: usize) -> Self {
-           Self {
-               grid: Grid::new(width, height),
-               boundary: BoundaryMode::default(),
-           }
-       }
-   }
+### TypeScript path
 
-   impl Automaton for MyAutomaton {
-       fn name(&self) -> &'static str { "My Automaton" }
-       fn step(&mut self) { /* implement rules */ }
-       fn reset(&mut self) { self.grid.clear(); }
-       fn get_grid(&self) -> &Grid { &self.grid }
-       fn get_grid_mut(&mut self) -> &mut Grid { &mut self.grid }
-       fn set_boundary(&mut self, b: BoundaryMode) { self.boundary = b; }
-       fn boundary(&self) -> BoundaryMode { self.boundary }
-       fn handle_click(&mut self, x: usize, y: usize) {
-           let v = self.grid.get(y, x);
-           self.grid.set(y, x, if v == 0 { 1 } else { 0 });
-       }
-       fn available_patterns(&self) -> &'static [&'static str] { &["Random Soup"] }
-       fn load_pattern(&mut self, _pattern: &str) {
-           // load or randomise
-       }
-   }
-   ```
+1. Add model class to `lifegrid-ts/src/automata/models.ts` implementing `Automaton`.
+2. Register it in `createModel` and `ALL_MODELS`.
+3. Add `colorForState` and `handleClick` behavior for multi-state models.
+4. Verify rendering and interactions in `lifegrid-ts/src/main.ts`.
 
-2. `pub mod <name>;` and `pub use <name>::MyAutomaton;` in `automata/mod.rs`.
-3. Add `"My Automaton"` to the `ALL_MODES` constant in `automata/mod.rs`.
-4. Add a match arm for it in the `make_automaton` factory in `automata/mod.rs`.
+### Documentation
+
+Update all of:
+
+- `README.md` model lists and controls (if changed)
+- `CHANGELOG.md` (under `Unreleased`)
 
 ---
 
 ## Project Layout
 
 | Path | Purpose |
-|------|---------|
-| `lifegrid-rs/src/app.rs` | egui application, UI panels, event loop |
-| `lifegrid-rs/src/automata/` | All automaton implementations + trait |
-| `lifegrid-rs/src/core/` | Grid, boundary, undo manager, app config |
-| `lifegrid-rs/src/patterns.rs` | Hardcoded Conway pattern point data |
-| `lifegrid-rs/src/export.rs` | PNG and GIF export |
+|---|---|
+| `lifegrid-rs/src/app.rs` | Native UI panels and simulation loop |
+| `lifegrid-rs/src/automata/` | Rust automata implementations |
+| `lifegrid-rs/src/core/` | Grid, boundary, undo, config |
+| `lifegrid-ts/src/main.ts` | Web UI, interactions, rendering |
+| `lifegrid-ts/src/automata/models.ts` | TS model registry and logic |
+| `lifegrid-ts/src/core/` | Shared TS interfaces and grid |
 
 ---
 
 ## Reporting Issues
 
-Open a GitHub issue with:
+Include:
 
-- A clear title and description
-- Steps to reproduce (for bugs)
-- Expected vs. actual behaviour
-- Rust version (`rustc --version`) and OS
+- Clear description and reproduction steps
+- Expected and actual behavior
+- Platform impacted (`lifegrid-rs`, `lifegrid-ts`, or both)
+- Environment details (`rustc --version` and/or `node -v`, OS, browser)
 
 ---
 
 ## License
 
-By contributing you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree your contributions are licensed under the MIT License.

@@ -23,6 +23,10 @@ pub struct AppConfig {
     pub paint_state: u8,
     #[serde(default)]
     pub show_aging: bool,
+    #[serde(default)]
+    pub advanced_ui: bool,
+    #[serde(default)]
+    pub first_run_complete: bool,
 }
 
 fn default_true() -> bool { true }
@@ -47,6 +51,8 @@ impl Default for AppConfig {
             rounded_cells: false,
             paint_state: 1,
             show_aging: false,
+            advanced_ui: false,
+            first_run_complete: false,
         }
     }
 }

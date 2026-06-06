@@ -1,6 +1,7 @@
 use std::time::{Duration, Instant};
 
 use egui::{Color32, CornerRadius, Rect, Sense, Vec2};
+use rand::Rng;
 
 use crate::automata::{self, Automaton, LifeLike};
 use crate::core::{AppConfig, BoundaryMode, UndoManager};
@@ -53,6 +54,9 @@ fn mode_accent_color(mode: &str) -> Color32 {
     match mode {
         "Conway's Game of Life" => Color32::from_rgb(0, 180, 220),
         "High Life"             => Color32::from_rgb(0, 210, 120),
+        "Seeds"                 => Color32::from_rgb(220, 140, 40),
+        "Day & Night"           => Color32::from_rgb(90, 120, 255),
+        "Maze"                  => Color32::from_rgb(0, 170, 150),
         "Hexagonal Life"        => Color32::from_rgb(160, 80, 240),
         "Immigration Game"      => Color32::from_rgb(240, 160, 0),
         "Rainbow Game"          => Color32::from_rgb(240, 60, 120),
@@ -62,6 +66,25 @@ fn mode_accent_color(mode: &str) -> Color32 {
         "Generations"           => Color32::from_rgb(0, 220, 180),
         "Custom Rules"          => Color32::from_rgb(180, 180, 180),
         _                       => Color32::GRAY,
+    }
+}
+
+fn mode_short_description(mode: &str) -> &'static str {
+    match mode {
+        "Conway's Game of Life" => "Classic B3/S23 life-like automaton.",
+        "High Life" => "B36/S23 variant known for replicators.",
+        "Seeds" => "B2/S rule with fast explosive growth.",
+        "Day & Night" => "Self-complementary B3678/S34678 rule.",
+        "Maze" => "B3/S12345 rule that forms labyrinth patterns.",
+        "Hexagonal Life" => "Life-like dynamics on a hex-neighbour grid.",
+        "Immigration Game" => "Two-species Conway competition.",
+        "Rainbow Game" => "Multi-color competitive Conway variant.",
+        "Langton's Ant" => "Turmite with emergent highways.",
+        "Wireworld" => "4-state cellular circuit simulator.",
+        "Brian's Brain" => "3-state firing and refractory dynamics.",
+        "Generations" => "Life-like births with multi-step decay.",
+        "Custom Rules" => "Enter your own B/S rule.",
+        _ => "",
     }
 }
 
@@ -130,6 +153,7 @@ pub struct LifeGridApp {
     show_grid: bool,
     dark_mode: bool,
     rounded_cells: bool,
+    advanced_ui: bool,
 
     // ── Mode / pattern selectors ─────────────────────────────────────────────
     selected_mode: String,
@@ -143,6 +167,7 @@ pub struct LifeGridApp {
     viewport_offset: Vec2,
     paint_state: u8,
     drag_undo_pushed: bool,
+    fit_to_view_requested: bool,
 
     // ── Cell aging ───────────────────────────────────────────────────────────
     age_grid: Vec<u32>,
@@ -168,6 +193,7 @@ pub struct LifeGridApp {
 
     // ── Status bar ───────────────────────────────────────────────────────────
     status_msg: Option<(String, Instant)>,
+    show_onboarding_hint: bool,
 }
 
 impl LifeGridApp {
@@ -224,6 +250,7 @@ impl LifeGridApp {
             show_grid: cfg.show_grid,
             dark_mode: cfg.dark_mode,
             rounded_cells: cfg.rounded_cells,
+            advanced_ui: cfg.advanced_ui,
 
             selected_mode: cfg.automaton_mode,
             selected_pattern: pattern,
@@ -235,6 +262,7 @@ impl LifeGridApp {
             viewport_offset: Vec2::ZERO,
             paint_state: cfg.paint_state.max(1),
             drag_undo_pushed: false,
+            fit_to_view_requested: false,
 
             age_grid: vec![0u32; n],
             show_aging: cfg.show_aging,
@@ -254,6 +282,7 @@ impl LifeGridApp {
             fps: 0.0,
 
             status_msg: None,
+            show_onboarding_hint: !cfg.first_run_complete,
         }
     }
 
@@ -328,6 +357,66 @@ impl LifeGridApp {
         self.frame_buffer.clear();
     }
 
+    fn randomize_grid(&mut self, alive_probability: f64) {
+        self.push_undo();
+        let mut rng = rand::thread_rng();
+        let cells = &mut self.automaton.get_grid_mut().cells;
+        for cell in cells.iter_mut() {
+            *cell = if rng.gen_bool(alive_probability.clamp(0.0, 1.0)) { 1 } else { 0 };
+        }
+        self.generation = 0;
+        self.running = false;
+        self.pop_history.clear();
+        self.frame_buffer.clear();
+        if self.age_grid.len() != cells.len() {
+            self.age_grid = vec![0u32; cells.len()];
+        } else {
+            self.age_grid.fill(0);
+        }
+    }
+
+    fn clear_grid(&mut self) {
+        self.push_undo();
+        let cells = &mut self.automaton.get_grid_mut().cells;
+        for cell in cells.iter_mut() {
+            *cell = 0;
+        }
+        self.generation = 0;
+        self.running = false;
+        self.pop_history.clear();
+        self.frame_buffer.clear();
+        if self.age_grid.len() != cells.len() {
+            self.age_grid = vec![0u32; cells.len()];
+        } else {
+            self.age_grid.fill(0);
+        }
+    }
+
+    fn save_snapshot(&mut self) {
+        let ts = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs())
+            .unwrap_or(0);
+        let base = std::env::var("HOME")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| std::path::PathBuf::from("."));
+        let dir = base.join("Pictures").join("LifeGrid");
+        if let Err(e) = std::fs::create_dir_all(&dir) {
+            self.set_status(format!("Snapshot failed: {}", e));
+            return;
+        }
+        let path = dir.join(format!("lifegrid-{}.png", ts));
+        let cs = (self.cell_size as u32).max(1);
+        match export::export_png(self.automaton.get_grid(), cs, &path) {
+            Ok(()) => self.set_status(format!("Snapshot saved: {}", path.display())),
+            Err(e) => self.set_status(format!("Snapshot failed: {}", e)),
+        }
+    }
+
+    fn mark_onboarded(&mut self) {
+        self.show_onboarding_hint = false;
+    }
+
     fn rebuild_automaton(&mut self) {
         let (w, h) = {
             let g = self.automaton.get_grid();
@@ -384,6 +473,8 @@ impl LifeGridApp {
             custom_survival: self.custom_survival.clone(),
             paint_state: self.paint_state,
             show_aging: self.show_aging,
+            advanced_ui: self.advanced_ui,
+            first_run_complete: !self.show_onboarding_hint,
         };
         cfg.save();
     }
@@ -409,15 +500,18 @@ impl LifeGridApp {
             if i.key_pressed(egui::Key::Space) {
                 self.running = !self.running;
                 if self.running { self.last_step = Instant::now(); }
+                self.mark_onboarded();
             }
             if i.key_pressed(egui::Key::S) {
                 self.push_undo();
                 self.do_step();
+                self.mark_onboarded();
             }
             if i.key_pressed(egui::Key::R) {
                 self.do_reset();
                 let pat = self.selected_pattern.clone();
                 self.automaton.load_pattern(&pat);
+                self.mark_onboarded();
             }
             if i.key_pressed(egui::Key::G) {
                 self.show_grid = !self.show_grid;
@@ -455,93 +549,121 @@ impl LifeGridApp {
     // ── UI panels ────────────────────────────────────────────────────────────
 
     fn ui_toolbar(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            let accent = mode_accent_color(&self.selected_mode);
-
-            // Coloured mode dot + title
-            ui.colored_label(accent, "●");
-            ui.label(egui::RichText::new("LifeGrid").strong().size(15.0));
-            ui.separator();
-
-            // Play / Pause
-            let play_label = if self.running { "⏸" } else { "▶" };
-            if ui.button(play_label).on_hover_text(if self.running { "Pause (Space)" } else { "Play (Space)" }).clicked() {
-                self.running = !self.running;
-                if self.running { self.last_step = Instant::now(); }
-            }
-            // Step
-            if ui.button("⏭").on_hover_text("Step (S)").clicked() {
-                self.push_undo();
-                self.do_step();
-            }
-            // Reset
-            if ui.button("⏹").on_hover_text("Reset (R)").clicked() {
-                self.do_reset();
-                let pat = self.selected_pattern.clone();
-                self.automaton.load_pattern(&pat);
-            }
-
-            ui.separator();
-
-            // Undo / Redo
-            let can_undo = self.undo.can_undo();
-            let can_redo = self.undo.can_redo();
-            if ui.add_enabled(can_undo, egui::Button::new("↩")).on_hover_text("Undo (Ctrl+Z)").clicked() {
-                let cur = self.automaton.get_grid().cells.clone();
-                if let Some(prev) = self.undo.undo(cur) {
-                    self.automaton.get_grid_mut().cells = prev;
-                    if self.generation > 0 { self.generation -= 1; }
+        ui.vertical(|ui| {
+            ui.horizontal(|ui| {
+                // Play / Pause
+                let play_label = if self.running { "Pause" } else { "Play" };
+                let play_hint  = if self.running { "Pause  (Space)" } else { "Play  (Space)" };
+                if ui.button(play_label).on_hover_text(play_hint).clicked() {
+                    self.running = !self.running;
+                    if self.running { self.last_step = Instant::now(); }
+                    self.mark_onboarded();
                 }
-            }
-            if ui.add_enabled(can_redo, egui::Button::new("↪")).on_hover_text("Redo (Ctrl+Y)").clicked() {
-                let cur = self.automaton.get_grid().cells.clone();
-                if let Some(next) = self.undo.redo(cur) {
-                    self.automaton.get_grid_mut().cells = next;
-                    self.generation += 1;
+                if ui.button("Step").on_hover_text("Advance one generation  (S)").clicked() {
+                    self.push_undo();
+                    self.do_step();
+                    self.mark_onboarded();
                 }
-            }
+                if ui.button("Reset").on_hover_text("Reset to initial pattern  (R)").clicked() {
+                    self.do_reset();
+                    let pat = self.selected_pattern.clone();
+                    self.automaton.load_pattern(&pat);
+                    self.mark_onboarded();
+                }
 
-            ui.separator();
+                ui.separator();
 
-            // Run N steps
-            if ui.button("Run N…").on_hover_text("Run a fixed number of steps").clicked() {
-                self.show_run_n_dialog = true;
-            }
+                // Undo / Redo
+                let can_undo = self.undo.can_undo();
+                let can_redo = self.undo.can_redo();
+                if ui.add_enabled(can_undo, egui::Button::new("Undo"))
+                    .on_hover_text("Undo  (Ctrl+Z)").clicked()
+                {
+                    let cur = self.automaton.get_grid().cells.clone();
+                    if let Some(prev) = self.undo.undo(cur) {
+                        self.automaton.get_grid_mut().cells = prev;
+                        if self.generation > 0 { self.generation -= 1; }
+                    }
+                    self.mark_onboarded();
+                }
+                if ui.add_enabled(can_redo, egui::Button::new("Redo"))
+                    .on_hover_text("Redo  (Ctrl+Y)").clicked()
+                {
+                    let cur = self.automaton.get_grid().cells.clone();
+                    if let Some(next) = self.undo.redo(cur) {
+                        self.automaton.get_grid_mut().cells = next;
+                        self.generation += 1;
+                    }
+                    self.mark_onboarded();
+                }
 
-            ui.separator();
+                ui.separator();
 
-            // Theme toggle
-            let theme_icon = if self.dark_mode { "☀" } else { "🌙" };
-            if ui.button(theme_icon).on_hover_text("Toggle dark/light theme").clicked() {
-                self.dark_mode = !self.dark_mode;
-            }
+                if ui.button("Run N…").on_hover_text("Run a fixed number of steps").clicked() {
+                    self.show_run_n_dialog = true;
+                    self.mark_onboarded();
+                }
 
-            // Version — right-aligned
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                ui.label(
-                    egui::RichText::new(format!("v{}", env!("CARGO_PKG_VERSION")))
-                        .small()
-                        .weak(),
-                );
+                // Right side
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.label(
+                        egui::RichText::new(format!("v{}", env!("CARGO_PKG_VERSION")))
+                            .small()
+                            .weak(),
+                    );
+                    ui.separator();
+                    let mode_label = if self.advanced_ui { "Beginner" } else { "Advanced" };
+                    if ui.button(mode_label).on_hover_text("Toggle UI complexity").clicked() {
+                        self.advanced_ui = !self.advanced_ui;
+                    }
+                    ui.separator();
+                    let theme_label = if self.dark_mode { "Light" } else { "Dark" };
+                    if ui.button(theme_label).on_hover_text("Toggle theme").clicked() {
+                        self.dark_mode = !self.dark_mode;
+                    }
+                });
+            });
+
+            ui.horizontal_wrapped(|ui| {
+                if ui.small_button("Randomize").clicked() {
+                    self.randomize_grid(0.20);
+                    self.set_status("Randomized grid");
+                    self.mark_onboarded();
+                }
+                if ui.small_button("Center View").clicked() {
+                    self.viewport_offset = Vec2::ZERO;
+                }
+                if ui.small_button("Fit Grid").clicked() {
+                    self.fit_to_view_requested = true;
+                }
+                if ui.small_button("Clear").clicked() {
+                    self.clear_grid();
+                    self.set_status("Grid cleared");
+                    self.mark_onboarded();
+                }
+                if ui.small_button("Snapshot").clicked() {
+                    self.save_snapshot();
+                }
             });
         });
     }
 
     fn ui_statusbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
-            let (gw, gh, pop) = {
+            let pop = {
                 let g = self.automaton.get_grid();
-                (g.width, g.height, g.population())
+                g.population()
             };
-            let density = pop as f32 / (gw * gh).max(1) as f32 * 100.0;
 
-            ui.label(format!("Gen: {}", self.generation));
+            let run_state = if self.running { "Running" } else { "Paused" };
+
+            ui.label(format!("{}", run_state));
             ui.separator();
-            ui.label(format!("Pop: {}", pop));
+            ui.label(format!("Gen {}", self.generation));
             ui.separator();
-            ui.label(format!("Density: {:.1}%", density));
+            ui.label(format!("Pop {}", pop));
             ui.separator();
-            ui.label(format!("FPS: {:.0}", self.fps));
+            ui.label(format!("Speed {} /s", self.speed));
 
             // Timed status message
             if let Some((ref msg, ts)) = self.status_msg.clone() {
@@ -557,60 +679,79 @@ impl LifeGridApp {
 
     fn ui_controls(&mut self, ui: &mut egui::Ui) {
         // ── Automaton section ────────────────────────────────────────────────
-        egui::CollapsingHeader::new("⚙  Automaton")
+        egui::CollapsingHeader::new("Automaton")
             .default_open(true)
             .show(ui, |ui| {
-                // Mode
-                ui.label("Mode:");
-                let old_mode = self.selected_mode.clone();
-                egui::ComboBox::from_id_salt("mode_combo")
-                    .selected_text(&self.selected_mode)
-                    .width(ui.available_width() - 4.0)
-                    .show_ui(ui, |ui| {
-                        for &m in automata::ALL_MODES {
-                            ui.selectable_value(&mut self.selected_mode, m.to_owned(), m);
+                egui::Grid::new("automaton_grid")
+                    .num_columns(2)
+                    .spacing([6.0, 4.0])
+                    .show(ui, |ui| {
+                        // Mode
+                        ui.label("Mode");
+                        let old_mode = self.selected_mode.clone();
+                        egui::ComboBox::from_id_salt("mode_combo")
+                            .selected_text(&self.selected_mode)
+                            .width(ui.available_width())
+                            .show_ui(ui, |ui| {
+                                for &m in automata::ALL_MODES {
+                                    ui.selectable_value(&mut self.selected_mode, m.to_owned(), m);
+                                }
+                            });
+                        if self.selected_mode != old_mode {
+                            self.rebuild_automaton();
                         }
-                    });
-                if self.selected_mode != old_mode {
-                    self.rebuild_automaton();
-                }
+                        ui.end_row();
 
-                // Pattern
-                ui.label("Pattern:");
-                let patterns: Vec<&str> = self.automaton.available_patterns().to_vec();
-                let old_pat = self.selected_pattern.clone();
-                egui::ComboBox::from_id_salt("pattern_combo")
-                    .selected_text(&self.selected_pattern)
-                    .width(ui.available_width() - 4.0)
-                    .show_ui(ui, |ui| {
-                        for &p in &patterns {
-                            ui.selectable_value(&mut self.selected_pattern, p.to_owned(), p);
-                        }
-                    });
-                if self.selected_pattern != old_pat {
-                    self.do_reset();
-                    let pat = self.selected_pattern.clone();
-                    self.automaton.load_pattern(&pat);
-                }
+                        ui.label("");
+                        ui.label(
+                            egui::RichText::new(mode_short_description(&self.selected_mode))
+                                .small()
+                                .weak(),
+                        );
+                        ui.end_row();
 
-                // Boundary
-                ui.label("Boundary:");
-                let old_bnd = self.selected_boundary;
-                egui::ComboBox::from_id_salt("boundary_combo")
-                    .selected_text(self.selected_boundary.as_str())
-                    .width(ui.available_width() - 4.0)
-                    .show_ui(ui, |ui| {
-                        for &b in BoundaryMode::all() {
-                            ui.selectable_value(&mut self.selected_boundary, b, b.as_str());
+                        // Pattern
+                        ui.label("Pattern");
+                        let patterns: Vec<&str> = self.automaton.available_patterns().to_vec();
+                        let old_pat = self.selected_pattern.clone();
+                        egui::ComboBox::from_id_salt("pattern_combo")
+                            .selected_text(&self.selected_pattern)
+                            .width(ui.available_width())
+                            .show_ui(ui, |ui| {
+                                for &p in &patterns {
+                                    ui.selectable_value(&mut self.selected_pattern, p.to_owned(), p);
+                                }
+                            });
+                        if self.selected_pattern != old_pat {
+                            self.do_reset();
+                            let pat = self.selected_pattern.clone();
+                            self.automaton.load_pattern(&pat);
                         }
-                    });
-                if self.selected_boundary != old_bnd {
-                    self.automaton.set_boundary(self.selected_boundary);
-                }
+                        ui.end_row();
+
+                        // Boundary
+                        if self.advanced_ui {
+                            ui.label("Boundary");
+                            let old_bnd = self.selected_boundary;
+                            egui::ComboBox::from_id_salt("boundary_combo")
+                                .selected_text(self.selected_boundary.as_str())
+                                .width(ui.available_width())
+                                .show_ui(ui, |ui| {
+                                    for &b in BoundaryMode::all() {
+                                        ui.selectable_value(&mut self.selected_boundary, b, b.as_str());
+                                    }
+                                });
+                            if self.selected_boundary != old_bnd {
+                                self.automaton.set_boundary(self.selected_boundary);
+                            }
+                            ui.end_row();
+                        }
+                    }); // end Grid
 
                 // Custom rule editor
-                if self.selected_mode == "Custom Rules" {
-                    ui.label("Rule (B/S):");
+                if self.advanced_ui && self.selected_mode == "Custom Rules" {
+                    ui.add_space(2.0);
+                    ui.label("Rule (B/S notation):");
                     let old_rule = self.custom_rule_str.clone();
                     ui.text_edit_singleline(&mut self.custom_rule_str);
                     if self.custom_rule_str != old_rule {
@@ -621,20 +762,18 @@ impl LifeGridApp {
                     }
                 }
 
-                // Resize button
                 ui.add_space(4.0);
-                if ui.button("⤢  Resize Grid…").clicked() {
-                    let (gw, gh) = {
-                        let g = self.automaton.get_grid();
-                        (g.width, g.height)
-                    };
-                    self.resize_w_input = gw.to_string();
-                    self.resize_h_input = gh.to_string();
-                    self.show_resize_dialog = true;
-                }
-
-                // RLE import from clipboard
-                if ui.button("📋  Import RLE").on_hover_text("Paste RLE pattern from clipboard").clicked() {
+                ui.horizontal(|ui| {
+                    if ui.button("Resize Grid…").clicked() {
+                        let (gw, gh) = {
+                            let g = self.automaton.get_grid();
+                            (g.width, g.height)
+                        };
+                        self.resize_w_input = gw.to_string();
+                        self.resize_h_input = gh.to_string();
+                        self.show_resize_dialog = true;
+                    }
+                    if ui.button("Import RLE").on_hover_text("Paste RLE pattern from clipboard").clicked() {
                     match arboard::Clipboard::new()
                         .and_then(|mut c| c.get_text())
                     {
@@ -665,48 +804,54 @@ impl LifeGridApp {
                         Err(e) => self.set_status(format!("Clipboard error: {e}")),
                     }
                 }
+                }); // end horizontal (Resize / Import)
             });
 
         ui.add_space(4.0);
 
         // ── View section ─────────────────────────────────────────────────────
-        egui::CollapsingHeader::new("🔍  View")
+        egui::CollapsingHeader::new("View")
             .default_open(true)
             .show(ui, |ui| {
-                ui.label(format!("Speed: {} steps/s", self.speed));
-                ui.add(egui::Slider::new(&mut self.speed, 1..=200).show_value(false));
+                egui::Grid::new("view_grid")
+                    .num_columns(2)
+                    .spacing([6.0, 4.0])
+                    .show(ui, |ui| {
+                        ui.label("Speed");
+                        ui.add(egui::Slider::new(&mut self.speed, 1..=200).suffix(" /s"));
+                        ui.end_row();
 
-                ui.label(format!("Cell size: {}px", self.cell_size as u32));
-                ui.horizontal(|ui| {
-                    if ui.small_button("−").clicked() {
-                        self.cell_size = (self.cell_size - 1.0).max(1.0);
-                    }
-                    ui.add(
-                        egui::Slider::new(&mut self.cell_size, 1.0..=64.0).show_value(false),
-                    );
-                    if ui.small_button("+").clicked() {
-                        self.cell_size = (self.cell_size + 1.0).min(64.0);
-                    }
-                });
+                        ui.label("Cell size");
+                        ui.add(egui::Slider::new(&mut self.cell_size, 1.0..=64.0).suffix(" px"));
+                        ui.end_row();
 
-                ui.checkbox(&mut self.show_grid, "Grid lines (G)");
-                ui.checkbox(&mut self.rounded_cells, "Rounded cells");
-                ui.checkbox(&mut self.show_aging, "Cell aging overlay");
+                        if self.advanced_ui {
+                            ui.label("Paint state");
+                            ui.add(egui::Slider::new(&mut self.paint_state, 0..=8)
+                                .clamping(egui::SliderClamping::Always));
+                            ui.end_row();
+                        }
+                    });
 
-                ui.add_space(4.0);
-                ui.label("Paint state:");
-                ui.add(egui::Slider::new(&mut self.paint_state, 0..=8).clamp_to_range(true));
-                ui.label(egui::RichText::new("Left-click = paint   Right-click = erase")
-                    .small()
-                    .weak());
+                ui.add_space(2.0);
+                ui.checkbox(&mut self.show_grid, "Grid lines");
+                if self.advanced_ui {
+                    egui::CollapsingHeader::new("Advanced display")
+                        .default_open(false)
+                        .show(ui, |ui| {
+                            ui.checkbox(&mut self.rounded_cells, "Rounded cells");
+                            ui.checkbox(&mut self.show_aging, "Cell aging");
+                        });
+                }
             });
 
-        ui.add_space(4.0);
+        if self.advanced_ui {
+            ui.add_space(4.0);
 
-        // ── Statistics section ───────────────────────────────────────────────
-        egui::CollapsingHeader::new("📊  Statistics")
-            .default_open(true)
-            .show(ui, |ui| {
+            // ── Statistics section ───────────────────────────────────────────────
+            egui::CollapsingHeader::new("Statistics")
+                .default_open(false)
+                .show(ui, |ui| {
                 if self.pop_history.len() > 1 {
                     let max_pop = self
                         .pop_history
@@ -757,12 +902,12 @@ impl LifeGridApp {
                 }
             });
 
-        ui.add_space(4.0);
+            ui.add_space(4.0);
 
-        // ── Export section ───────────────────────────────────────────────────
-        egui::CollapsingHeader::new("💾  Export")
-            .default_open(false)
-            .show(ui, |ui| {
+            // ── Export section ───────────────────────────────────────────────────
+            egui::CollapsingHeader::new("Export")
+                .default_open(false)
+                .show(ui, |ui| {
                 if ui.button("Export PNG…").clicked() {
                     if let Some(path) = rfd::FileDialog::new()
                         .add_filter("PNG image", &["png"])
@@ -826,6 +971,7 @@ impl LifeGridApp {
                     self.set_status("Frame buffer cleared");
                 }
             });
+        }
     }
 
     fn ui_canvas(&mut self, ui: &mut egui::Ui) {
@@ -847,6 +993,14 @@ impl LifeGridApp {
             let g = self.automaton.get_grid();
             (g.width, g.height, g.cells.clone(), self.age_grid.clone())
         };
+
+        if self.fit_to_view_requested {
+            let sx = avail.x / gw.max(1) as f32;
+            let sy = avail.y / gh.max(1) as f32;
+            self.cell_size = sx.min(sy).clamp(1.0, 64.0);
+            self.viewport_offset = Vec2::ZERO;
+            self.fit_to_view_requested = false;
+        }
 
         // ── Mouse-wheel zoom ─────────────────────────────────────────────────
         if response.hovered() {
@@ -968,6 +1122,7 @@ impl LifeGridApp {
                 let gx = ((pos.x - rect.left() + vox) / cs) as i64;
                 let gy_v = ((pos.y - rect.top() + voy) / cs) as i64;
                 if gx >= 0 && gx < gw as i64 && gy_v >= 0 && gy_v < gh as i64 {
+                    self.mark_onboarded();
                     if !self.drag_undo_pushed {
                         self.push_undo();
                         self.drag_undo_pushed = true;
@@ -987,6 +1142,7 @@ impl LifeGridApp {
                 let gx = ((pos.x - rect.left() + vox) / cs) as i64;
                 let gy_v = ((pos.y - rect.top() + voy) / cs) as i64;
                 if gx >= 0 && gx < gw as i64 && gy_v >= 0 && gy_v < gh as i64 {
+                    self.mark_onboarded();
                     if !self.drag_undo_pushed {
                         self.push_undo();
                         self.drag_undo_pushed = true;
@@ -1001,6 +1157,28 @@ impl LifeGridApp {
         // Reset drag-undo sentinel when not dragging.
         if !response.dragged() {
             self.drag_undo_pushed = false;
+        }
+
+        if !self.running && self.generation == 0 {
+            let helper = "Click to draw, then press Play. Use Randomize for a quick start.";
+            painter.text(
+                rect.center_top() + Vec2::new(0.0, 12.0),
+                egui::Align2::CENTER_TOP,
+                helper,
+                egui::FontId::proportional(13.0),
+                if dark { Color32::from_gray(170) } else { Color32::from_gray(90) },
+            );
+        }
+
+        if self.show_onboarding_hint {
+            let msg = "Tip: Start with Play, Step, or Randomize. Switch to Advanced for more controls.";
+            painter.text(
+                rect.center_bottom() - Vec2::new(0.0, 14.0),
+                egui::Align2::CENTER_BOTTOM,
+                msg,
+                egui::FontId::proportional(13.0),
+                if dark { Color32::from_rgb(185, 205, 255) } else { Color32::from_rgb(30, 80, 150) },
+            );
         }
     }
 

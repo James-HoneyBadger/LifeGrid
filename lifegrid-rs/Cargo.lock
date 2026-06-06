@@ -1765,7 +1765,7 @@ dependencies = [
 
 [[package]]
 name = "lifegrid"
-version = "3.2.0"
+version = "4.1.0"
 dependencies = [
  "arboard",
  "eframe",

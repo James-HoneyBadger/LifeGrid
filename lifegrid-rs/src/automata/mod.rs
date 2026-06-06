@@ -1,23 +1,29 @@
 pub mod ant;
 pub mod briansbrain;
 pub mod conway;
+pub mod daynight;
 pub mod generations;
 pub mod hexagonal;
 pub mod highlife;
 pub mod immigration;
 pub mod lifelike;
+pub mod maze;
 pub mod rainbow;
+pub mod seeds;
 pub mod wireworld;
 
 pub use ant::LangtonsAnt;
 pub use briansbrain::BriansBrain;
 pub use conway::ConwayLife;
+pub use daynight::DayNight;
 pub use generations::Generations;
 pub use hexagonal::HexagonalLife;
 pub use highlife::HighLife;
 pub use immigration::ImmigrationGame;
 pub use lifelike::LifeLike;
+pub use maze::Maze;
 pub use rainbow::RainbowGame;
+pub use seeds::Seeds;
 pub use wireworld::Wireworld;
 
 use crate::core::{BoundaryMode, Grid};
@@ -55,6 +61,9 @@ pub trait Automaton {
 pub const ALL_MODES: &[&str] = &[
     "Conway's Game of Life",
     "High Life",
+    "Seeds",
+    "Day & Night",
+    "Maze",
     "Hexagonal Life",
     "Immigration Game",
     "Rainbow Game",
@@ -70,6 +79,9 @@ pub fn make_automaton(mode: &str, width: usize, height: usize) -> Box<dyn Automa
     match mode {
         "Conway's Game of Life" => Box::new(ConwayLife::new(width, height)),
         "High Life" => Box::new(HighLife::new(width, height)),
+        "Seeds" => Box::new(Seeds::new(width, height)),
+        "Day & Night" => Box::new(DayNight::new(width, height)),
+        "Maze" => Box::new(Maze::new(width, height)),
         "Hexagonal Life" => Box::new(HexagonalLife::new(width, height)),
         "Immigration Game" => Box::new(ImmigrationGame::new(width, height)),
         "Rainbow Game" => Box::new(RainbowGame::new(width, height)),

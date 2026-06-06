@@ -12,6 +12,7 @@ pub struct LangtonsAnt {
     pub ant_y: usize,
     /// 0 = North, 1 = East, 2 = South, 3 = West
     pub ant_dir: u8,
+    boundary: BoundaryMode,
 }
 
 impl LangtonsAnt {
@@ -22,6 +23,7 @@ impl LangtonsAnt {
             ant_x: width / 2,
             ant_y: height / 2,
             ant_dir: 0,
+            boundary: BoundaryMode::Wrap,
         };
         s.sync_display();
         s
@@ -50,11 +52,16 @@ impl Automaton for LangtonsAnt {
 
         let h = self.base.height;
         let w = self.base.width;
-        match self.ant_dir {
-            0 => self.ant_y = (self.ant_y + h - 1) % h,
-            1 => self.ant_x = (self.ant_x + 1) % w,
-            2 => self.ant_y = (self.ant_y + 1) % h,
-            _ => self.ant_x = (self.ant_x + w - 1) % w,
+        let (next_y, next_x) = match self.ant_dir {
+            0 => (self.ant_y as i32 - 1, self.ant_x as i32),
+            1 => (self.ant_y as i32, self.ant_x as i32 + 1),
+            2 => (self.ant_y as i32 + 1, self.ant_x as i32),
+            _ => (self.ant_y as i32, self.ant_x as i32 - 1),
+        };
+
+        if let Some((ry, rx)) = self.boundary.resolve(next_y, next_x, h, w) {
+            self.ant_y = ry;
+            self.ant_x = rx;
         }
 
         self.sync_display();
@@ -91,8 +98,60 @@ impl Automaton for LangtonsAnt {
     }
 
     fn boundary(&self) -> BoundaryMode {
-        BoundaryMode::Wrap
+        self.boundary
     }
 
-    fn set_boundary(&mut self, _mode: BoundaryMode) {}
+    fn set_boundary(&mut self, mode: BoundaryMode) {
+        self.boundary = mode;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn wraps_at_top_edge() {
+        let mut ant = LangtonsAnt::new(5, 5);
+        ant.set_boundary(BoundaryMode::Wrap);
+        ant.ant_x = 2;
+        ant.ant_y = 0;
+        ant.ant_dir = 3; // facing West; on white cell it turns North and moves.
+        ant.base.clear();
+        ant.sync_display();
+
+        ant.step();
+
+        assert_eq!((ant.ant_x, ant.ant_y), (2, 4));
+    }
+
+    #[test]
+    fn fixed_boundary_blocks_out_of_bounds_step() {
+        let mut ant = LangtonsAnt::new(5, 5);
+        ant.set_boundary(BoundaryMode::Fixed);
+        ant.ant_x = 2;
+        ant.ant_y = 0;
+        ant.ant_dir = 3; // facing West; on white cell it turns North and would step out.
+        ant.base.clear();
+        ant.sync_display();
+
+        ant.step();
+
+        assert_eq!((ant.ant_x, ant.ant_y), (2, 0));
+    }
+
+    #[test]
+    fn reflect_boundary_mirrors_at_top_edge() {
+        let mut ant = LangtonsAnt::new(5, 5);
+        ant.set_boundary(BoundaryMode::Reflect);
+        ant.ant_x = 2;
+        ant.ant_y = 0;
+        ant.ant_dir = 3; // facing West; on white cell it turns North and reflects.
+        ant.base.clear();
+        ant.sync_display();
+
+        ant.step();
+
+        assert_eq!((ant.ant_x, ant.ant_y), (2, 0));
+    }
 }
