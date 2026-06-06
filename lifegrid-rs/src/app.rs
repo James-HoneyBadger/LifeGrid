@@ -664,6 +664,8 @@ impl LifeGridApp {
             ui.label(format!("Pop {}", pop));
             ui.separator();
             ui.label(format!("Speed {} /s", self.speed));
+            ui.separator();
+            ui.label(format!("Boundary {}", self.selected_boundary.as_str()));
 
             // Timed status message
             if let Some((ref msg, ts)) = self.status_msg.clone() {
@@ -730,22 +732,28 @@ impl LifeGridApp {
                         ui.end_row();
 
                         // Boundary
-                        if self.advanced_ui {
-                            ui.label("Boundary");
-                            let old_bnd = self.selected_boundary;
-                            egui::ComboBox::from_id_salt("boundary_combo")
-                                .selected_text(self.selected_boundary.as_str())
-                                .width(ui.available_width())
-                                .show_ui(ui, |ui| {
-                                    for &b in BoundaryMode::all() {
-                                        ui.selectable_value(&mut self.selected_boundary, b, b.as_str());
-                                    }
-                                });
-                            if self.selected_boundary != old_bnd {
-                                self.automaton.set_boundary(self.selected_boundary);
-                            }
-                            ui.end_row();
+                        ui.label("Boundary");
+                        let old_bnd = self.selected_boundary;
+                        egui::ComboBox::from_id_salt("boundary_combo")
+                            .selected_text(self.selected_boundary.as_str())
+                            .width(ui.available_width())
+                            .show_ui(ui, |ui| {
+                                for &b in BoundaryMode::all() {
+                                    ui.selectable_value(&mut self.selected_boundary, b, b.as_str());
+                                }
+                            });
+                        if self.selected_boundary != old_bnd {
+                            self.automaton.set_boundary(self.selected_boundary);
+                            self.set_status(format!(
+                                "Boundary set to {}.",
+                                self.selected_boundary.as_str()
+                            ));
                         }
+                        ui.end_row();
+
+                        ui.label("");
+                        ui.label(egui::RichText::new("Tip: Wrap is best for sustained evolution.").small().weak());
+                        ui.end_row();
                     }); // end Grid
 
                 // Custom rule editor
