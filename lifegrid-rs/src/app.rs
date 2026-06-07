@@ -197,6 +197,35 @@ pub struct LifeGridApp {
 }
 
 impl LifeGridApp {
+    fn max_paint_state_for_mode(mode: &str) -> u8 {
+        match mode {
+            // Binary rules: only state 1 is considered alive.
+            "Conway's Game of Life"
+            | "High Life"
+            | "Seeds"
+            | "Day & Night"
+            | "Maze"
+            | "Hexagonal Life"
+            | "Custom Rules"
+            | "Langton's Ant" => 1,
+            "Wireworld" => 3,
+            "Brian's Brain" => 2,
+            "Immigration Game" => 3,
+            "Rainbow Game" => 6,
+            // Generations defaults to 8 states (0..7).
+            "Generations" => 7,
+            _ => 1,
+        }
+    }
+
+    fn max_paint_state(&self) -> u8 {
+        Self::max_paint_state_for_mode(&self.selected_mode)
+    }
+
+    fn normalized_primary_paint_state(&self) -> u8 {
+        self.paint_state.clamp(1, self.max_paint_state())
+    }
+
     pub fn new(_cc: &eframe::CreationContext<'_>) -> Self {
         let cfg = AppConfig::load();
 
@@ -437,6 +466,7 @@ impl LifeGridApp {
         new_auto.load_pattern(&self.selected_pattern);
         let n = new_auto.get_grid().cells.len();
         self.automaton = new_auto;
+        self.paint_state = self.paint_state.clamp(1, self.max_paint_state());
         self.generation = 0;
         self.pop_history.clear();
         self.running = false;
@@ -835,7 +865,8 @@ impl LifeGridApp {
 
                         if self.advanced_ui {
                             ui.label("Paint state");
-                            ui.add(egui::Slider::new(&mut self.paint_state, 0..=8)
+                            let max_state = self.max_paint_state();
+                            ui.add(egui::Slider::new(&mut self.paint_state, 0..=max_state)
                                 .clamping(egui::SliderClamping::Always));
                             ui.end_row();
                         }
@@ -1135,9 +1166,9 @@ impl LifeGridApp {
                         self.push_undo();
                         self.drag_undo_pushed = true;
                     }
+                    let paint = self.normalized_primary_paint_state();
                     self.automaton
-                        .get_grid_mut()
-                        .set(gy_v as usize, gx as usize, self.paint_state);
+                        .paint_cell(gx as usize, gy_v as usize, paint);
                 }
             }
         }
@@ -1156,8 +1187,7 @@ impl LifeGridApp {
                         self.drag_undo_pushed = true;
                     }
                     self.automaton
-                        .get_grid_mut()
-                        .set(gy_v as usize, gx as usize, 0);
+                        .paint_cell(gx as usize, gy_v as usize, 0);
                 }
             }
         }

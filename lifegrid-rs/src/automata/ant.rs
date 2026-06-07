@@ -104,6 +104,11 @@ impl Automaton for LangtonsAnt {
     fn set_boundary(&mut self, mode: BoundaryMode) {
         self.boundary = mode;
     }
+
+    fn paint_cell(&mut self, x: usize, y: usize, state: u8) {
+        self.base.set(y, x, u8::from(state > 0));
+        self.sync_display();
+    }
 }
 
 #[cfg(test)]

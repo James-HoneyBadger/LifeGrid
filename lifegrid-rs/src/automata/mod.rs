@@ -45,6 +45,10 @@ pub trait Automaton {
     fn boundary(&self) -> BoundaryMode;
     fn set_boundary(&mut self, mode: BoundaryMode);
 
+    fn paint_cell(&mut self, x: usize, y: usize, state: u8) {
+        self.get_grid_mut().set(y, x, state);
+    }
+
     fn width(&self) -> usize {
         self.get_grid().width
     }
