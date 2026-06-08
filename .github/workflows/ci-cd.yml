@@ -5,165 +5,84 @@ on:
     branches: [ master, main, develop ]
   pull_request:
     branches: [ master, main ]
-  release:
-    types: [ published ]
 
 jobs:
-  test:
-    name: Test on Python ${{ matrix.python-version }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.13', '3.12', '3.11']
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-cov mypy
-
-    - name: Run tests
-      run: |
-        pytest tests/ -v --cov=src --cov-report=xml --cov-report=term
-
-    - name: Upload coverage to Codecov
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
-      uses: codecov/codecov-action@v4
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-umbrella
-
-    - name: Type check with mypy
-      run: |
-        mypy src/ --ignore-missing-imports || true
-
-  lint:
-    name: Lint and Code Quality
+  rust-check:
+    name: Rust Check
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        cache: 'pip'
-
-    - name: Install dependencies
+    - name: Install Linux GUI dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install flake8 black isort
+        sudo apt-get update
+        sudo apt-get install -y \
+          pkg-config \
+          libxkbcommon-dev \
+          libwayland-dev \
+          libasound2-dev \
+          libudev-dev
 
-    - name: Check code formatting with black
-      run: |
-        black --check src/ tests/ || true
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
 
-    - name: Check import sorting with isort
-      run: |
-        isort --check-only src/ tests/ || true
+    - name: Cargo check
+      run: cargo check --manifest-path lifegrid-rs/Cargo.toml
 
-    - name: Lint with flake8
-      run: |
-        flake8 src/ tests/ --max-line-length=100 --extend-ignore=E203,W503 || true
+    - name: Cargo test
+      run: cargo test --manifest-path lifegrid-rs/Cargo.toml -- --nocapture
 
-  docs:
-    name: Build Documentation
+  ts-check:
+    name: TypeScript Check
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
+    - name: Set up Node
+      uses: actions/setup-node@v4
       with:
-        python-version: '3.13'
-        cache: 'pip'
+        node-version: '20'
 
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install sphinx sphinx-rtd-theme myst-parser
+      run: npm --prefix lifegrid-ts install
 
-    - name: Build Sphinx documentation
-      run: |
-        cd docs
-        make html
+    - name: Run TypeScript tests
+      run: npm --prefix lifegrid-ts run test
 
-    - name: Upload documentation artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: documentation
-        path: docs/_build/html/
+    - name: Build TypeScript app
+      run: npm --prefix lifegrid-ts run build
 
   build:
-    name: Build Distribution
+    name: Build Rust Binary
     runs-on: ubuntu-latest
-    needs: [test, lint]
+    needs: [rust-check, ts-check]
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-        cache: 'pip'
-
-    - name: Install build dependencies
+    - name: Install Linux GUI dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install build twine
+        sudo apt-get update
+        sudo apt-get install -y \
+          pkg-config \
+          libxkbcommon-dev \
+          libwayland-dev \
+          libasound2-dev \
+          libudev-dev
 
-    - name: Build package
-      run: |
-        python -m build
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
 
-    - name: Check package with twine
-      run: |
-        twine check dist/*
+    - name: Build release binary
+      run: cargo build --release --manifest-path lifegrid-rs/Cargo.toml
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: dist
-        path: dist/
-
-  publish:
-    name: Publish to PyPI
-    runs-on: ubuntu-latest
-    needs: [test, lint, build]
-    if: github.event_name == 'release' && github.event.action == 'published'
-    permissions:
-      id-token: write  # required for PyPI Trusted Publisher (OIDC)
-
-    steps:
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: dist
-        path: dist/
-
-    - name: Publish to PyPI
-      # Uses OIDC Trusted Publisher — no API token required.
-      # Configure at: https://pypi.org/manage/project/lifegrid/settings/publishing/
-      uses: pypa/gh-action-pypi-publish@release/v1
-      with:
-        skip-existing: true
+        name: lifegrid-linux-release
+        path: lifegrid-rs/target/release/lifegrid
