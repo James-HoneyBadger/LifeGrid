@@ -7,7 +7,7 @@ LifeGrid is a cellular automaton sandbox with two actively maintained frontends:
 
 ![Rust](https://img.shields.io/badge/rust-2021-orange)
 ![TypeScript](https://img.shields.io/badge/typescript-5.x-3178c6)
-![LifeGrid 4.1.0](https://img.shields.io/badge/lifegrid-4.1.0-2b6cb0)
+![LifeGrid 4.1.1](https://img.shields.io/badge/lifegrid-4.1.1-2b6cb0)
 ![LifeGrid TS 0.2.0](https://img.shields.io/badge/lifegrid_ts-0.2.0-0f766e)
 ![License MIT](https://img.shields.io/badge/license-MIT-green)
 
