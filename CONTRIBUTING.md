@@ -1,6 +1,6 @@
 # Contributing to LifeGrid
 
-Thanks for your interest in contributing! This guide covers setup, workflow, and standards.
+Thanks for your interest in contributing! This guide covers setup, workflow, and standards for the Rust/egui rewrite of LifeGrid.
 
 ---
 
@@ -8,9 +8,11 @@ Thanks for your interest in contributing! This guide covers setup, workflow, and
 
 ### Prerequisites
 
-- Rust 1.75 or later — install via [rustup](https://rustup.rs)
-- A C linker (`gcc` or `clang`) — on Debian/Ubuntu: `sudo apt-get install build-essential`
-- A display server (X11 or Wayland) to run the GUI
+- [Rust](https://rustup.rs/) 1.75 or later
+- A C linker (`gcc` or `clang`)
+  - Debian/Ubuntu: `sudo apt-get install build-essential`
+  - macOS: Xcode Command Line Tools
+- A display server (X11 or Wayland on Linux) to run the GUI
 
 ### Clone and Build
 
@@ -37,28 +39,51 @@ cargo build --release
 
 ## Workflow
 
-1. **Fork and clone** the repository.
+1. **Fork** the repository and clone your fork.
 2. **Create a branch** from `master`:
+
    ```bash
    git checkout -b feature/my-feature
    ```
-3. **Make your changes** — keep commits focused and well-described.
+
+3. **Make your changes** – keep commits focused and well-described.
 4. **Run checks** before submitting:
+
    ```bash
    cargo test          # unit tests
    cargo clippy        # lints
    cargo fmt --check   # formatting
    ```
+
 5. **Open a pull request** against `master`.
 
 ---
 
 ## Code Standards
 
-- **Formatting**: `cargo fmt` (rustfmt defaults). No unformatted code is accepted.
-- **Linting**: zero warnings from `cargo clippy`. Use `#[allow(...)]` only with a comment explaining why.
-- **Tests**: new automaton logic should include unit tests in the same file or a `tests/` submodule.
-- **No `unsafe`**: avoid `unsafe` blocks. The codebase does not use any.
+### Formatting
+
+- Run `cargo fmt` before committing.
+- Use the default rustfmt style. No unformatted code is accepted.
+
+### Linting
+
+- Aim for zero warnings from `cargo clippy`.
+- Use `#[allow(...)]` only with a comment explaining why the lint is suppressed.
+
+### Tests
+
+- New automaton logic should include unit tests in the same file or a `tests/` submodule.
+- Run the full suite with `cargo test`.
+
+### Safety
+
+- Avoid `unsafe` blocks. The codebase does not use any.
+
+### Documentation
+
+- Add doc comments (`///`) for public items.
+- Update `README.md`, `CHANGELOG.md`, and this file when behaviour changes.
 
 ---
 
@@ -103,9 +128,10 @@ cargo build --release
    }
    ```
 
-2. `pub mod <name>;` and `pub use <name>::MyAutomaton;` in `automata/mod.rs`.
+2. Add `pub mod <name>;` and `pub use <name>::MyAutomaton;` in `automata/mod.rs`.
 3. Add `"My Automaton"` to the `ALL_MODES` constant in `automata/mod.rs`.
 4. Add a match arm for it in the `make_automaton` factory in `automata/mod.rs`.
+5. Update `README.md` and `CHANGELOG.md`.
 
 ---
 
@@ -129,9 +155,21 @@ Open a GitHub issue with:
 - Steps to reproduce (for bugs)
 - Expected vs. actual behaviour
 - Rust version (`rustc --version`) and OS
+- Screenshots or GIFs if they help illustrate the problem
+
+---
+
+## Pull Request Checklist
+
+- [ ] Branch is up to date with `master`
+- [ ] `cargo test` passes
+- [ ] `cargo clippy` produces no new warnings
+- [ ] `cargo fmt --check` passes
+- [ ] Documentation is updated where necessary
+- [ ] CHANGELOG.md is updated for user-facing changes
 
 ---
 
 ## License
 
-By contributing you agree that your contributions will be licensed under the MIT License.
+By contributing you agree that your contributions will be licensed under the [MIT License](LICENSE).
