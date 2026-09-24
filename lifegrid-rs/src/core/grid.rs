@@ -76,6 +76,7 @@ impl Grid {
     /// Like [`neighbor_counts`] but counts any cell with `value > 0`.
     ///
     /// Uses rayon parallel iteration for grids larger than 50 000 cells.
+    #[allow(dead_code)]
     pub fn neighbor_counts_alive(&self, boundary: BoundaryMode) -> Vec<u8> {
         let h = self.height;
         let w = self.width;

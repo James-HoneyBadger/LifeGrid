@@ -2,6 +2,7 @@
 pub struct PatternDef {
     pub name: &'static str,
     pub points: &'static [(i32, i32)],
+    #[allow(dead_code)]
     pub description: &'static str,
 }
 

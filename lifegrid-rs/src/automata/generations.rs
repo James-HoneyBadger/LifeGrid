@@ -26,6 +26,7 @@ impl Generations {
         }
     }
 
+    #[allow(dead_code)]
     pub fn set_rules(&mut self, birth: Vec<u8>, survival: Vec<u8>, n_states: u8) {
         self.birth = birth;
         self.survival = survival;

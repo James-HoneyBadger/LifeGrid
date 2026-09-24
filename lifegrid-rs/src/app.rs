@@ -742,9 +742,9 @@ impl LifeGridApp {
         visuals.widgets.inactive.corner_radius = CornerRadius::same(6);
         visuals.widgets.open.corner_radius = CornerRadius::same(6);
 
-        visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, mode_accent_color(&self.selected_mode));
+        visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0_f32, mode_accent_color(&self.selected_mode));
         visuals.selection.bg_fill = mode_accent_color(&self.selected_mode).linear_multiply(0.25);
-        visuals.selection.stroke = egui::Stroke::new(1.0, mode_accent_color(&self.selected_mode));
+        visuals.selection.stroke = egui::Stroke::new(1.0_f32, mode_accent_color(&self.selected_mode));
 
         ctx.set_visuals(visuals);
 
@@ -1040,7 +1040,7 @@ impl LifeGridApp {
 
         let section_frame = egui::Frame::group(ui.style())
             .fill(card_fill)
-            .stroke(egui::Stroke::new(1.0, card_stroke))
+            .stroke(egui::Stroke::new(1.0_f32, card_stroke))
             .corner_radius(CornerRadius::same(8))
             .inner_margin(card_margin);
 
@@ -1297,7 +1297,7 @@ impl LifeGridApp {
                             )
                         })
                         .collect();
-                    painter.add(egui::Shape::line(pts, egui::Stroke::new(1.5, accent)));
+                    painter.add(egui::Shape::line(pts, egui::Stroke::new(1.5_f32, accent)));
                 } else {
                     ui.weak("Run the simulation to see statistics.");
                 }
@@ -1487,7 +1487,7 @@ impl LifeGridApp {
         // ── Grid lines ───────────────────────────────────────────────────────
         if show_grid && cs >= 4.0 {
             let lc = if dark { Color32::from_gray(50) } else { Color32::from_gray(210) };
-            let stroke = egui::Stroke::new(0.5, lc);
+            let stroke = egui::Stroke::new(0.5_f32, lc);
             for gx in start_gx..=end_gx {
                 let px = rect.left() - vox + gx as f32 * cs;
                 if px >= rect.left() - 1.0 && px <= rect.right() + 1.0 {
@@ -1544,7 +1544,7 @@ impl LifeGridApp {
             let ey = rect.top()  - voy + (y1 + 1) as f32 * cs;
             let sel_rect = egui::Rect::from_min_max(egui::pos2(sx, sy), egui::pos2(ex, ey));
             let fill = Color32::from_rgba_premultiplied(100, 160, 255, 25);
-            let stroke = egui::Stroke::new(1.5, Color32::from_rgb(120, 180, 255));
+            let stroke = egui::Stroke::new(1.5_f32, Color32::from_rgb(120, 180, 255));
             painter.rect_filled(sel_rect, CornerRadius::ZERO, fill);
             painter.rect_stroke(sel_rect, CornerRadius::ZERO, stroke, egui::StrokeKind::Outside);
         }
@@ -1677,7 +1677,7 @@ impl LifeGridApp {
         // Ground-grid lines
         if self.show_grid && cs >= 3.0 {
             let lc = if dark { Color32::from_gray(38) } else { Color32::from_gray(215) };
-            let stroke = egui::Stroke::new(0.5, lc);
+            let stroke = egui::Stroke::new(0.5_f32, lc);
             for gx in 0..=gw {
                 let p1 = ipt(gx as f32, 0.0,      0.0);
                 let p2 = ipt(gx as f32, gh as f32, 0.0);
@@ -1742,7 +1742,7 @@ impl LifeGridApp {
                 ipt(x1f, y1f, 0.0), ipt(x0f, y1f, 0.0),
             ];
             painter.add(egui::Shape::closed_line(
-                sel_pts, egui::Stroke::new(2.0, Color32::from_rgb(120, 180, 255)),
+                sel_pts, egui::Stroke::new(2.0_f32, Color32::from_rgb(120, 180, 255)),
             ));
         }
 
@@ -1762,7 +1762,7 @@ impl LifeGridApp {
                 painter.add(egui::Shape::closed_line(
                     vec![ipt(hxf, hyf, 0.0), ipt(hxf+1.0, hyf, 0.0),
                          ipt(hxf+1.0, hyf+1.0, 0.0), ipt(hxf, hyf+1.0, 0.0)],
-                    egui::Stroke::new(1.5, accent),
+                    egui::Stroke::new(1.5_f32, accent),
                 ));
                 response.clone().on_hover_text(format!("({}, {})  state: {}", hx, hy, state));
             }
@@ -1950,7 +1950,7 @@ impl eframe::App for LifeGridApp {
         };
         let bar_frame = egui::Frame::default()
             .fill(bar_fill)
-            .stroke(egui::Stroke::new(1.0, bar_stroke))
+            .stroke(egui::Stroke::new(1.0_f32, bar_stroke))
             .corner_radius(CornerRadius::same(0))
             .inner_margin(bar_margin);
 

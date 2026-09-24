@@ -27,6 +27,7 @@ use crate::core::{BoundaryMode, Grid};
 // ---------------------------------------------------------------------------
 
 /// Common interface for all cellular automata.
+#[allow(dead_code)]
 pub trait Automaton {
     fn name(&self) -> &'static str;
     fn step(&mut self);
