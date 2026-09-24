@@ -23,6 +23,8 @@ pub struct AppConfig {
     pub paint_state: u8,
     #[serde(default)]
     pub show_aging: bool,
+    #[serde(default)]
+    pub compact_mode: bool,
 }
 
 fn default_true() -> bool { true }
@@ -47,6 +49,7 @@ impl Default for AppConfig {
             rounded_cells: false,
             paint_state: 1,
             show_aging: false,
+            compact_mode: false,
         }
     }
 }

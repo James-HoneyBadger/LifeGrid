@@ -6,12 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [5.0.0] — 2026-09-24
+
 ### Added
 - Native Rust/egui release build (`cargo build --release`).
 - `run-simulation.sh` helper script at the repository root.
 
 ### Changed
 - Documentation restored and enhanced as Markdown files.
+- Version bumped to 5.0.0.
 
 ## [4.0.0] — 2026-05-15
 
